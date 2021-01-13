@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ApiClinicaSanFelipe</name>
+    </assembly>
+    <members>
+        <member name="M:Net.Business.Services.Controllers.VentaController.GetAll(System.String,System.Int32,System.Int32,System.Int32,System.String)">
+            <summary>
+            Obtener Listado
+            </summary>
+            <param name="buscar">Codigo de Venta o Comprobante</param>
+            <param name="key"></param>
+            <param name="numeroLineas">numero de lineas que devolvera la consulta</param>
+            <param name="orden"></param>
+            <param name="fecha"></param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>
