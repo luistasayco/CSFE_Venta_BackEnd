@@ -1,5 +1,4 @@
 ﻿using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
 using Net.Connection.Attributes;
 using System;
 using System.Collections.Generic;
@@ -11,22 +10,7 @@ namespace Net.Connection
 {
     public class ConnectionSQL : IConnectionSQL
     {
-
-        private readonly string _cnx;
-        public ConnectionSQL(IConfiguration configuration, IServiceProvider serviceProvider)
-        {
-            var connectionStringPlaceHolder = configuration.GetConnectionString("cnnSql");
-            _cnx = connectionStringPlaceHolder;
-        }
-
-        public ConnectionSQL()
-        {
-        }
-
-        public string DevuelveConnectionSQL()
-        {
-            return _cnx;
-        }
+        private string _cnx;
 
         public void ExecuteSqlNonQuery(string comandSql)
         {
@@ -38,18 +22,15 @@ namespace Net.Connection
             ExecuteSqlNonQuery(procedureName, GetParametersSqlQueryAnotation(parameters, ActionType.Update).ToArray());
         }
 
-        //public static IEnumerable<T> ExecuteSqlView<T>( string procedureName, T parameters)
-        //{
-        //    return ExecuteSqlQuery<T>( procedureName, GetParametersSqlQueryAnotation(parameters, ActionType.Everything).ToArray());
-        //}
-
-        public IEnumerable<T> ExecuteSqlViewFindByCondition<T>(string procedureName, object parameters)
+        public IEnumerable<T> ExecuteSqlViewFindByCondition<T>(string procedureName, object parameters, string cadenaConexion)
         {
+            _cnx = cadenaConexion;
             return ExecuteSqlQuery<T>(procedureName, GetParametersSqlQueryAnotation(parameters, ActionType.View).ToArray());
         }
 
-        public T ExecuteSqlViewId<T>(string procedureName, T parameters)
+        public T ExecuteSqlViewId<T>(string procedureName, T parameters, string cadenaConexion)
         {
+            _cnx = cadenaConexion;
             return ExecuteSqlQuery<T>(procedureName, GetParametersSqlQueryAnotation(parameters, ActionType.Everything).ToArray()).FirstOrDefault();
         }
 
@@ -169,6 +150,7 @@ namespace Net.Connection
                         cmd.Parameters.Add(prm);
                     }
                 }
+
                 // Creamos la Conexion
                 cmd.Connection = new SqlConnection(_cnx);
                 if (cmd.Connection.State.HasFlag(ConnectionState.Closed))
@@ -327,6 +309,24 @@ namespace Net.Connection
             }
 
             return listaParametro;
+        }
+
+        public IList<T> ConvertTo<T>(IDataReader reader)
+        {
+            DataTable dataTable = new DataTable();
+            IList<T> queryResult;
+            dataTable.Load(reader);
+            queryResult = ConvertTo<T>(dataTable);
+            return queryResult;
+        }
+
+        public T Convert<T>(IDataReader reader)
+        {
+            DataTable dataTable = new DataTable();
+            IList<T> queryResult;
+            dataTable.Load(reader);
+            queryResult = ConvertTo<T>(dataTable);
+            return queryResult[0];
         }
 
         public static IList<T> ConvertTo<T>(DataTable table)

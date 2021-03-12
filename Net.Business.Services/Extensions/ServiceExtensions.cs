@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Net.Connection;
 using Net.Data;
+using System.Net.Http;
 
 namespace Net.Business.Services
 {
@@ -43,6 +44,19 @@ namespace Net.Business.Services
             services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
 
             //services.AddSingleton<DriveApiService>();
+        }
+
+        public static void ConfigureHttpClientServiceLayer(this IServiceCollection services)
+        {
+            services.AddHttpClient("bypass-ssl-validation")
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (
+                    httpRequestMessage, cert, certChain, policyErrors) =>
+                {
+                    return true;
+                }
+            });
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace Net.Data
 {
@@ -15,11 +16,11 @@ namespace Net.Data
         private SmtpClient Cliente { get; }
         private BE_ParametroSistema Options { get; }
 
-        public EmailSenderRepository(IConnectionSQL context)
+        public EmailSenderRepository(IConnectionSQL context, IConfiguration configuration)
             : base(context)
         {
 
-            Options = context.ExecuteSqlViewId<BE_ParametroSistema>(SP_GET_ID, new BE_ParametroSistema { IdParametrosSistema = 0 });
+            Options = context.ExecuteSqlViewId<BE_ParametroSistema>(SP_GET_ID, new BE_ParametroSistema { IdParametrosSistema = 0 }, configuration.GetConnectionString("cnnSqlLogistica"));
 
             Options.SendEmailPasswordOrigen = EncriptaHelper.DecryptStringAES(Options.SendEmailPassword);
 

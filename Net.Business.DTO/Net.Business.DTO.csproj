@@ -9,10 +9,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Venta\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Net.Business.Entities\Net.Business.Entities.csproj" />
   </ItemGroup>
 

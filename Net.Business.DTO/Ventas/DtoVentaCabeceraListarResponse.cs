@@ -6,11 +6,11 @@ namespace Net.Business.DTO
 {
     public class DtoVentaCabeceraListarResponse
     {
-        public List<DtoVentaCabeceraResponse> ListaVentaCabecera { get; set; }
+        public IEnumerable<DtoVentaCabeceraResponse> ListaVentaCabecera { get; set; }
 
-        public DtoVentaCabeceraListarResponse RetornarListaVentaCabecera(List<BE_VentaCabecera> listaArticulos)
+        public DtoVentaCabeceraListarResponse RetornarListaVentaCabecera(IEnumerable<BE_VentasCabecera> listaArticulos)
         {
-            List<DtoVentaCabeceraResponse> lista = (
+            IEnumerable<DtoVentaCabeceraResponse> lista = (
                 from value in listaArticulos
                 select new DtoVentaCabeceraResponse
                 {
@@ -22,7 +22,7 @@ namespace Net.Business.DTO
                     nombretipocliente = value.nombretipocliente,
                     codatencion = value.codatencion,
                     codcomprobante = value.codcomprobante,
-                    estado = value.estado,
+                    nombreestado = value.nombreestado,
                     nombre = value.nombre,
                     montopaciente = value.montopaciente,
                     montoaseguradora = value.montoaseguradora,
@@ -33,7 +33,7 @@ namespace Net.Business.DTO
                     codcliente = value.codcliente,
                     codpedido = value.codpedido
                 }
-                ).ToList();
+                );
 
             return new DtoVentaCabeceraListarResponse() { ListaVentaCabecera = lista };
         }

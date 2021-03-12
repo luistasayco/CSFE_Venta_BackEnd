@@ -29,6 +29,7 @@ namespace Net.Business.Services
             services.ConfigureCors();
             services.ConfigureIISIntegration();
             services.ConfigureSQLConnection();
+            services.ConfigureHttpClientServiceLayer();
 
             // Para obtener datos de los header
             services.AddSingleton<Microsoft.AspNetCore.Http.IHttpContextAccessor, Microsoft.AspNetCore.Http.HttpContextAccessor>();
@@ -82,25 +83,25 @@ namespace Net.Business.Services
                 options.IncludeXmlComments(rutaApiComentarios);
 
                 /*Primero definir el esquema de seguridad*/
-                //options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-                //{
-                //    Description = "Autenticacion JWT (Bearer)",
-                //    Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-                //    Scheme = "bearer"
-                //});
+                options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Description = "Autenticacion JWT (Bearer)",
+                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+                    Scheme = "bearer"
+                });
 
-                //options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement {
-                //    {
-                //        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-                //        {
-                //            Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                //            {
-                //                Id = "Bearer",
-                //                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme
-                //            }
-                //        }, new List<string>()
-                //    }
-                //});
+                options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement {
+                    {
+                        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                        {
+                            Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                            {
+                                Id = "Bearer",
+                                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme
+                            }
+                        }, new List<string>()
+                    }
+                });
             });
 
             services.AddControllers();

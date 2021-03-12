@@ -13,7 +13,7 @@ namespace Net.Business.DTO
         public string nombretipocliente { get; set; }
         public string codatencion { get; set; }
         public string codcomprobante { get; set; }
-        public string estado { get; set; }
+        public string nombreestado { get; set; }
         public string nombre { get; set; }
         public decimal montopaciente { get; set; }
         public decimal montoaseguradora { get; set; }
@@ -24,7 +24,7 @@ namespace Net.Business.DTO
         public string codcliente { get; set; }
         public string codpedido { get; set; }
 
-        public DtoVentaCabeceraResponse RetornaDtoVentaCabeceraResponse(BE_VentaCabecera value)
+        public DtoVentaCabeceraResponse RetornaDtoVentaCabeceraResponse(BE_VentasCabecera value)
         {
             return new DtoVentaCabeceraResponse()
             {
@@ -36,7 +36,7 @@ namespace Net.Business.DTO
                 nombretipocliente = value.nombretipocliente,
                 codatencion = value.codatencion,
                 codcomprobante = value.codcomprobante,
-                estado = value.estado,
+                nombreestado = value.nombreestado,
                 nombre = value.nombre,
                 montopaciente = value.montopaciente,
                 montoaseguradora = value.montoaseguradora,

@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>ApiClinicaSanFelipe</AssemblyName>
+    <UserSecretsId>9d2d5894-d85c-4488-87b6-a575f5d19650</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -21,6 +22,8 @@
     <ProjectReference Include="..\Net.Connection\Net.Connection.csproj" />
     <ProjectReference Include="..\Net.Data\Net.Data.csproj" />
   </ItemGroup>
+
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
 
 
 </Project>
