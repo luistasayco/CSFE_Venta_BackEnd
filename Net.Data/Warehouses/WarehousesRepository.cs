@@ -24,5 +24,11 @@ namespace Net.Data
             List<BE_Warehouses> data = await _connectServiceLayer.GetAsync<BE_Warehouses>("Warehouses?$select=WarehouseCode, WarehouseName&$filter=contains (WarehouseName , '" + warehouseName + "' )");
             return data;
         }
+
+        public async Task<BE_Warehouses> GetWarehousesPorCodigo(string warehouseCode)
+        {
+            BE_Warehouses data = await _connectServiceLayer.GetAsyncTo<BE_Warehouses>("Warehouses?$select=WarehouseCode, WarehouseName&$filter=WarehouseCode eq '" + warehouseCode + "'");
+            return data;
+        }
     }
 }

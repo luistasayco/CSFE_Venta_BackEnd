@@ -9,7 +9,7 @@ namespace Net.Business.Services.Controllers
     [Route("api/[controller]/[action]")]
     [ApiController]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ApiExplorerSettings(GroupName = "ApiVenta")]
+    [ApiExplorerSettings(GroupName = "ApiPaciente")]
     [Authorize(AuthenticationSchemes = "Bearer")]
     public class PacienteController : ControllerBase
     {
@@ -32,12 +32,12 @@ namespace Net.Business.Services.Controllers
 
             var objectGetAll = await _repository.Paciente.GetPacientePorAtencion(codAtencion);
 
-            if (objectGetAll == null)
+            if (objectGetAll.ResultadoCodigo == -1)
             {
-                return NotFound();
+                return BadRequest(objectGetAll);
             }
 
-            return Ok(objectGetAll);
+            return Ok(objectGetAll.data);
         }
     }
 }

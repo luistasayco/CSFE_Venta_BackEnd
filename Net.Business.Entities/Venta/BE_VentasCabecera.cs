@@ -1,5 +1,6 @@
 ﻿using Net.Connection.Attributes;
 using System;
+using System.Collections.Generic;
 using System.Data;
 
 namespace Net.Business.Entities
@@ -7,7 +8,7 @@ namespace Net.Business.Entities
     public class BE_VentasCabecera
     {
         [DBParameter(SqlDbType.Char, ActionType.Everything, true)]
-        public string CodVenta { get; set; }
+        public string codventa { get; set; }
         [DBParameter(SqlDbType.Char, 8, ActionType.Everything)]
         public string codalmacen { get; set; }
         [DBParameter(SqlDbType.Char, 2, ActionType.Everything)]
@@ -128,5 +129,24 @@ namespace Net.Business.Entities
         public string autorizado { get; set; }
         [DBParameter(SqlDbType.Char, 60, ActionType.Everything)]
         public string codcomprobantee { get; set; }
+        [DBParameter(SqlDbType.Bit, 0, ActionType.Everything)]
+        public bool tienedevolucion { get; set; }
+        [DBParameter(SqlDbType.VarChar, 20, ActionType.Everything)]
+        public string ruccliente { get; set; }
+        [DBParameter(SqlDbType.VarChar, 60, ActionType.Everything)]
+        public string dircliente { get; set; }
+        [DBParameter(SqlDbType.Char, 1, ActionType.Everything)]
+        public string tipdocidentidad { get; set; }
+        [DBParameter(SqlDbType.Char, 15, ActionType.Everything)]
+        public string docidentidad { get; set; }
+        [DBParameter(SqlDbType.VarChar, 50, ActionType.Everything)]
+        public string nombretipdocidentidad { get; set; }
+        [DBParameter(SqlDbType.VarChar, 50, ActionType.Everything)]
+        public string correocliente { get; set; }
+        [DBParameter(SqlDbType.Char, 1, ActionType.Everything)]
+        public string moneda_comprobantes { get; set; }
+        [DBParameter(SqlDbType.VarChar, 20, ActionType.Everything)]
+        public string numeroplanilla { get; set; }
+        public List<BE_VentasDetalle> listaVentaDetalle { get; set; }
     }
 }

@@ -9,7 +9,7 @@ namespace Net.Business.Services.Controllers
     [Route("api/[controller]/[action]")]
     [ApiController]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ApiExplorerSettings(GroupName = "ApiVenta")]
+    [ApiExplorerSettings(GroupName = "ApiCliente")]
     [Authorize(AuthenticationSchemes = "Bearer")]
     public class ClienteController : ControllerBase
     {
@@ -28,12 +28,12 @@ namespace Net.Business.Services.Controllers
 
             var objectGetAll = await _repository.Cliente.GetListClientePorFiltro(opcion, ruc, nombre);
 
-            if (objectGetAll == null)
+            if (objectGetAll.ResultadoCodigo == -1)
             {
-                return NotFound();
+                return BadRequest(objectGetAll);
             }
 
-            return Ok(objectGetAll);
+            return Ok(objectGetAll.dataList);
         }
     }
 }

@@ -5,7 +5,7 @@ namespace Net.Business.DTO
 {
     public class DtoVentaCabeceraResponse
     {
-        public string CodVenta { get; set; }
+        public string codventa { get; set; }
         public string codalmacen { get; set; }
         public string tipomovimiento { get; set; }
         public string codempresa { get; set; }
@@ -23,12 +23,14 @@ namespace Net.Business.DTO
         public string codpaciente { get; set; }
         public string codcliente { get; set; }
         public string codpedido { get; set; }
+        public string estado { get; set; }
+        public string usuarioanulacion { get; set; }
 
         public DtoVentaCabeceraResponse RetornaDtoVentaCabeceraResponse(BE_VentasCabecera value)
         {
             return new DtoVentaCabeceraResponse()
             {
-                CodVenta = value.CodVenta,
+                codventa = value.codventa,
                 codalmacen = value.codalmacen,
                 tipomovimiento = value.tipomovimiento,
                 codempresa = value.codempresa,
@@ -45,7 +47,9 @@ namespace Net.Business.DTO
                 fechaemision = value.fechaemision,
                 codpaciente = value.codpaciente,
                 codcliente = value.codcliente,
-                codpedido = value.codpedido
+                codpedido = value.codpedido,
+                estado = value.estado,
+                usuarioanulacion = value.usuarioanulacion
             };
         }
     }

@@ -9,7 +9,7 @@ namespace Net.Business.Services.Controllers
     [Route("api/[controller]/[action]")]
     [ApiController]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ApiExplorerSettings(GroupName = "ApiVenta")]
+    [ApiExplorerSettings(GroupName = "ApiPersonaClinica")]
     [Authorize(AuthenticationSchemes = "Bearer")]
     public class PersonalClinicaController : ControllerBase
     {

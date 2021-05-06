@@ -59,11 +59,335 @@ namespace Net.Business.Services
 
             /*De aqui en adelante configuracion de documentacion de nuestra API*/
             services.AddSwaggerGen(options => {
+                options.SwaggerDoc("ApiAtencion", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Atención",
+                    Version = "1",
+                    Description = "BackEnd Atención",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiCentro", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Centro",
+                    Version = "1",
+                    Description = "BackEnd Centro",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiCliente", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Cliente",
+                    Version = "1",
+                    Description = "BackEnd Cliente",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
                 options.SwaggerDoc("ApiVenta", new Microsoft.OpenApi.Models.OpenApiInfo()
                 {
-                    Title = "API (Tabla Maestra)",
+                    Title = "API General Ventas",
                     Version = "1",
-                    Description = "BackEnd Generales",
+                    Description = "BackEnd Ventas",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiComprobante", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Comprobante",
+                    Version = "1",
+                    Description = "BackEnd Comprobante",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiHospital", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Hospital",
+                    Version = "1",
+                    Description = "BackEnd Hospital",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiMedico", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Médico",
+                    Version = "1",
+                    Description = "BackEnd Médico",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiPaciente", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Paciente",
+                    Version = "1",
+                    Description = "BackEnd Paciente",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiPedido", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Pedido",
+                    Version = "1",
+                    Description = "BackEnd Pedido",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiPersonaClinica", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Persona Clínica",
+                    Version = "1",
+                    Description = "BackEnd Persona Clínica",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiPlanes", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Planes",
+                    Version = "1",
+                    Description = "BackEnd Planes",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiProducto", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Producto",
+                    Version = "1",
+                    Description = "BackEnd Producto",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiReceta", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Receta",
+                    Version = "1",
+                    Description = "BackEnd Receta",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiSerie", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Serie",
+                    Version = "1",
+                    Description = "BackEnd Serie",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiSeriePorMaquina", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Serie Por Maquina",
+                    Version = "1",
+                    Description = "BackEnd Serie Por Maquina",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiTabla", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Tabla",
+                    Version = "1",
+                    Description = "BackEnd Tabla",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiTipoCambio", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Tipo Cambio",
+                    Version = "1",
+                    Description = "BackEnd Tipo Cambio",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiAlmacen", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Almacén",
+                    Version = "1",
+                    Description = "BackEnd Almacén",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
+                options.SwaggerDoc("ApiApu", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API - Proveedor APU",
+                    Version = "1",
+                    Description = "BackEnd - Para el proveedor APU",
                     Contact = new Microsoft.OpenApi.Models.OpenApiContact()
                     {
                         Email = "luis.tasayco@sba.pe",
@@ -123,7 +447,25 @@ namespace Net.Business.Services
             app.UseSwagger();
             app.UseSwaggerUI(options =>
             {
-                options.SwaggerEndpoint("/swagger/ApiVenta/swagger.json", "API General (Tabla Maestra)");
+                options.SwaggerEndpoint("/swagger/ApiAtencion/swagger.json", "API General Atención");
+                options.SwaggerEndpoint("/swagger/ApiCentro/swagger.json", "API General Centro");
+                options.SwaggerEndpoint("/swagger/ApiCliente/swagger.json", "API General Cliente");
+                options.SwaggerEndpoint("/swagger/ApiVenta/swagger.json", "API General Ventas");
+                options.SwaggerEndpoint("/swagger/ApiComprobante/swagger.json", "API General Comprobante");
+                options.SwaggerEndpoint("/swagger/ApiHospital/swagger.json", "API General Hospital");
+                options.SwaggerEndpoint("/swagger/ApiMedico/swagger.json", "API General Médico");
+                options.SwaggerEndpoint("/swagger/ApiPaciente/swagger.json", "API General Paciente");
+                options.SwaggerEndpoint("/swagger/ApiPedido/swagger.json", "API General Pedido");
+                options.SwaggerEndpoint("/swagger/ApiPersonaClinica/swagger.json", "API General Persona Clínica");
+                options.SwaggerEndpoint("/swagger/ApiPlanes/swagger.json", "API General Planes");
+                options.SwaggerEndpoint("/swagger/ApiProducto/swagger.json", "API General Producto");
+                options.SwaggerEndpoint("/swagger/ApiReceta/swagger.json", "API General Receta");
+                options.SwaggerEndpoint("/swagger/ApiSerie/swagger.json", "API General Serie");
+                options.SwaggerEndpoint("/swagger/ApiSeriePorMaquina/swagger.json", "API General Serie Por Maquina");
+                options.SwaggerEndpoint("/swagger/ApiTabla/swagger.json", "API General Tabla");
+                options.SwaggerEndpoint("/swagger/ApiTipoCambio/swagger.json", "API General Tipo Cambio");
+                options.SwaggerEndpoint("/swagger/ApiAlmacen/swagger.json", "API General Almacén");
+                options.SwaggerEndpoint("/swagger/ApiApu/swagger.json", "API - Proveedor APU");
                 options.RoutePrefix = "";
             });
 

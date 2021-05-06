@@ -35,12 +35,12 @@ namespace Net.Business.Services.Controllers
 
             var objectGetAll = await _repository.Planes.GetByFiltros(value.RetornaPlanes());
 
-            if (objectGetAll == null)
+            if (objectGetAll.ResultadoCodigo == -1)
             {
-                return NotFound();
+                return BadRequest(objectGetAll);
             }
 
-            return Ok(objectGetAll);
+            return Ok(objectGetAll.dataList);
         }
 
         /// <summary>
@@ -53,17 +53,30 @@ namespace Net.Business.Services.Controllers
         [HttpGet("{id}", Name = "GetbyIdPlanes")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesDefaultResponseType]
         public async Task<IActionResult> GetbyId(int id)
         {
             var objectGetById = await _repository.Planes.GetbyId(new DtoPlanesFind { IdPlan = id }.RetornaPlanes());
 
-            if (objectGetById == null)
+            if (objectGetById.ResultadoCodigo == -1)
             {
-                return NotFound();
+                return BadRequest(objectGetById);
             }
 
-            return Ok(objectGetById);
+            return Ok(objectGetById.data);
+        }
+
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetbyCodigo(string codigo)
+        {
+            var objectGetById = await _repository.Planes.GetbyCodigo(new DtoPlanesFind { CodPlan = codigo }.RetornaPlanes());
+
+            if (objectGetById.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetById);
+            }
+
+            return Ok(objectGetById.data);
         }
 
         /// <summary>

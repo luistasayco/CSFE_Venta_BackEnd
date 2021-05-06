@@ -6,6 +6,6 @@ namespace Net.Data
 {
     public interface IPacienteRepository : IRepositoryBase<BE_Paciente>
     {
-        Task<BE_Paciente> GetPacientePorAtencion(string codAtencion);
+        Task<ResultadoTransaccion<BE_Paciente>> GetPacientePorAtencion(string codAtencion);
     }
 }

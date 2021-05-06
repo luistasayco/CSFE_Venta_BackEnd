@@ -11,7 +11,7 @@ namespace Net.Data
     {
         private readonly string _cnx;
         const string DB_ESQUEMA = "";
-        const string SP_GET = DB_ESQUEMA + "VEN_ObtieneDatosAtencionPorFiltros";
+        const string SP_GET = DB_ESQUEMA + "VEN_ListaAtencionPorFiltrosGet";
 
         public AtencionRepository(IConnectionSQL context, IConfiguration configuration)
             : base(context)

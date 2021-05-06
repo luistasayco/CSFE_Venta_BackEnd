@@ -9,7 +9,7 @@ namespace Net.Business.Services.Controllers
     [Route("api/[controller]/[action]")]
     [ApiController]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ApiExplorerSettings(GroupName = "ApiVenta")]
+    [ApiExplorerSettings(GroupName = "ApiAlmacen")]
     [Authorize(AuthenticationSchemes = "Bearer")]
     public class WarehousesController : ControllerBase
     {
@@ -31,6 +31,27 @@ namespace Net.Business.Services.Controllers
         {
 
             var objectGetAll = await _repository.Warehouses.GetListWarehousesContains(warehouseName);
+
+            if (objectGetAll == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(objectGetAll);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="warehouseCode"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetWarehousesPorCodigo([FromQuery] string warehouseCode)
+        {
+
+            var objectGetAll = await _repository.Warehouses.GetWarehousesPorCodigo(warehouseCode);
 
             if (objectGetAll == null)
             {

@@ -23,14 +23,14 @@ namespace Net.Data
         {
             _aplicacionName = this.GetType().Name;
         }
-        public async Task<ResultadoTransaccion> ObtieneTipoCambio()
+        public async Task<ResultadoTransaccion<BE_TipoCambio>> ObtieneTipoCambio()
         {
-            ResultadoTransaccion vResultadoTransaccion = new ResultadoTransaccion();
+            ResultadoTransaccion<BE_TipoCambio> vResultadoTransaccion = new ResultadoTransaccion<BE_TipoCambio>();
 
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
-            vResultadoTransaccion.ResultadoMetodo = _metodoName;
-            vResultadoTransaccion.ResultadoAplicacion = _aplicacionName;
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
 
             BE_TipoCambio tipoCambio = new BE_TipoCambio();
             tipoCambio.bancarioventa = 3.5990M;

@@ -14,7 +14,7 @@ namespace Net.Business.DTO
                 from value in listaArticulos
                 select new DtoVentaCabeceraResponse
                 {
-                    CodVenta = value.CodVenta,
+                    codventa = value.codventa,
                     codalmacen = value.codalmacen,
                     tipomovimiento = value.tipomovimiento,
                     codempresa = value.codempresa,
@@ -31,9 +31,11 @@ namespace Net.Business.DTO
                     fechaemision = value.fechaemision,
                     codpaciente = value.codpaciente,
                     codcliente = value.codcliente,
-                    codpedido = value.codpedido
+                    codpedido = value.codpedido,
+                    estado = value.estado,
+                    usuarioanulacion = value.usuarioanulacion
                 }
-                );
+            );
 
             return new DtoVentaCabeceraListarResponse() { ListaVentaCabecera = lista };
         }

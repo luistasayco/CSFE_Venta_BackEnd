@@ -17,6 +17,8 @@ namespace Net.Business.Entities
         public string telefono { get; set; }
         public string nombreprovincia { get; set; }
         public string nombredistrito { get; set; }
+        public string codplan { get; set; }
+        public decimal porcentajeplan { get; set; }
         public string poliza { get; set; }
         public string planpoliza { get; set; }
         public string npoliza { get; set; }

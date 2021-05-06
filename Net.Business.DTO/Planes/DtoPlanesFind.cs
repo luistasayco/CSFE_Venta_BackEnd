@@ -6,13 +6,15 @@ namespace Net.Business.DTO
     {
         public int? IdPlan { get; set; }
         public string Nombre { get; set; }
+        public string CodPlan { get; set; }
 
         public BE_Planes RetornaPlanes()
         {
             return new BE_Planes
             {
                 IdPlan = this.IdPlan,
-                Nombre = this.Nombre
+                Nombre = this.Nombre,
+                CodPlan = this.CodPlan
             };
         }
     }

@@ -4,6 +4,50 @@
         <name>ApiClinicaSanFelipe</name>
     </assembly>
     <members>
+        <member name="M:Net.Business.Services.Controllers.ApuController.GetListPedidosPorRangoFechas(System.DateTime,System.DateTime)">
+            <summary>
+            Listara los pedidos por rango de fechas
+            </summary>
+            <param name="fechainicio"> Fecha de Inicio</param>
+            <param name="fechafin">Fecha Fin</param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ApuController.GetListPedidosPorPedido(System.String)">
+            <summary>
+            Lista un pedido por un codigo de pedido
+            </summary>
+            <param name="codpedido">Codigo de Pedido</param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ApuController.GetListDetallePedidoPorPedido(System.String)">
+            <summary>
+            Listara el detalle del pedido
+            </summary>
+            <param name="codpedido">Codigo de Pedido</param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ApuController.GetListRecetasPorFiltro(System.DateTime,System.DateTime)">
+            <summary>
+            Listara las recetas por rango de fechas
+            </summary>
+            <param name="fechainicio">Fecha Inicio</param>
+            <param name="fechafin">Fecha Fin</param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ApuController.GetListRecetasPorReceta(System.Int32)">
+            <summary>
+            Lista la receta por un id de receta
+            </summary>
+            <param name="id">Id de Receta</param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ApuController.GetListDetalleRecetaPorReceta(System.Int32)">
+            <summary>
+            Listara el detalle de la receta
+            </summary>
+            <param name="id">Id Receta</param>
+            <returns></returns>
+        </member>
         <member name="M:Net.Business.Services.Controllers.AtencionController.GetListPacientePorFiltros(System.String,System.String,System.String)">
             <summary>
             
@@ -11,6 +55,13 @@
             <param name="opcion"></param>
             <param name="codpaciente"></param>
             <param name="nombres"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.CentroController.GetListCentroContains(System.String)">
+            <summary>
+            Lista los almacenes que tienen la palabra filtrada
+            </summary>
+            <param name="nombre">palabra filtrada</param>
             <returns></returns>
         </member>
         <member name="M:Net.Business.Services.Controllers.MedicoController.GetListMedicoPorNombre(System.String)">
@@ -88,18 +139,117 @@
             <response code="400">Si el objeto enviado es nulo o invalido</response>
             <response code="409">Si ocurrio un conflicto</response>
         </member>
+        <member name="M:Net.Business.Services.Controllers.SerieController.Registrar(Net.Business.DTO.DtoSerieRegistrar)">
+            <summary>
+            Crear una nueva registro
+            </summary>
+            <param name="value"></param>
+            <returns>Id del registro creado</returns>
+            <response code="201">Devuelve el elemento recién creado</response>
+            <response code="400">Si el objeto enviado es nulo o invalido</response>  
+            <response code="500">Algo salio mal guardando el registro</response>  
+        </member>
+        <member name="M:Net.Business.Services.Controllers.SeriePorMaquinaController.GetSeriePorMaquinaPorId(System.Int32)">
+            <summary>
+            
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.SeriePorMaquinaController.Registrar(Net.Business.DTO.DtoSeriePorMaquinaRegistrar)">
+            <summary>
+            Crear una nueva registro
+            </summary>
+            <param name="value"></param>
+            <returns>Id del registro creado</returns>
+            <response code="201">Devuelve el elemento recién creado</response>
+            <response code="400">Si el objeto enviado es nulo o invalido</response>  
+            <response code="500">Algo salio mal guardando el registro</response>  
+        </member>
+        <member name="M:Net.Business.Services.Controllers.SeriePorMaquinaController.Modificar(Net.Business.DTO.DtoSeriePorMaquinaModificar)">
+            <summary>
+            Actualizar un registro existente
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+            <response code="204">Actualizado Satisfactoriamente</response>
+            <response code="404">Si el objeto enviado es nulo o invalido</response>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.SeriePorMaquinaController.Eliminar(Net.Business.DTO.DtoSeriePorMaquinaEliminar)">
+             <summary>
+             Eliminar un registro existente
+             </summary>
+             <param name="value"></param>
+             <returns></returns>
+            <response code="204">Eliminado Satisfactoriamente</response>
+            <response code="400">Si el objeto enviado es nulo o invalido</response>
+            <response code="409">Si ocurrio un conflicto</response>
+        </member>
         <member name="M:Net.Business.Services.Controllers.TipoCambioController.ObtieneTipoCambio">
             <summary>
             
             </summary>
             <returns></returns>
         </member>
-        <member name="M:Net.Business.Services.Controllers.VentaController.GetAll(System.String,System.String)">
+        <member name="M:Net.Business.Services.Controllers.VentaConfiguracionController.GetByFiltros(Net.Business.DTO.DtoVentasConfiguracionFind)">
+            <summary>
+            Obtener lista de registros
+            </summary>
+            <param name="value">Este es el cuerpo para enviar los parametros</param>
+            <returns>Retorna lista</returns>
+            <response code="200">Devuelve el listado completo </response>
+            <response code="404">Si no existen datos</response>   
+        </member>
+        <member name="M:Net.Business.Services.Controllers.VentaConfiguracionController.GetbyIdVentaConfiguracion(System.Int32)">
+            <summary>
+            Obtener un registro individual segun el ID
+            </summary>
+            <param name="id">Id de Usuarii</param>
+            <returns>Devuelve un solo registro</returns>
+            <response code="200">Devuelve el listado completo </response>
+            <response code="404">Si no existen datos</response>  
+        </member>
+        <member name="M:Net.Business.Services.Controllers.VentaConfiguracionController.Registrar(Net.Business.DTO.DtoVentasConfiguracionRegistrar)">
+            <summary>
+            Crear una nueva registro
+            </summary>
+            <param name="value"></param>
+            <returns>Id del registro creado</returns>
+            <response code="201">Devuelve el elemento recién creado</response>
+            <response code="400">Si el objeto enviado es nulo o invalido</response>  
+            <response code="500">Algo salio mal guardando el registro</response>  
+        </member>
+        <member name="M:Net.Business.Services.Controllers.VentaConfiguracionController.Modificar(Net.Business.DTO.DtoVentasConfiguracionModificar)">
+            <summary>
+            Actualizar un registro existente
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+            <response code="204">Actualizado Satisfactoriamente</response>
+            <response code="404">Si el objeto enviado es nulo o invalido</response>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.VentaConfiguracionController.Eliminar(Net.Business.DTO.DtoVentasConfiguracionEliminar)">
+             <summary>
+             Eliminar un registro existente
+             </summary>
+             <param name="value"></param>
+             <returns></returns>
+            <response code="204">Eliminado Satisfactoriamente</response>
+            <response code="400">Si el objeto enviado es nulo o invalido</response>
+            <response code="409">Si ocurrio un conflicto</response>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.VentaController.GetVentaPorCodVenta(System.String)">
             <summary>
             
             </summary>
-            <param name="codcomprobante"></param>
             <param name="codventa"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.VentaController.GetVentaCabeceraPendientePorFiltro(System.DateTime)">
+            <summary>
+            
+            </summary>
+            <param name="fecha"></param>
             <returns></returns>
         </member>
         <member name="M:Net.Business.Services.Controllers.WarehousesController.GetListWarehousesContains(System.String)">
@@ -107,6 +257,13 @@
             Lista los almacenes que tienen la palabra filtrada
             </summary>
             <param name="warehouseName">palabra filtrada</param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.WarehousesController.GetWarehousesPorCodigo(System.String)">
+            <summary>
+            
+            </summary>
+            <param name="warehouseCode"></param>
             <returns></returns>
         </member>
     </members>

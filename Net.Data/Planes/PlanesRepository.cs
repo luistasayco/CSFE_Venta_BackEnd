@@ -20,6 +20,7 @@ namespace Net.Data
         const string DB_ESQUEMA = "";
         const string SP_GET = DB_ESQUEMA + "VEN_PlanesGet";
         const string SP_GET_ID = DB_ESQUEMA + "VEN_PlanesById";
+        const string SP_GET_CODIGO = DB_ESQUEMA + "VEN_PlanesByCodigo";
         const string SP_INSERT = DB_ESQUEMA + "VEN_PlanesIns";
         const string SP_UPDATE = DB_ESQUEMA + "VEN_PlanesUpd";
         const string SP_DELETE = DB_ESQUEMA + "VEN_PlanesDel";
@@ -31,28 +32,159 @@ namespace Net.Data
             _cnx = configuration.GetConnectionString("cnnSqlLogistica");
         }
 
-        public Task<IEnumerable<BE_Planes>> GetByFiltros(BE_Planes value)
+        public async Task<ResultadoTransaccion<BE_Planes>> GetByFiltros(BE_Planes value)
         {
-            return Task.Run(() => {
-                value.Nombre = value.Nombre == null ? "" : value.Nombre;
-                return context.ExecuteSqlViewFindByCondition<BE_Planes>(SP_GET, new BE_Planes { Nombre = value.Nombre }, _cnx);
-            });
-        }
-        public Task<BE_Planes> GetbyId(BE_Planes value)
-        {
-            return Task.Run(() => {
-                return context.ExecuteSqlViewId<BE_Planes>(SP_GET_ID, new BE_Planes { IdPlan = value.IdPlan }, _cnx);
-            });
 
-        }
-
-        public async Task<ResultadoTransaccion> Registrar(BE_Planes item)
-        {
-            ResultadoTransaccion vResultadoTransaccion = new ResultadoTransaccion();
+            ResultadoTransaccion<BE_Planes> vResultadoTransaccion = new ResultadoTransaccion<BE_Planes>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
-            vResultadoTransaccion.ResultadoMetodo = _metodoName;
-            vResultadoTransaccion.ResultadoAplicacion = _aplicacionName;
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@Nombre", value.Nombre));
+
+                        var response = new List<BE_Planes>();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_Planes>)context.ConvertTo<BE_Planes>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+        public async Task<ResultadoTransaccion<BE_Planes>> GetbyId(BE_Planes value)
+        {
+            ResultadoTransaccion<BE_Planes> vResultadoTransaccion = new ResultadoTransaccion<BE_Planes>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_ID, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@IdPlan", value.IdPlan));
+
+                        var response = new BE_Planes();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = context.Convert<BE_Planes>(reader);
+
+                            if (response == null)
+                            {
+                                response = new BE_Planes();
+                            }
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                        vResultadoTransaccion.data = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        public async Task<ResultadoTransaccion<BE_Planes>> GetbyCodigo(BE_Planes value)
+        {
+            ResultadoTransaccion<BE_Planes> vResultadoTransaccion = new ResultadoTransaccion<BE_Planes>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_CODIGO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codplan", value.CodPlan));
+
+                        var response = new BE_Planes();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = context.Convert<BE_Planes>(reader);
+
+                            if (response == null)
+                            {
+                                response = new BE_Planes();
+                            }
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                        vResultadoTransaccion.data = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<BE_Planes>> Registrar(BE_Planes item)
+        {
+            ResultadoTransaccion<BE_Planes> vResultadoTransaccion = new ResultadoTransaccion<BE_Planes>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
 
             try
             {
@@ -103,14 +235,14 @@ namespace Net.Data
             return vResultadoTransaccion;
         }
 
-        public async Task<ResultadoTransaccion> Modificar(BE_Planes item)
+        public async Task<ResultadoTransaccion<BE_Planes>> Modificar(BE_Planes item)
         {
 
-            ResultadoTransaccion vResultadoTransaccion = new ResultadoTransaccion();
+            ResultadoTransaccion<BE_Planes> vResultadoTransaccion = new ResultadoTransaccion<BE_Planes>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
-            vResultadoTransaccion.ResultadoMetodo = _metodoName;
-            vResultadoTransaccion.ResultadoAplicacion = _aplicacionName;
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
 
             using (SqlConnection conn = new SqlConnection(_cnx))
             {
@@ -157,13 +289,13 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-        public async Task<ResultadoTransaccion> Eliminar(BE_Planes value)
+        public async Task<ResultadoTransaccion<BE_Planes>> Eliminar(BE_Planes value)
         {
-            ResultadoTransaccion vResultadoTransaccion = new ResultadoTransaccion();
+            ResultadoTransaccion<BE_Planes> vResultadoTransaccion = new ResultadoTransaccion<BE_Planes>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
-            vResultadoTransaccion.ResultadoMetodo = _metodoName;
-            vResultadoTransaccion.ResultadoAplicacion = _aplicacionName;
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
 
             using (SqlConnection conn = new SqlConnection(_cnx))
             {

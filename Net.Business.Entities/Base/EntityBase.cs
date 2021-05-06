@@ -7,7 +7,5 @@ namespace Net.Business.Entities
     {
         [DBParameter(SqlDbType.Int, 0, ActionType.Everything)]
         public int? RegIdUsuario { get; set; }
-        [DBParameter(SqlDbType.NVarChar, 15, ActionType.Everything)]
-        public string RegEstacion { get; set; }
     }
 }

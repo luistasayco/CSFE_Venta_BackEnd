@@ -10,7 +10,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Net.Business.DTO\Net.Business.DTO.csproj" />
     <ProjectReference Include="..\Net.Business.Entities\Net.Business.Entities.csproj" />
     <ProjectReference Include="..\Net.Connection.ServiceLayer\Net.Connection.ServiceLayer.csproj" />
     <ProjectReference Include="..\Net.Connection\Net.Connection.csproj" />

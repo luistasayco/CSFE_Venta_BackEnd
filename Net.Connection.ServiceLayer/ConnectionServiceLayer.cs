@@ -252,5 +252,102 @@ namespace Net.Connection.ServiceLayer
             }
         }
 
+        public async Task<T> GetAsyncTo<T>(string Query)
+        {
+            try
+            {
+                // CONSTRUIMOS LA URL DE LA ACCIÓN
+                var urlBuilder_ = new StringBuilder();
+                urlBuilder_.Append(_url != null ? _url.TrimEnd('/') : "")
+                           .Append("/" + Query);
+                var url_ = urlBuilder_.ToString();
+
+                // RECUPERAMOS EL HttpClient
+                var client_ = _httpClient.CreateClient("bypass-ssl-validation");
+
+
+
+            band:
+
+                using (var request_ = new HttpRequestMessage())
+                {
+                    ///////////////////////////////////////
+                    // CONSTRUIMOS LA PETICIÓN (REQUEST) //
+                    ///////////////////////////////////////
+                    // DEFINIMOS EL MÉTODO HTTP
+                    request_.Method = new HttpMethod("GET");
+
+                    // DEFINIMOS LA URI
+                    request_.RequestUri = new Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    // DEFINIMOS EL Accept, EN ESTE CASO ES "application/json"
+                    request_.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/json"));
+                    request_.Headers.Add("cache-control", "no-cache");
+                    //request_.Headers.Add("Prefer", "odata.maxpagesize=0");
+
+
+                    // ASIGNAMOS A LA CABECERA DE LA PETICIÓN EL TOKEN JWT.
+                    if (_responseLoginServiceLayer.ServicioActivo)
+                        //request_.Headers. = new AuthenticationHeaderValue("B1SESSION", _responseLoginServiceLayer.SessionId);
+                        request_.Headers.Add("Cookie", "B1SESSION=" + _responseLoginServiceLayer.SessionId);
+                    /////////////////////////////////////////
+                    // CONSTRUIMOS LA RESPUESTA (RESPONSE) //
+                    /////////////////////////////////////////
+                    // Utilizamos ConfigureAwait(false) para evitar el DeadLock.
+                    var response_ = await client_.SendAsync(request_, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+
+                    // OBTENEMOS EL Content DEL RESPONSE como un String
+                    // Utilizamos ConfigureAwait(false) para evitar el DeadLock.
+                    var responseText_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    // SI ES LA RESPUESTA ESPERADA !! ...
+                    if (response_.StatusCode == System.Net.HttpStatusCode.OK) // 200
+                    {
+                        // DESERIALIZAMOS Content DEL RESPONSE
+                        var responseBody_ = JsonConvert.DeserializeObject<ResponseGetServiceLayer<T>>(responseText_);
+                        return responseBody_.value[0];
+                    }
+                    else
+                    // SI NO SE ESTÁ AUTORIZADO ...
+                    if (response_.StatusCode == System.Net.HttpStatusCode.Unauthorized) // 401
+                    {
+
+                        _responseLoginServiceLayer = JsonConvert.DeserializeObject<ResponseLoginServiceLayer>(responseText_);
+                        _responseLoginServiceLayer.ServicioActivo = false;
+
+                        if (_responseLoginServiceLayer.error.code == 301)
+                        {
+                            await Login();
+                        }
+
+                        goto band;
+                    }
+                    else
+                    // CUALQUIER OTRA RESPUESTA ...
+                    if (response_.StatusCode != System.Net.HttpStatusCode.OK && // 200
+                        response_.StatusCode != System.Net.HttpStatusCode.NoContent) // 204
+                    {
+                        _responseLoginServiceLayer = JsonConvert.DeserializeObject<ResponseLoginServiceLayer>(responseText_);
+                        _responseLoginServiceLayer.ServicioActivo = false;
+
+                        if (_responseLoginServiceLayer.error.code == 301)
+                        {
+                            await Login();
+                        }
+
+                        goto band;
+                    }
+
+                    // RETORNAMOS EL OBJETO POR DEFECTO ESPERADO
+                    return default(T);
+                }
+            }
+            finally
+            {
+                // NO UTILIZAMOS CATCH, 
+                // PASAMOS LA EXCEPCIÓN A LA APP.
+            }
+        }
+
     }
 }

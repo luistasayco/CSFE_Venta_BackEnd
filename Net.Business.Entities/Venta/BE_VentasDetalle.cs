@@ -42,6 +42,8 @@ namespace Net.Business.Entities
         public decimal montoaseguradora { get; set; }
         [DBParameter(SqlDbType.DateTime, 0, ActionType.Everything)]
         public DateTime fechagenera { get; set; }
+        [DBParameter(SqlDbType.DateTime, 0, ActionType.Everything)]
+        public DateTime fechaemision { get; set; }
         [DBParameter(SqlDbType.Int, 0, ActionType.Everything)]
         public int stockfraccion { get; set; }
         [DBParameter(SqlDbType.Decimal, 0, ActionType.Everything)]
@@ -64,5 +66,13 @@ namespace Net.Business.Entities
         public int cant_devmencon { get; set; }
         [DBParameter(SqlDbType.Decimal, 0, ActionType.Everything)]
         public decimal promediomn { get; set; }
+        [DBParameter(SqlDbType.VarChar, 200, ActionType.Everything)]
+        public string nombreproducto { get; set; }
+        [DBParameter(SqlDbType.Decimal, 0, ActionType.Everything)]
+        public decimal porcentajedctoplan { get; set; }
+        [DBParameter(SqlDbType.Decimal, 0, ActionType.Everything)]
+        public decimal porcentajecoaseguro { get; set; }
+        [DBParameter(SqlDbType.Float, 0, ActionType.Everything)]
+        public double valor_dscto { get; set; }
     }
 }

@@ -326,6 +326,14 @@ namespace Net.Connection
             IList<T> queryResult;
             dataTable.Load(reader);
             queryResult = ConvertTo<T>(dataTable);
+
+            T notData = default(T);
+
+            if (queryResult.Count == 0)
+            {
+                return notData;
+            }
+
             return queryResult[0];
         }
 

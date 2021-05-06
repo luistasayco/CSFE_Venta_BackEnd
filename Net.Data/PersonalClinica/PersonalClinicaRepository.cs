@@ -26,7 +26,7 @@ namespace Net.Data
                 using (SqlCommand cmd = new SqlCommand(SP_GET, conn))
                 {
                     cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                    cmd.Parameters.Add(new SqlParameter("@buscar", nombre));
+                    cmd.Parameters.Add(new SqlParameter("@buscar", nombre == null ? "": nombre.ToUpper()));
                     cmd.Parameters.Add(new SqlParameter("@key", 1));
                     cmd.Parameters.Add(new SqlParameter("@numerolineas", 1));
                     cmd.Parameters.Add(new SqlParameter("@orden", 5));

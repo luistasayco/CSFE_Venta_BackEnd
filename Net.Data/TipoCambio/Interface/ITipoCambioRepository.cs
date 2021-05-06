@@ -6,6 +6,6 @@ namespace Net.Data
 {
     public interface ITipoCambioRepository : IRepositoryBase<BE_TipoCambio>
     {
-        Task<ResultadoTransaccion> ObtieneTipoCambio();
+        Task<ResultadoTransaccion<BE_TipoCambio>> ObtieneTipoCambio();
     }
 }
