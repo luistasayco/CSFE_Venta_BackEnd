@@ -100,5 +100,37 @@ namespace Net.Business.Services.Controllers
 
             return Ok(obj.ListaVentaDetalle);
         }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetGastoCubiertoPorFiltro([FromQuery] string codaseguradora, string codproducto, int tipoatencion)
+        {
+
+            var objectGetAll = await _repository.Venta.GetGastoCubiertoPorFiltro(codaseguradora, codproducto, tipoatencion);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.data);
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetIPorFiltro([FromQuery] string codaseguradora, string codproducto, int tipoatencion)
+        {
+
+            var objectGetAll = await _repository.Venta.GetGastoCubiertoPorFiltro(codaseguradora, codproducto, tipoatencion);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.data);
+        }
     }
 }

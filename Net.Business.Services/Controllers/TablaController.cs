@@ -66,5 +66,21 @@ namespace Net.Business.Services.Controllers
 
             return Ok(objectGetAll.dataList);
         }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetTablaLogisticaPorFiltros([FromQuery] string codtabla, string buscar, int key, int numerolineas, int orden)
+        {
+
+            var objectGetAll = await _repository.Tabla.GetTablaLogisticaPorFiltros(codtabla, buscar, key, numerolineas, orden);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
     }
 }

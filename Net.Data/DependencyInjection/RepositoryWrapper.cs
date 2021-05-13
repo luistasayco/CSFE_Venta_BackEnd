@@ -30,6 +30,10 @@ namespace Net.Data
         private IRecetaRepository _Receta;
         private ISerieRepository _Serie;
         private ICentroRepository _CentroCosto;
+        private IPickingRepository _Picking;
+        private IConsolidadoRepository _Consolidado;
+        private IConveniosRepository _Convenios;
+        private IAseguradoraxProductoRepository _AseguradoraxProducto;
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
             _repoContext = repoContext;
@@ -179,7 +183,7 @@ namespace Net.Data
             {
                 if (_Producto == null)
                 {
-                    _Producto = new ProductoRepository(_clientFactory, _configuration);
+                    _Producto = new ProductoRepository(_clientFactory, _configuration, _repoContext);
                 }
                 return _Producto;
             }
@@ -260,6 +264,51 @@ namespace Net.Data
                     _CentroCosto = new CentroRepository(_repoContext, _configuration);
                 }
                 return _CentroCosto;
+            }
+        }
+
+        public IPickingRepository Picking
+        {
+            get
+            {
+                if (_Picking == null)
+                {
+                    _Picking = new PickingRepository(_repoContext, _configuration);
+                }
+                return _Picking;
+            }
+        }
+        public IConsolidadoRepository Consolidado
+        {
+            get
+            {
+                if (_Consolidado == null)
+                {
+                    _Consolidado = new ConsolidadoRepository(_repoContext, _configuration);
+                }
+                return _Consolidado;
+            }
+        }
+        public IConveniosRepository Convenios
+        {
+            get
+            {
+                if (_Convenios == null)
+                {
+                    _Convenios = new ConveniosRepository(_repoContext, _configuration);
+                }
+                return _Convenios;
+            }
+        }
+        public IAseguradoraxProductoRepository AseguradoraxProducto
+        {
+            get
+            {
+                if (_AseguradoraxProducto == null)
+                {
+                    _AseguradoraxProducto = new AseguradoraxProductoRepository(_repoContext, _configuration);
+                }
+                return _AseguradoraxProducto;
             }
         }
     }

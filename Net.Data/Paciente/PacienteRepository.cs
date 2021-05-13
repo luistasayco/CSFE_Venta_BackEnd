@@ -17,12 +17,12 @@ namespace Net.Data
 
         private readonly IConfiguration _configuration;
         const string DB_ESQUEMA = "";
-        const string SP_GET = DB_ESQUEMA + "Fa_Pacientes_Info_Farma";
+        const string SP_GET = DB_ESQUEMA + "VEN_PacientesInfoFarmaPorAtencionGet";
 
         public PacienteRepository(IConnectionSQL context, IConfiguration configuration)
             : base(context)
         {
-            _cnx = configuration.GetConnectionString("cnnSqlClinica");
+            _cnx = configuration.GetConnectionString("cnnSqlLogistica");
             _aplicacionName = this.GetType().Name;
             _configuration = configuration;
         }

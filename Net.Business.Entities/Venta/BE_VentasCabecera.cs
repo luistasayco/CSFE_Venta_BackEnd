@@ -5,7 +5,7 @@ using System.Data;
 
 namespace Net.Business.Entities
 {
-    public class BE_VentasCabecera
+    public class BE_VentasCabecera: EntityBase
     {
         [DBParameter(SqlDbType.Char, ActionType.Everything, true)]
         public string codventa { get; set; }

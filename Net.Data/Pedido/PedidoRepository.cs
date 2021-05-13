@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Text.RegularExpressions;
+using Net.CrossCotting;
 
 namespace Net.Data
 {
@@ -30,13 +31,14 @@ namespace Net.Data
             _cnx = configuration.GetConnectionString("cnnSqlLogistica");
         }
 
-        public async Task<ResultadoTransaccion<BE_Pedido>> GetListaPedidosSeguimientoPorFiltro(DateTime fechainicio, DateTime fechaFin, string ccosto, int opcion)
+        public async Task<ResultadoTransaccion<BE_Pedido>> GetListaPedidosSeguimientoPorFiltro(DateTime fechainicio, DateTime fechafin, string ccosto, int opcion)
         {
             ResultadoTransaccion<BE_Pedido> vResultadoTransaccion = new ResultadoTransaccion<BE_Pedido>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(_cnx))
@@ -46,7 +48,7 @@ namespace Net.Data
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@fechaini", fechainicio));
-                        cmd.Parameters.Add(new SqlParameter("@fechafin", fechaFin));
+                        cmd.Parameters.Add(new SqlParameter("@fechafin", fechafin));
                         cmd.Parameters.Add(new SqlParameter("@ccosto", ccosto));
                         cmd.Parameters.Add(new SqlParameter("@opcion", opcion));
 
@@ -173,6 +175,10 @@ namespace Net.Data
 
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            fechainicio = Utilidades.GetFechaHoraInicioActual(fechainicio);
+            fechafin = Utilidades.GetFechaHoraFinActual(fechafin);
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(_cnx))

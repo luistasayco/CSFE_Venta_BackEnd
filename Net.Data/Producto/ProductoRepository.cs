@@ -6,12 +6,14 @@ using System.Net.Http;
 using Net.Connection.ServiceLayer;
 using System.Text.RegularExpressions;
 using System;
+using Microsoft.Data.SqlClient;
+using Net.Connection;
 
 namespace Net.Data
 {
-    public class ProductoRepository: IProductoRepository
+    public class ProductoRepository : RepositoryBase<BE_Producto>, IProductoRepository
     {
-
+        private readonly string _cnx;
         private string _aplicacionName;
         private string _metodoName;
         private readonly Regex regex = new Regex(@"<(\w+)>.*");
@@ -20,14 +22,19 @@ namespace Net.Data
         private readonly IHttpClientFactory _clientFactory;
         private readonly ConnectionServiceLayer _connectServiceLayer;
 
-        public ProductoRepository(IHttpClientFactory clientFactory, IConfiguration configuration)
+        const string DB_ESQUEMA = "";
+        const string SP_GET_ALTERNATIVO_POR_FILTRO = DB_ESQUEMA + "VEN_ListaAlternativoxProductoPorFiltroGet";
+
+        public ProductoRepository(IHttpClientFactory clientFactory, IConfiguration configuration, IConnectionSQL context)
+             : base(context)
         {
+            _cnx = configuration.GetConnectionString("cnnSqlLogistica");
             _aplicacionName = this.GetType().Name;
             _configuration = configuration;
             _clientFactory = clientFactory;
             _connectServiceLayer = new ConnectionServiceLayer(_configuration, _clientFactory);
         }
-        public async Task<ResultadoTransaccion<BE_Producto>> GetListProductoPorFiltro(string codigo, string nombre, bool conStock = true)
+        public async Task<ResultadoTransaccion<BE_Producto>> GetListProductoPorFiltro(string codalmacen, string codigo, string nombre, string codaseguradora, string codcia, bool conStock = true)
         {
             ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
@@ -41,7 +48,7 @@ namespace Net.Data
 
                 var cadena = "Items";
                 var filter = "";
-                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, QuantityOnStock, AvgStdPrice, U_SYP_CS_FAMILIA";
+                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, QuantityOnStock, AvgStdPrice, U_SYP_CS_FAMILIA, U_SYP_CS_SIC, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART";
                 var filterConStock = " and QuantityOnStock gt 0";
 
                 if (!string.IsNullOrEmpty(codigo))
@@ -64,6 +71,20 @@ namespace Net.Data
                 }
 
                 List<BE_Producto> data = await _connectServiceLayer.GetAsync<BE_Producto>(cadena);
+
+                if (!string.IsNullOrEmpty(codaseguradora) && !string.IsNullOrEmpty(codcia))
+                {
+                    for (int i = 0; i < data.Count; i++)
+                    {
+                        var dataProducto = data[i];
+                        ResultadoTransaccion<BE_Producto> dataAlternativo = await GetListProductoAlternativoPorCodigo(dataProducto.codproducto, codaseguradora, codcia);
+
+                        if (((List<BE_Producto>)dataAlternativo.dataList).Count > 0)
+                        {
+                            data[i].flgrestringido = true;
+                        }
+                    }
+                }
 
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;
@@ -93,7 +114,7 @@ namespace Net.Data
 
                 var cadena = "Items";
                 var filter = "";
-                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, QuantityOnStock, AvgStdPrice, U_SYP_CS_FAMILIA";
+                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, QuantityOnStock, AvgStdPrice, U_SYP_CS_FAMILIA, U_SYP_CS_SIC, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART";
                 var filterConStock = " and QuantityOnStock gt 0";
 
                 if (!string.IsNullOrEmpty(codigo))
@@ -127,7 +148,8 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-        public async Task<ResultadoTransaccion<BE_Producto>> GetProductoInsertarVentaPorFiltro(string codatencion)
+
+        public async Task<ResultadoTransaccion<BE_Producto>> GetListProductoAlternativoPorCodigo(string codproducto, string codaseguradora, string codcia)
         {
             ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
@@ -136,9 +158,32 @@ namespace Net.Data
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
             try
             {
-               
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_Producto>();
 
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_ALTERNATIVO_POR_FILTRO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codproducto", codproducto));
+                        cmd.Parameters.Add(new SqlParameter("@codaseguradora", codaseguradora));
+                        cmd.Parameters.Add(new SqlParameter("@codcia", codcia));
 
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_Producto>)context.ConvertTo<BE_Producto>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -151,5 +196,38 @@ namespace Net.Data
 
         }
 
+        public async Task<ResultadoTransaccion<BE_Producto>> GetProductoPorCodigo(string codproducto)
+        {
+            ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                codproducto = codproducto == null ? "" : codproducto.ToUpper();
+
+                var cadena = "Items";
+                var filter = "&$filter=U_SYP_CS_SIC eq '" + codproducto + "'";
+                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, QuantityOnStock, AvgStdPrice, U_SYP_CS_FAMILIA, U_SYP_CS_SIC, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART, ItemsGroupCode ";
+
+                cadena = cadena + campos + filter;
+
+                BE_Producto data = await _connectServiceLayer.GetAsyncTo<BE_Producto>(cadena);
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                vResultadoTransaccion.data = data;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
     }
 }

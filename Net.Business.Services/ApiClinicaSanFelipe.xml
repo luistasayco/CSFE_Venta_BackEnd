@@ -12,13 +12,6 @@
             <param name="fechafin">Fecha Fin</param>
             <returns></returns>
         </member>
-        <member name="M:Net.Business.Services.Controllers.ApuController.GetListPedidosPorPedido(System.String)">
-            <summary>
-            Lista un pedido por un codigo de pedido
-            </summary>
-            <param name="codpedido">Codigo de Pedido</param>
-            <returns></returns>
-        </member>
         <member name="M:Net.Business.Services.Controllers.ApuController.GetListDetallePedidoPorPedido(System.String)">
             <summary>
             Listara el detalle del pedido
@@ -26,7 +19,7 @@
             <param name="codpedido">Codigo de Pedido</param>
             <returns></returns>
         </member>
-        <member name="M:Net.Business.Services.Controllers.ApuController.GetListRecetasPorFiltro(System.DateTime,System.DateTime)">
+        <member name="M:Net.Business.Services.Controllers.ApuController.GetListRecetasPorRangoFechas(System.DateTime,System.DateTime)">
             <summary>
             Listara las recetas por rango de fechas
             </summary>
@@ -34,18 +27,61 @@
             <param name="fechafin">Fecha Fin</param>
             <returns></returns>
         </member>
-        <member name="M:Net.Business.Services.Controllers.ApuController.GetListRecetasPorReceta(System.Int32)">
-            <summary>
-            Lista la receta por un id de receta
-            </summary>
-            <param name="id">Id de Receta</param>
-            <returns></returns>
-        </member>
         <member name="M:Net.Business.Services.Controllers.ApuController.GetListDetalleRecetaPorReceta(System.Int32)">
             <summary>
             Listara el detalle de la receta
             </summary>
             <param name="id">Id Receta</param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ApuController.RegistrarPicking(Net.Business.DTO.DtoPickingRegistrar)">
+            <summary>
+            Registrar Picking
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ApuController.ModificarEstadoPedido(Net.Business.DTO.DtoPickingModificarEstadoPedido)">
+            <summary>
+            Actualizar Estado del Picking Pedido
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ApuController.ModificarEstadoReceta(Net.Business.DTO.DtoPickingModificarEstadoReceta)">
+            <summary>
+            Actualizar Estado del Picking receta
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ApuController.EliminarPicking(Net.Business.DTO.DtoPickingEliminar)">
+            <summary>
+            Eliminar registro logicos
+            </summary>
+            <param name="value">Body para eliminar</param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ApuController.GetListConsolidadoPorFiltro(System.DateTime,System.DateTime)">
+            <summary>
+            Listado de Consolidados
+            </summary>
+            <param name="fechainicio">Fecha Inicio</param>
+            <param name="fechafin">Fecha Fin</param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ApuController.GetListDetalleConsolidado(System.Int32)">
+            <summary>
+            Listara el detalle de un consolidado especifico
+            </summary>
+            <param name="idconsolidado">Id Consolidado</param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ApuController.RegistrarConsolidadoPicking(Net.Business.DTO.DtoConsolidadoPedidoPickingRegistrar)">
+            <summary>
+            Registrar Consolidado - Picking
+            </summary>
+            <param name="value"></param>
             <returns></returns>
         </member>
         <member name="M:Net.Business.Services.Controllers.AtencionController.GetListPacientePorFiltros(System.String,System.String,System.String)">
@@ -138,6 +174,24 @@
             <response code="204">Eliminado Satisfactoriamente</response>
             <response code="400">Si el objeto enviado es nulo o invalido</response>
             <response code="409">Si ocurrio un conflicto</response>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ProductoController.GetListProductoPorFiltro(System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Lista por filtro para ventas
+            </summary>
+            <param name="codalmacen"></param>
+            <param name="codigo"></param>
+            <param name="nombre"></param>
+            <param name="codaseguradora"></param>
+            <param name="codcia"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ProductoController.GetListProductoGenericoPorCodigo(System.String)">
+            <summary>
+            Lista Generico por codigo
+            </summary>
+            <param name="codigo"></param>
+            <returns></returns>
         </member>
         <member name="M:Net.Business.Services.Controllers.SerieController.Registrar(Net.Business.DTO.DtoSerieRegistrar)">
             <summary>

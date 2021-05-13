@@ -181,6 +181,60 @@ namespace Net.Data
 
         }
 
+        public async Task<ResultadoTransaccion<BE_Tabla>> GetTablaLogisticaPorFiltros(string codtabla, string buscar, int key, int numerolineas, int orden)
+        {
+            ResultadoTransaccion<BE_Tabla> vResultadoTransaccion = new ResultadoTransaccion<BE_Tabla>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx_logistica))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_LOGISTICA, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codtabla", codtabla));
+                        cmd.Parameters.Add(new SqlParameter("@buscar", buscar == null ? string.Empty : buscar));
+                        cmd.Parameters.Add(new SqlParameter("@key", key));
+                        cmd.Parameters.Add(new SqlParameter("@numerolineas", numerolineas));
+                        cmd.Parameters.Add(new SqlParameter("@orden", orden));
+
+                        var response = new BE_Tabla();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = context.Convert<BE_Tabla>(reader);
+
+                            if (response == null)
+                            {
+                                response = new BE_Tabla();
+                            }
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                        vResultadoTransaccion.data = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
         //public async Task<IEnumerable<BE_Tabla>> GetListTablasClinicaPorFiltros(string codtabla, string buscar, int key, int numerolineas, int orden)
         //{
         //    using (SqlConnection conn = new SqlConnection(_cnx))

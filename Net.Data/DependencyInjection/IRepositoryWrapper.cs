@@ -22,5 +22,9 @@
         IRecetaRepository Receta { get; }
         ISerieRepository Serie { get; }
         ICentroRepository CentroCosto { get; }
+        IPickingRepository Picking { get; }
+        IConsolidadoRepository Consolidado { get; }
+        IConveniosRepository Convenios { get; }
+        IAseguradoraxProductoRepository AseguradoraxProducto { get; }
     }
 }

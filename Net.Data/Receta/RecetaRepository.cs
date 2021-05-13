@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Text.RegularExpressions;
+using Net.CrossCotting;
 
 namespace Net.Data
 {
@@ -19,7 +20,7 @@ namespace Net.Data
 
         const string DB_ESQUEMA = "";
         const string SP_GET_RECETAS_POR_FILTRO = DB_ESQUEMA + "VEN_ListaRecetasPorFiltrosGet";
-        const string SP_GET_RECETADETALLE_POR_RECETA = DB_ESQUEMA + "VEN_ListaRecetasPorFiltrosGet";
+        const string SP_GET_RECETADETALLE_POR_RECETA = DB_ESQUEMA + "VEN_ListaRecetaDetallePorRecetaGet";
 
         public RecetaRepository(IConnectionSQL context, IConfiguration configuration)
             : base(context)
@@ -35,6 +36,10 @@ namespace Net.Data
 
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            fechainicio = Utilidades.GetFechaHoraInicioActual(fechainicio);
+            fechafin = Utilidades.GetFechaHoraFinActual(fechafin);
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(_cnx))
