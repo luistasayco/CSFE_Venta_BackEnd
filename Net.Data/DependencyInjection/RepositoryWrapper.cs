@@ -34,6 +34,7 @@ namespace Net.Data
         private IConsolidadoRepository _Consolidado;
         private IConveniosRepository _Convenios;
         private IAseguradoraxProductoRepository _AseguradoraxProducto;
+        private IStockRepository _Stock;
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
             _repoContext = repoContext;
@@ -295,7 +296,7 @@ namespace Net.Data
             {
                 if (_Convenios == null)
                 {
-                    _Convenios = new ConveniosRepository(_repoContext, _configuration);
+                    _Convenios = new ConveniosRepository(_clientFactory,_repoContext, _configuration);
                 }
                 return _Convenios;
             }
@@ -309,6 +310,18 @@ namespace Net.Data
                     _AseguradoraxProducto = new AseguradoraxProductoRepository(_repoContext, _configuration);
                 }
                 return _AseguradoraxProducto;
+            }
+        }
+
+        public IStockRepository Stock
+        {
+            get
+            {
+                if (_Stock == null)
+                {
+                    _Stock = new StockRepository(_clientFactory, _configuration);
+                }
+                return _Stock;
             }
         }
     }

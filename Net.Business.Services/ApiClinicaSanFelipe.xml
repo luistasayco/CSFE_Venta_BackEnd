@@ -175,18 +175,7 @@
             <response code="400">Si el objeto enviado es nulo o invalido</response>
             <response code="409">Si ocurrio un conflicto</response>
         </member>
-        <member name="M:Net.Business.Services.Controllers.ProductoController.GetListProductoPorFiltro(System.String,System.String,System.String,System.String,System.String)">
-            <summary>
-            Lista por filtro para ventas
-            </summary>
-            <param name="codalmacen"></param>
-            <param name="codigo"></param>
-            <param name="nombre"></param>
-            <param name="codaseguradora"></param>
-            <param name="codcia"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Net.Business.Services.Controllers.ProductoController.GetListProductoGenericoPorCodigo(System.String)">
+        <member name="M:Net.Business.Services.Controllers.ProductoController.GetListProductoAlternativoPorCodigo(System.String,System.String,System.String)">
             <summary>
             Lista Generico por codigo
             </summary>

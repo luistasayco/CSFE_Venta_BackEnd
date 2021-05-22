@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using System.Text.RegularExpressions;
 using System;
+using System.Net.Http;
+using System.Collections.Generic;
 
 namespace Net.Data
 {
@@ -15,12 +17,17 @@ namespace Net.Data
         private string _metodoName;
         private readonly Regex regex = new Regex(@"<(\w+)>.*");
 
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _clientFactory;
+
         const string DB_ESQUEMA = "";
         const string SP_GET = DB_ESQUEMA + "VEN_ConveniosPorFiltroGet";
 
-        public ConveniosRepository(IConnectionSQL context, IConfiguration configuration)
+        public ConveniosRepository(IHttpClientFactory clientFactory, IConnectionSQL context, IConfiguration configuration)
             : base(context)
         {
+            _configuration = configuration;
+            _clientFactory = clientFactory;
             _cnx = configuration.GetConnectionString("cnnSqlLogistica");
             _aplicacionName = this.GetType().Name;
         }
@@ -35,6 +42,9 @@ namespace Net.Data
 
             try
             {
+
+                var response = new List<BE_Convenios>();
+
                 using (SqlConnection conn = new SqlConnection(_cnx))
                 {
                     using (SqlCommand cmd = new SqlCommand(SP_GET, conn))
@@ -49,18 +59,11 @@ namespace Net.Data
                         cmd.Parameters.Add(new SqlParameter("@codcia", codcia == null ? string.Empty : codcia));
                         cmd.Parameters.Add(new SqlParameter("@codproducto", codproducto == null ? string.Empty : codproducto));
 
-                        var response = new BE_Convenios();
-
                         conn.Open();
 
                         using (var reader = await cmd.ExecuteReaderAsync())
                         {
-                            response = context.Convert<BE_Convenios>(reader);
-
-                            if (response == null)
-                            {
-                                response = new BE_Convenios();
-                            }
+                            response = (List<BE_Convenios>)context.ConvertTo<BE_Convenios>(reader);
                         }
 
                         conn.Close();
@@ -68,9 +71,32 @@ namespace Net.Data
                         vResultadoTransaccion.IdRegistro = 0;
                         vResultadoTransaccion.ResultadoCodigo = 0;
                         vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
-                        vResultadoTransaccion.data = response;
+                        vResultadoTransaccion.dataList = response;
                     }
                 }
+
+                if (response.Count > 0)
+                {
+                    ListaPrecioRepository listaPrecioRepository = new ListaPrecioRepository(_clientFactory, _configuration);
+                    ResultadoTransaccion<BE_ListaPrecio> resultadoTransaccionListaPrecio = await listaPrecioRepository.GetPrecioPorCodigo(codproducto, response[0].pricelist);
+
+                    if (resultadoTransaccionListaPrecio.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionListaPrecio.ResultadoDescripcion;
+                        return vResultadoTransaccion;
+                    }
+
+                    if (((List<BE_ListaPrecio>)resultadoTransaccionListaPrecio.dataList).Count > 0)
+                    {
+                        response[0].monto = double.Parse(((List<BE_ListaPrecio>)resultadoTransaccionListaPrecio.dataList)[0].Price.ToString());
+                    } else
+                    {
+                        response[0].monto = 0;
+                    }
+                }
+
             }
             catch (Exception ex)
             {

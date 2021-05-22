@@ -27,6 +27,8 @@ namespace Net.Data
 
         const string SP_UPDATE_CABECERA_VENTA_ENVIO_PISO = DB_ESQUEMA + "VEN_VentaCabeceraEnvioPisoUpd";
 
+        const string SP_UPDATE_INSERT = DB_ESQUEMA + "";
+
         public VentaRepository(IConnectionSQL context, IConfiguration configuration)
             : base(context)
         {
@@ -329,6 +331,7 @@ namespace Net.Data
                 {
 
                     AseguradoraxProductoRepository aseguradoraxProductoRepository = new AseguradoraxProductoRepository(context, _configuration);
+                    //Lista los productos que no se encuentran cubierto por la aseguradora
                     ResultadoTransaccion<BE_AseguradoraxProducto> resultadoTransaccionAseguradora = await aseguradoraxProductoRepository.GetListAseguradoraxProductoPorFiltros(codaseguradora, codproducto, tipoatencion);
 
                     if (resultadoTransaccionAseguradora.ResultadoCodigo == -1)
@@ -367,6 +370,231 @@ namespace Net.Data
 
             return vResultadoTransaccion;
 
+        }
+
+        public async Task<ResultadoTransaccion<BE_VentasCabecera>> RegistrarVentaCabecera(BE_VentasCabecera value)
+        {
+            ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+
+                SeriePorMaquinaRepository seriePorMaquinaRepository = new SeriePorMaquinaRepository(context, _configuration);
+                ResultadoTransaccion<BE_SeriePorMaquina> resultadoTransaccionSeriePorMaquina = await seriePorMaquinaRepository.GetListSeriePorMaquinaPorFiltro(new BE_SeriePorMaquina { nombremaquina = value.nombremaquina });
+
+                if (resultadoTransaccionSeriePorMaquina.ResultadoCodigo == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionSeriePorMaquina.ResultadoDescripcion;
+
+                    return vResultadoTransaccion;
+                }
+
+                if (((List<BE_SeriePorMaquina> )resultadoTransaccionSeriePorMaquina.dataList).Count > 0)
+                {
+                    BE_SeriePorMaquina seriePorMaquina = ((List<BE_SeriePorMaquina>)resultadoTransaccionSeriePorMaquina.dataList)[0];
+
+                    if (!seriePorMaquina.codalmacen.Equals(value.codalmacen) && !seriePorMaquina.codalmacen.Equals(string.Empty))
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Ud. solo puede vender del almacén: {0} - {1} ...Favor de revisar", seriePorMaquina.codalmacen, seriePorMaquina.desalmacen);
+
+                        return vResultadoTransaccion;
+                    }
+
+                } else
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = "Ud. no tiene acceso al almacén seleccionado...Favor de revisar";
+
+                    return vResultadoTransaccion;
+                }
+
+                if (value.codtipocliente.Equals("01"))
+                {
+                    PacienteRepository atencionRepository = new PacienteRepository(context, _configuration);
+
+                    ResultadoTransaccion<BE_Paciente> resultadoTransaccionPaciente = await atencionRepository.GetExistenciaPaciente(value.codatencion);
+
+                    if (resultadoTransaccionPaciente.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPaciente.ResultadoDescripcion;
+
+                        return vResultadoTransaccion;
+                    }
+
+                    List<BE_Paciente> listPaciente = (List<BE_Paciente>)resultadoTransaccionPaciente.dataList;
+
+                    if (listPaciente.Count == 0)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = "Atención no existe...Favor de revisar";
+
+                        return vResultadoTransaccion;
+                    } else
+                    {
+                        if (!listPaciente[0].activo.Equals(1)){
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = "Atención desactivada...Favor de revisar";
+
+                            return vResultadoTransaccion;
+                        }
+                    }
+                }
+
+                if (value.codpedido.Length.Equals(14))
+                {
+                    PedidoRepository pedidoRepository = new PedidoRepository(context, _configuration);
+                    ResultadoTransaccion<BE_Pedido> resultadoTransaccionPedido = await pedidoRepository.GetDatosPedidoPorPedido(value.codpedido);
+
+                    if (resultadoTransaccionPedido.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPedido.ResultadoDescripcion;
+
+                        return vResultadoTransaccion;
+                    }
+
+                    List<BE_Pedido> listPedido = (List<BE_Pedido>)resultadoTransaccionPedido.dataList;
+
+                    if (listPedido.Count > 0)
+                    {
+                        if (listPedido[0].TieneVenta)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = "Pedido ya fue atendido:" + value.codpedido + "en el almacén: " + listPedido[0].codalmacen;
+
+                            return vResultadoTransaccion;
+                        }
+
+                        if (!string.IsNullOrEmpty(listPedido[0].codalmacen))
+                        {
+                            if (listPedido[0].codalmacen != value.codalmacen)
+                            {
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = "Pedido ya fue atendido:" + value.codpedido + "en el almacén: " + listPedido[0].codalmacen;
+
+                                return vResultadoTransaccion;
+                            }
+                            
+                        } else
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = "El centro de costo del pedido no tiene asignado un almacén";
+
+                            return vResultadoTransaccion;
+                        }
+                    }
+                }
+
+                // Controla monto de venta a personal
+                if (value.codtipocliente.Equals("03"))
+                {
+                    PersonalClinicaRepository personalClinicaRepository = new PersonalClinicaRepository(context, _configuration);
+                    ResultadoTransaccion<BE_PersonalLimiteConsumo> resultadoTransaccionPersonalClinica = await personalClinicaRepository.GetListLimiteConsumoPorPersonal(value.codcliente);
+
+                    if (resultadoTransaccionPersonalClinica.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPersonalClinica.ResultadoDescripcion;
+
+                        return vResultadoTransaccion;
+                    }
+
+                    List<BE_PersonalLimiteConsumo> personalClinicas = ((List<BE_PersonalLimiteConsumo>)resultadoTransaccionPersonalClinica.dataList);
+
+                    if (personalClinicas.Count > 0)
+                    {
+                        if (personalClinicas[0].vender.Equals("N"))
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion =  string.Format("El consumo al CREDITO es mayor al límite de consumo <br> en el periodo del {0} al {1} <br> Monto consumo (NO incluye esta venta): {2} <br> Monto Limite de Consumo {3}...Favor de revisar", personalClinicas[0].fecha1, personalClinicas[0].fecha2, personalClinicas[0].montoconsumo, personalClinicas[0].montolimite);
+
+                            return vResultadoTransaccion;
+                        }
+                    } else
+                    {
+                        var nuevoConsumo = personalClinicas[0].montoconsumo + value.montoneto;
+                        
+                        if (nuevoConsumo <= personalClinicas[0].montolimite)
+                        {
+                            vResultadoTransaccion.ResultadoDescripcion = string.Format("El consumo al CREDITO en el periodo del {0} al {1} <br> Monto consumo (INCLUYE esta venta): {2} <br> Monto Limite de Consumo {3}...Favor de revisar", personalClinicas[0].fecha1, personalClinicas[0].fecha2, personalClinicas[0].montoconsumo, personalClinicas[0].montolimite);
+                        }
+                    }
+                }
+
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (CommittableTransaction transaction = new CommittableTransaction())
+                    {
+                        await conn.OpenAsync();
+                        conn.EnlistTransaction(transaction);
+                        try
+                        {
+                            using (SqlCommand cmd = new SqlCommand(SP_UPDATE_CABECERA_VENTA_ENVIO_PISO, conn))
+                            {
+                                cmd.Parameters.Clear();
+
+                                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                                cmd.Parameters.Add(new SqlParameter("@codventa", value.codventa));
+                                cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
+
+                                SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                                {
+                                    Direction = ParameterDirection.Output
+                                };
+                                cmd.Parameters.Add(outputIdTransaccionParam);
+
+                                SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                                {
+                                    Direction = ParameterDirection.Output
+                                };
+                                cmd.Parameters.Add(outputMsjTransaccionParam);
+
+                                await cmd.ExecuteNonQueryAsync();
+
+                                vResultadoTransaccion.IdRegistro = 0;
+                                vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                                vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                            }
+                            transaction.Commit();
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
         }
     }
 }

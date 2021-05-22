@@ -26,18 +26,18 @@ namespace Net.Business.Services.Controllers
         /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetListPersonalClinicaPorNombre([FromQuery] string nombre)
         {
 
             var objectGetAll = await _repository.PersonalClinica.GetListPersonalClinicaPorNombre(nombre);
 
-            if (objectGetAll == null)
+            if (objectGetAll.ResultadoCodigo == -1)
             {
-                return NotFound();
+                return BadRequest(objectGetAll);
             }
 
-            return Ok(objectGetAll);
+            return Ok(objectGetAll.dataList);
         }
     }
 }

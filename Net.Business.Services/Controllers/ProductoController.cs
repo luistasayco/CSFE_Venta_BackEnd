@@ -28,42 +28,42 @@ namespace Net.Business.Services.Controllers
         /// <param name="codaseguradora"></param>
         /// <param name="codcia"></param>
         /// <returns></returns>
-        [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetListProductoPorFiltro([FromQuery] string codalmacen, string codigo, string nombre, string codaseguradora, string codcia)
-        {
+        //[HttpGet]
+        //[ProducesResponseType(StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status404NotFound)]
+        //public async Task<IActionResult> GetListProductoPorFiltro([FromQuery] string codalmacen, string codigo, string nombre, string codaseguradora, string codcia)
+        //{
 
-            var objectGetAll = await _repository.Producto.GetListProductoPorFiltro(codalmacen, codigo, nombre, codaseguradora, codcia);
+        //    var objectGetAll = await _repository.Producto.GetListProductoPorFiltro(codalmacen, codigo, nombre, codaseguradora, codcia);
 
-            if (objectGetAll.ResultadoCodigo == -1)
-            {
-                return BadRequest(objectGetAll);
-            }
+        //    if (objectGetAll.ResultadoCodigo == -1)
+        //    {
+        //        return BadRequest(objectGetAll);
+        //    }
 
-            return Ok(objectGetAll.dataList);
-        }
+        //    return Ok(objectGetAll.dataList);
+        //}
 
         /// <summary>
         /// Lista Generico por codigo
         /// </summary>
         /// <param name="codigo"></param>
         /// <returns></returns>
-        [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetListProductoGenericoPorCodigo([FromQuery] string codigo)
-        {
+        //[HttpGet]
+        //[ProducesResponseType(StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status404NotFound)]
+        //public async Task<IActionResult> GetListProductoGenericoPorCodigo([FromQuery] string codigo)
+        //{
 
-            var objectGetAll = await _repository.Producto.GetListProductoGenericoPorCodigo(codigo);
+        //    var objectGetAll = await _repository.Producto.GetListProductoGenericoPorCodigo(codigo);
 
-            if (objectGetAll.ResultadoCodigo == -1)
-            {
-                return BadRequest(objectGetAll);
-            }
+        //    if (objectGetAll.ResultadoCodigo == -1)
+        //    {
+        //        return BadRequest(objectGetAll);
+        //    }
 
-            return Ok(objectGetAll.dataList);
-        }
+        //    return Ok(objectGetAll.dataList);
+        //}
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -84,10 +84,26 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetProductoPorCodigo([FromQuery] string codproducto)
+        public async Task<IActionResult> GetProductoPorCodigo([FromQuery] string codalmacen, string codproducto, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente)
         {
 
-            var objectGetAll = await _repository.Producto.GetProductoPorCodigo(codproducto);
+            var objectGetAll = await _repository.Producto.GetProductoPorCodigo(codalmacen, codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.data);
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetProductoyStockAlmacenesPorCodigo([FromQuery] string codproducto)
+        {
+
+            var objectGetAll = await _repository.Producto.GetProductoyStockAlmacenesPorCodigo(codproducto);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {

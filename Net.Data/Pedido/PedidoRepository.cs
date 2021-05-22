@@ -23,6 +23,7 @@ namespace Net.Data
         const string SP_GET_PEDIDOS_POR_ATENCION = DB_ESQUEMA + "VEN_ListaPedidosPorAtencionGet";
         const string SP_GET_PEDIDODETALLE_POR_PEDIDO = DB_ESQUEMA + "VEN_ListaPedidoDetallePorPedidoGet";
         const string SP_GET_PEDIDO_POR_FILTRO = DB_ESQUEMA + "VEN_ListaPedidosPorFiltrosGet";
+        const string SP_GET_DATOS_PEDIDO_POR_PEDIDO = DB_ESQUEMA + "VEN_DatosPedidoPorPedidoGet";
 
         public PedidoRepository(IConnectionSQL context, IConfiguration configuration)
             : base(context)
@@ -191,6 +192,50 @@ namespace Net.Data
                         cmd.Parameters.Add(new SqlParameter("@fechafin", fechafin));
                         cmd.Parameters.Add(new SqlParameter("@codtipopedido", codtipopedido == null ? string.Empty : codtipopedido));
                         cmd.Parameters.Add(new SqlParameter("@codpedido", codpedido == null ? string.Empty : codpedido));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_Pedido>)context.ConvertTo<BE_Pedido>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        public async Task<ResultadoTransaccion<BE_Pedido>> GetDatosPedidoPorPedido(string codpedido)
+        {
+            ResultadoTransaccion<BE_Pedido> vResultadoTransaccion = new ResultadoTransaccion<BE_Pedido>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_Pedido>();
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_DATOS_PEDIDO_POR_PEDIDO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codpedido", codpedido));
 
                         conn.Open();
 

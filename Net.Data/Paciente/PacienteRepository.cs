@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using System.Text.RegularExpressions;
 using System;
+using System.Collections.Generic;
 
 namespace Net.Data
 {
@@ -143,6 +144,53 @@ namespace Net.Data
                         vResultadoTransaccion.ResultadoCodigo = 0;
                         vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
                         vResultadoTransaccion.data = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        public async Task<ResultadoTransaccion<BE_Paciente>> GetExistenciaPaciente(string codAtencion)
+        {
+            ResultadoTransaccion<BE_Paciente> vResultadoTransaccion = new ResultadoTransaccion<BE_Paciente>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codatencion", codAtencion));
+
+                        var response = new List<BE_Paciente>();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_Paciente>)context.ConvertTo<BE_Paciente>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+
                     }
                 }
             }

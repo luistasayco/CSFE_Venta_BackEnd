@@ -21,5 +21,6 @@ namespace Net.Business.Entities
         public double monto { get; set; }
         public string moneda { get; set; }
         public bool estado { get; set; }
+        public int pricelist { get; set; }
     }
 }

@@ -132,5 +132,35 @@ namespace Net.Business.Services.Controllers
 
             return Ok(objectGetAll.data);
         }
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RegistrarVentaCabecera([FromBody] DtoVentaCabeceraRegistrar value)
+        {
+            try
+            {
+                if (value == null)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var response = await _repository.Venta.RegistrarVentaCabecera(value.RetornaVentasCabecera());
+
+                if (response.ResultadoCodigo == -1)
+                {
+                    return BadRequest(response);
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+            }
+
+        }
     }
 }

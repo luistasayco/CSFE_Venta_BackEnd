@@ -1,4 +1,6 @@
-﻿namespace Net.Business.Entities
+﻿using System.Collections.Generic;
+
+namespace Net.Business.Entities
 {
     public class BE_Producto
     {
@@ -11,19 +13,14 @@
         /// </summary>
         public string ItemName { get; set; }
         /// <summary>
-        /// Stock
+        /// Trabaja con Lote
         /// </summary>
-        public decimal QuantityOnStock { get; set; }
-        //public decimal AvgStdPrice { get; set; }
-        /// <summary>
-        /// Stock
-        /// </summary>
-        public decimal AvgStdPrice { get => 20; }
-        //public string U_SYP_CS_LABORATORIO { get; set; }
+        public string ManageBatchNumbers { get; set; }
+        public string ArTaxCode { get; set; }
         /// <summary>
         /// Laboratorio
         /// </summary>
-        public string U_SYP_CS_LABORATORIO { get => "GLAXO OTC"; }
+        public string U_SYP_CS_LABORATORIO { get; set; }
         /// <summary>
         /// Familia
         /// </summary>
@@ -31,11 +28,7 @@
         /// <summary>
         /// Codigo de producto de CSFE
         /// </summary>
-        public string U_SYP_CS_SIC { get; set; }
-        /// <summary>
-        /// Codigo Articulo -CSFE
-        /// </summary>
-        public string codproducto { get => U_SYP_CS_SIC; }
+        //public string U_SYP_CS_SIC { get; set; }
         /// <summary>
         /// Estado de Abastecimiento
         /// N => Normal
@@ -60,11 +53,35 @@
         /// False
         /// </summary>
         public bool flgrestringido { get; set; }
-
         /// <summary>
         /// Grupo de Articulos
         /// </summary>
         public int ItemsGroupCode { get; set; }
+        /// <summary>
+        /// Codigo Articulo -CSFE
+        /// </summary>
+        //public string codproducto { get => U_SYP_CS_SIC; }
+        /// <summary>
+        /// Precio Venta al publico (incluyendo utilidad + IGV)
+        /// </summary>
+        public decimal valorPVP { get => decimal.Round(valorVVP * (valorIGV / 100 + 1),2); }
+        /// <summary>
+        /// Valor venta al publico (Solo incluye IGV)
+        /// </summary>
+        public decimal valorVVP { get; set; }
+        /// <summary>
+        /// Valor IGV
+        /// </summary>
+        public decimal valorIGV { get; set; }
+        /// <summary>
+        /// Descuento del producto
+        /// </summary>
+        public decimal valorDescuento { get => 0M; }
+        public bool FlgConvenio { get; set; }
+
+        public List<BE_Stock> ListStockAlmacen { get; set; }
+
+        public List<BE_StockLote> ListStockLote { get; set; }
     }
 }
 
