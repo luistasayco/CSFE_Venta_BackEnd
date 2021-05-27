@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 
 namespace Net.Data
 {
-    public interface ITipoCambioRepository : IRepositoryBase<BE_TipoCambio>
+    public interface ITipoCambioRepository
     {
-        Task<ResultadoTransaccion<BE_TipoCambio>> ObtieneTipoCambio();
+        Task<ResultadoTransaccion<BE_TipoCambio>> GetObtieneTipoCambio();
     }
 }

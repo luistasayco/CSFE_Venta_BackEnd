@@ -15,8 +15,9 @@ namespace Net.Business.DTO
         public string nombre { get; set; }
         public string cama { get; set; }
         public string codmedico { get; set; }
+        public string nombremedico { get; set; }
         public string codatencion { get; set; }
-        public string codpresotor { get; set; }
+        //public string codpresotor { get; set; }
         public string codpoliza { get; set; }
         public string planpoliza { get; set; }
         public double deducible { get; set; }
@@ -37,18 +38,19 @@ namespace Net.Business.DTO
         public string observacion { get; set; }
         public string codcentro { get; set; }
         //public string coduser { get; set; }
-        public string estado { get; set; }
+        //public string estado { get; set; }
         public decimal tipocambio { get; set; }
         public string codpedido { get; set; }
-        //public string nombrediagnostico { get; set; }
+        public string nombrediagnostico { get; set; }
         public string flagpaquete { get; set; }
         public Boolean flg_gratuito { get; set; }
-        public string autorizado { get; set; }
-        public string ruccliente { get; set; }
-        public string dircliente { get; set; }
-        public string tipdocidentidad { get; set; }
-        public string docidentidad { get; set; }
-        public string correocliente { get; set; }
+        public string nombreaseguradora { get; set; }
+        public string nombrecia { get; set; }
+        public string nombremaquina { get; set; }
+        public string usuario { get; set; }
+        //public string tipdocidentidad { get; set; }
+        //public string docidentidad { get; set; }
+        //public string correocliente { get; set; }
         public List<BE_VentasDetalle> listaVentaDetalle { get; set; }
 
         public BE_VentasCabecera RetornaVentasCabecera()
@@ -65,7 +67,7 @@ namespace Net.Business.DTO
                 cama = this.cama,
                 codmedico = this.codmedico,
                 codatencion = this.codatencion,
-                codpresotor = this.codpresotor,
+                //codpresotor = this.codpresotor,
                 codpoliza = this.codpoliza,
                 planpoliza = this.planpoliza,
                 deducible = this.deducible,
@@ -79,18 +81,24 @@ namespace Net.Business.DTO
                 codplan = this.codplan,
                 observacion = this.observacion,
                 codcentro = this.codcentro,
-                estado = this.estado,
+                //estado = this.estado,
                 tipocambio = this.tipocambio,
                 codpedido = this.codpedido,
                 flagpaquete = this.flagpaquete,
                 flg_gratuito = this.flg_gratuito,
-                autorizado = this.autorizado,
-                ruccliente = this.ruccliente,
-                dircliente = this.dircliente,
-                tipdocidentidad = this.tipdocidentidad,
-                docidentidad = this.docidentidad,
-                correocliente = this.correocliente,
-                listaVentaDetalle = this.listaVentaDetalle
+                nombremedico = this.nombremedico,
+                nombrediagnostico = this.nombrediagnostico,
+                nombreaseguradora = this.nombreaseguradora,
+                nombrecia = this.nombrecia,
+                nombremaquina = this.nombremaquina,
+                usuario = this.usuario,
+                //ruccliente = this.ruccliente,
+                //dircliente = this.dircliente,
+                //tipdocidentidad = this.tipdocidentidad,
+                //docidentidad = this.docidentidad,
+                //correocliente = this.correocliente,
+                listaVentaDetalle = this.listaVentaDetalle,
+                RegIdUsuario = this.RegIdUsuario
             };
         }
 

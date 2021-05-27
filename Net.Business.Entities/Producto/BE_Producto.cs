@@ -78,6 +78,14 @@ namespace Net.Business.Entities
         /// </summary>
         public decimal valorDescuento { get => 0M; }
         public bool FlgConvenio { get; set; }
+        /// <summary>
+        /// Narcotico ?
+        /// </summary>
+        public string Properties1 { get; set; }
+        /// <summary>
+        /// Narcotico ?
+        /// </summary>
+        public bool Narcotico { get => Properties1.Equals("tSI") ? true: false; }
 
         public List<BE_Stock> ListStockAlmacen { get; set; }
 

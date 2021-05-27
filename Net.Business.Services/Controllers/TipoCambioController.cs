@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Net.Business.DTO;
 using Net.Data;
 
 namespace Net.Business.Services.Controllers
@@ -11,7 +10,7 @@ namespace Net.Business.Services.Controllers
     [ApiController]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ApiExplorerSettings(GroupName = "ApiTipoCambio")]
-    //[Authorize(AuthenticationSchemes = "Bearer")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class TipoCambioController : ControllerBase
     {
         private readonly IRepositoryWrapper _repository;
@@ -20,31 +19,20 @@ namespace Net.Business.Services.Controllers
             this._repository = repository;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        [HttpPost]
+        [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> ObtieneTipoCambio()
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetObtieneTipoCambio()
         {
 
-            if (!ModelState.IsValid)
+            var objectGetAll = await _repository.TipoCambio.GetObtieneTipoCambio();
+
+            if (objectGetAll.ResultadoCodigo == -1)
             {
-                return BadRequest("Invalid model object");
+                return BadRequest(objectGetAll);
             }
 
-            var ObjectNew = await _repository.TipoCambio.ObtieneTipoCambio();
-
-            if (ObjectNew == null)
-            {
-                return StatusCode(500, "");
-            }
-
-            return Ok(ObjectNew);
+            return Ok(objectGetAll.dataList);
         }
     }
 }

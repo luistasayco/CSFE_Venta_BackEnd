@@ -74,5 +74,10 @@ namespace Net.Business.Entities
         public decimal porcentajecoaseguro { get; set; }
         [DBParameter(SqlDbType.Float, 0, ActionType.Everything)]
         public double valor_dscto { get; set; }
+        public bool narcotico { get; set; }
+        public decimal igvproducto { get; set; }
+        public string codtipoproducto { get; set; }
+
+        public BE_VentasDetalleDatos VentasDetalleDatos { get; set; }
     }
 }

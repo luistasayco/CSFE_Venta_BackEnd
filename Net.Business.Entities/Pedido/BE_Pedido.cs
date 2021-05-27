@@ -32,6 +32,7 @@ namespace Net.Business.Entities
         public string nomalmacen { get; set; }
         public string orden { get; set; }
         public bool TieneVenta { get; set; }
+        public string flg_paquete { get; set; }
         public string key { get => codventa == null ? string.Empty : codventa + codpedido + codatencion; }
     }
 }

@@ -1,81 +1,57 @@
-﻿using Microsoft.Data.SqlClient;
-using Net.Business.Entities;
-using Net.Connection;
-using System;
-using System.Data;
-using System.Text.RegularExpressions;
+﻿using Net.Business.Entities;
+using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
-using System.Transactions;
+using System.Net.Http;
+using Net.Connection.ServiceLayer;
+using System.Text.RegularExpressions;
+using System;
 
 namespace Net.Data
 {
-    public class TipoCambioRepository : RepositoryBase<BE_TipoCambio>, ITipoCambioRepository
+    public class TipoCambioRepository : ITipoCambioRepository
     {
         private string _metodoName;
         private string _aplicacionName;
         private readonly Regex regex = new Regex(@"<(\w+)>.*");
 
-        const string DB_ESQUEMA = "";
-        const string SP_GET_TIPO_CAMBIO = DB_ESQUEMA + "VEN_GetVentasCabeceraPorFiltros";
+        private readonly ConnectionServiceLayer _connectServiceLayer;
 
-        public TipoCambioRepository(IConnectionSQL context)
-            : base(context)
+        public TipoCambioRepository(IHttpClientFactory clientFactory, IConfiguration configuration)
         {
             _aplicacionName = this.GetType().Name;
+            _connectServiceLayer = new ConnectionServiceLayer(configuration, clientFactory);
         }
-        public async Task<ResultadoTransaccion<BE_TipoCambio>> ObtieneTipoCambio()
+        public async Task<ResultadoTransaccion<BE_TipoCambio>> GetObtieneTipoCambio()
         {
             ResultadoTransaccion<BE_TipoCambio> vResultadoTransaccion = new ResultadoTransaccion<BE_TipoCambio>();
-
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                var fechaActual = string.Format("{0}-{1}-{2}", DateTime.Now.Year, DateTime.Now.Month.ToString().PadLeft(2,'0'), DateTime.Now.Day);
 
-            BE_TipoCambio tipoCambio = new BE_TipoCambio();
-            tipoCambio.bancarioventa = 3.5990M;
+                var cadena = "sml.svc/SBATIDC";
+                var filter = "&$filter = RateDate eq '" + fechaActual + "'";
+                var campos = "?$select = Currency, RateDate, Rate ";
 
-            vResultadoTransaccion.ResultadoCodigo = 0;
-            vResultadoTransaccion.ResultadoDescripcion = "Se realizo correctamente";
-            //vResultadoTransaccion.Data = tipoCambio;
+                cadena = cadena + campos + filter;
 
-            //using (SqlConnection conn = new SqlConnection(context.DevuelveConnectionSQL()))
-            //{
-            //    using (CommittableTransaction transaction = new CommittableTransaction())
-            //    {
-            //        await conn.OpenAsync();
-            //        conn.EnlistTransaction(transaction);
+                List<BE_TipoCambio> data = await _connectServiceLayer.GetAsync<BE_TipoCambio>(cadena);
 
-            //        try
-            //        {
-            //            using (SqlCommand cmd = new SqlCommand(SP_GET_TIPO_CAMBIO, conn))
-            //            {
-            //                cmd.CommandType = System.Data.CommandType.StoredProcedure;
-
-            //                SqlParameter oParam = new SqlParameter("@tipodecambio", 0);
-            //                oParam.SqlDbType = SqlDbType.Int;
-            //                oParam.Direction = ParameterDirection.Output;
-            //                cmd.Parameters.Add(oParam);
-
-            //                await cmd.ExecuteNonQueryAsync();
-
-            //                tipoCambio.bancarioventa = (int)cmd.Parameters["@tipodecambio"].Value;
-
-            //                vResultadoTransaccion.IdRegistro = (int)cmd.Parameters["@tipodecambio"].Value;
-            //                vResultadoTransaccion.ResultadoCodigo = 0;
-            //                vResultadoTransaccion.ResultadoDescripcion = "Se realizo correctamente";
-            //                vResultadoTransaccion.Data = tipoCambio;
-            //            }
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //            vResultadoTransaccion.IdRegistro = -1;
-            //            vResultadoTransaccion.ResultadoCodigo = -1;
-            //            vResultadoTransaccion.ResultadoDescripcion += ex.Message.ToString();
-            //            transaction.Rollback();
-            //        }
-            //    }
-            //}
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", data.Count);
+                vResultadoTransaccion.dataList = data;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
 
             return vResultadoTransaccion;
         }

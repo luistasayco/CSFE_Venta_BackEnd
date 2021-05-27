@@ -70,7 +70,7 @@ namespace Net.Data
             {
                 if (_TipoCambio == null)
                 {
-                    _TipoCambio = new TipoCambioRepository(_repoContext);
+                    _TipoCambio = new TipoCambioRepository(_clientFactory, _configuration);
                 }
                 return _TipoCambio;
             }

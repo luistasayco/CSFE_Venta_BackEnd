@@ -150,5 +150,6 @@ namespace Net.Business.Entities
         public List<BE_VentasDetalle> listaVentaDetalle { get; set; }
         [DBParameter(SqlDbType.VarChar, 20, ActionType.Everything)]
         public string nombremaquina { get; set; }
+        public string usuario { get; set; }
     }
 }

@@ -228,12 +228,6 @@
             <response code="400">Si el objeto enviado es nulo o invalido</response>
             <response code="409">Si ocurrio un conflicto</response>
         </member>
-        <member name="M:Net.Business.Services.Controllers.TipoCambioController.ObtieneTipoCambio">
-            <summary>
-            
-            </summary>
-            <returns></returns>
-        </member>
         <member name="M:Net.Business.Services.Controllers.VentaConfiguracionController.GetByFiltros(Net.Business.DTO.DtoVentasConfiguracionFind)">
             <summary>
             Obtener lista de registros
