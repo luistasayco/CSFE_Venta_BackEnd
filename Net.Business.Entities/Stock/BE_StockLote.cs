@@ -14,12 +14,9 @@ namespace Net.Business.Entities
         /// Descripción del Articulo
         /// </summary>
         public string ItemName { get; set; }
-        /// <summary>
-        /// Codigo de producto de CSFE
-        /// </summary>
-        public string U_SYP_CS_SIC { get; set; }
         public string BatchNum { get; set; }
         public decimal Quantity { get; set; }
+        public decimal Quantityinput { get; set; }
         /// <summary>
         /// Cantidad Solicitada Lote (Solo del almacén)
         /// </summary>
@@ -28,5 +25,6 @@ namespace Net.Business.Entities
         /// Cantidad Comprometida Lote (Solo del almacén)
         /// </summary>
         public decimal OnOrder_2 { get; set; }
+        public DateTime ExpDate { get; set; }
     }
 }

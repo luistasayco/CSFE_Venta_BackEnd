@@ -183,7 +183,7 @@ namespace Net.Business.Services.Controllers
                 }
                 else
                 {
-                    return NoContent();
+                    return Ok(response.dataList);
                 }
             }
             catch (Exception ex)

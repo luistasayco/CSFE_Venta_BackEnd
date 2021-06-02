@@ -209,7 +209,7 @@ namespace Net.Data
 
                 var cadena = "Items";
                 var filter = "&$filter=ItemCode eq '" + codproducto + "'";
-                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, U_SYP_FAMILIA, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART, ItemsGroupCode, ManageBatchNumbers, ArTaxCode, Properties1 ";
+                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, U_SYP_FAMILIA, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART, ItemsGroupCode, ManageBatchNumbers, ArTaxCode, Properties1, U_SYP_CS_DCTO, U_SYP_CS_FRVTA ";
 
                 cadena = cadena + campos + filter;
 
@@ -233,21 +233,21 @@ namespace Net.Data
                     }
                 }
 
-                if (data.ManageBatchNumbers.Equals("tYes"))
-                {
-                    StockRepository stockRepository = new StockRepository(_clientFactory, _configuration);
-                    ResultadoTransaccion<BE_StockLote> resultadoTransaccionStockLote = await stockRepository.GetListStockLotePorFiltro(codalmacen, codproducto, true);
+                //if (data.ManageBatchNumbers.Equals("tYES"))
+                //{
+                //    StockRepository stockRepository = new StockRepository(_clientFactory, _configuration);
+                //    ResultadoTransaccion<BE_StockLote> resultadoTransaccionStockLote = await stockRepository.GetListStockLotePorFiltro(codalmacen, codproducto, true);
 
-                    if (resultadoTransaccionStockLote.ResultadoCodigo == -1)
-                    {
-                        vResultadoTransaccion.IdRegistro = -1;
-                        vResultadoTransaccion.ResultadoCodigo = -1;
-                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionStockLote.ResultadoDescripcion;
-                        return vResultadoTransaccion;
-                    }
+                //    if (resultadoTransaccionStockLote.ResultadoCodigo == -1)
+                //    {
+                //        vResultadoTransaccion.IdRegistro = -1;
+                //        vResultadoTransaccion.ResultadoCodigo = -1;
+                //        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionStockLote.ResultadoDescripcion;
+                //        return vResultadoTransaccion;
+                //    }
 
-                    data.ListStockLote = (List<BE_StockLote>)resultadoTransaccionStockLote.dataList;
-                }
+                //    data.ListStockLote = (List<BE_StockLote>)resultadoTransaccionStockLote.dataList;
+                //}
 
                 IGVRepository iGVRepository = new IGVRepository(_clientFactory, _configuration);
                 ResultadoTransaccion<BE_IGV> resultadoTransaccionIGV = await iGVRepository.GetIGVPorCodigo(data.ArTaxCode);
@@ -347,7 +347,7 @@ namespace Net.Data
 
                 var cadena = "Items";
                 var filter = "&$filter=ItemCode eq '" + codproducto + "'";
-                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, U_SYP_FAMILIA, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART, ItemsGroupCode ";
+                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, U_SYP_FAMILIA, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART, ItemsGroupCode, Properties1 ";
 
                 cadena = cadena + campos + filter;
 

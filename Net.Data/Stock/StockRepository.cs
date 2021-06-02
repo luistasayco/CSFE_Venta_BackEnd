@@ -38,7 +38,7 @@ namespace Net.Data
                 nombre = nombre == null ? "" : nombre.ToUpper();
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
 
-                var modelo = "sml.svc/SBASTKG";
+                var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTKG";
                 var campos = "?$select=* ";
                 var filter = "&$filter = WhsCode eq '" + codalmacen + "' ";
                 var filterConStock = "and OnHand_1 gt 0";
@@ -91,7 +91,7 @@ namespace Net.Data
             {
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
 
-                var modelo = "sml.svc/SBASTKG";
+                var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTKG";
                 var campos = "?$select=* ";
                 var filter = "&$filter = WhsCode eq '" + codalmacen + "' and ItemCode eq '" + codproducto + "'";
                 var filterConStock = "and OnHand_1 gt 0";
@@ -126,18 +126,19 @@ namespace Net.Data
             {
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
 
-                var modelo = "sml.svc/SBASTCK";
-                var campos = "?$select= ItemCode, ItemName, BatchNum, Quantity, IsCommited_2, OnOrder_2 ";
+                var modelo = "sml.svc/SBASTCKParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTCK";
+                var campos = "?$select= ItemCode, ItemName, BatchNum, Quantity, IsCommited_2, OnOrder_2 , ExpDate";
                 var filter = "&$filter = WhsCode eq '" + codalmacen + "' and ItemCode eq '" + codproducto + "' ";
-                var filterConStock = "and Quantity gt 0";
+                var filterConStock = "and Quantity gt 0 ";
+                var orderby = "&$orderby = ExpDate";
 
                 if (constock)
                 {
-                    modelo = modelo + campos + filter + filterConStock;
+                    modelo = modelo + campos + filter + filterConStock + orderby;
                 }
                 else
                 {
-                    modelo = modelo + campos + filter;
+                    modelo = modelo + campos + filter + orderby;
                 }
 
                 List<BE_StockLote> data = await _connectServiceLayer.GetAsync<BE_StockLote>(modelo);
@@ -167,7 +168,7 @@ namespace Net.Data
             {
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
 
-                var modelo = "sml.svc/SBASTKG";
+                var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTKG";
                 var campos = "?$select=* ";
                 var filter = "&$filter = ItemCode eq '" + codproducto + "' ";
                 var filterConStock = "and OnHand_1 gt 0";

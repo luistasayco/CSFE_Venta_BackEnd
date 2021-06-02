@@ -58,7 +58,7 @@ namespace Net.Data
             {
                 if (_Venta == null)
                 {
-                    _Venta = new VentaRepository(_repoContext, _configuration);
+                    _Venta = new VentaRepository(_clientFactory,_repoContext, _configuration);
                 }
                 return _Venta;
             }

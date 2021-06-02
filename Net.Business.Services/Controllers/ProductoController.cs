@@ -65,6 +65,7 @@ namespace Net.Business.Services.Controllers
         //    return Ok(objectGetAll.dataList);
         //}
 
+        
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

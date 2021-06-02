@@ -91,6 +91,7 @@
         /// Stock Lote (Solo del almacén)
         /// </summary>
         public decimal Quantity { get; set; }
+        
         /// <summary>
         /// Cantidad Solicitada Lote (Solo del almacén)
         /// </summary>
@@ -99,5 +100,6 @@
         /// Cantidad Comprometida Lote (Solo del almacén)
         /// </summary>
         public decimal OnOrder_2 { get; set; }
+        public string WhsName { get; set; }
     }
 }

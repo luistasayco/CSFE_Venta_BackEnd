@@ -62,11 +62,11 @@ namespace Net.Business.Entities
         /// </summary>
         //public string codproducto { get => U_SYP_CS_SIC; }
         /// <summary>
-        /// Precio Venta al publico (incluyendo utilidad + IGV)
+        /// Precio Venta al publico (+ IGV)
         /// </summary>
         public decimal valorPVP { get => decimal.Round(valorVVP * (valorIGV / 100 + 1),2); }
         /// <summary>
-        /// Valor venta al publico (Solo incluye IGV)
+        /// Valor venta al publico (sin IGV)
         /// </summary>
         public decimal valorVVP { get; set; }
         /// <summary>
@@ -74,9 +74,21 @@ namespace Net.Business.Entities
         /// </summary>
         public decimal valorIGV { get; set; }
         /// <summary>
+        /// Fraccion Venta
+        /// </summary>
+        public int U_SYP_CS_FRVTA { get; set; }
+        /// <summary>
+        /// Fraccion Venta
+        /// </summary>
+        public decimal fraccionVenta { get => U_SYP_CS_FRVTA.Equals(null) ? 0 : U_SYP_CS_FRVTA; }
+        /// <summary>
         /// Descuento del producto
         /// </summary>
-        public decimal valorDescuento { get => 0M; }
+        public decimal U_SYP_CS_DCTO { get; set; }
+        /// <summary>
+        /// Descuento del producto
+        /// </summary>
+        public decimal valorDescuento { get => U_SYP_CS_DCTO.Equals(null) ? 0 : U_SYP_CS_DCTO; }
         public bool FlgConvenio { get; set; }
         /// <summary>
         /// Narcotico ?

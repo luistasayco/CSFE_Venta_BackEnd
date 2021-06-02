@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Transactions;
 using System.Data;
 using System.Linq;
+using System.Net.Http;
 
 namespace Net.Data
 {
@@ -17,6 +18,7 @@ namespace Net.Data
         private readonly string _cnx;
         private readonly string _cnxClinica;
         private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _clientFactory;
         private string _aplicacionName;
         private string _metodoName;
         private readonly Regex regex = new Regex(@"<(\w+)>.*");
@@ -37,24 +39,26 @@ namespace Net.Data
         const string SP_INSERT = DB_ESQUEMA + "VEN_VentaCabeceraIns";
         const string SP_INSERT_DETALLE = DB_ESQUEMA + "VEN_VentaDetalleIns";
         const string SP_INSERT_DETALLE_DATOS = DB_ESQUEMA + "VEN_VentaDetalleDatosIns";
+        const string SP_INSERT_DETALLE_LOTE = DB_ESQUEMA + "VEN_VentaDetalleLoteIns";
 
         const string SP_UPDATE = DB_ESQUEMA + "VEN_VentaCabeceraUpd";
         const string SP_UPDATE_DSCTO_DETALLE = DB_ESQUEMA + "VEN_VentaCabeceraUpdDscDet";
 
 
         // Clinica
-        const string SP_PEDIDOXDEVOLVER_RECALCULO = DB_ESQUEMA + "Sp_PedidosxDevolver_Recalculo";
-        const string SP_GET_PRESOTOR_CONSULTAVARIOS = DB_ESQUEMA + "Sp_Presotor_ConsultaVarios";
-        const string SP_UPDATE_PRESOTOR = DB_ESQUEMA + "Sp_Presotor_Update";
-        const string SP_UPDATE_PEDIDO = DB_ESQUEMA + "Sp_Pedidos_Update";
-        const string SP_FARMACIA_PRESTACION_INSERT = DB_ESQUEMA + "Fa_FarmaciaPrestacion_Insert";
+        const string SP_PEDIDOXDEVOLVER_RECALCULO = DB_ESQUEMA + "VEN_ClinicaPedidosxDevolver_Recalculo";
+        const string SP_GET_PRESOTOR_CONSULTAVARIOS = DB_ESQUEMA + "VEN_ClinicaPresotorConsultaVariosGet";
+        const string SP_UPDATE_PRESOTOR = DB_ESQUEMA + "VEN_ClinicaPresotorUpd";
+        const string SP_UPDATE_PEDIDO = DB_ESQUEMA + "VEN_ClinicaPedidosUpd";
+        const string SP_FARMACIA_PRESTACION_INSERT = DB_ESQUEMA + "VEN_ClinicaFarmaciaPrestacionIns";
 
-        public VentaRepository(IConnectionSQL context, IConfiguration configuration)
+        public VentaRepository(IHttpClientFactory clientFactory, IConnectionSQL context, IConfiguration configuration)
             : base(context)
         {
             _cnx = configuration.GetConnectionString("cnnSqlLogistica");
             _cnxClinica = configuration.GetConnectionString("cnnSqlClinica");
             _configuration = configuration;
+            _clientFactory = clientFactory;
             _aplicacionName = this.GetType().Name;
         }
         public async Task<ResultadoTransaccion<BE_VentasCabecera>> GetAll(string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin)
@@ -583,9 +587,9 @@ namespace Net.Data
             return vResultadoTransaccion;
         }
 
-        public async Task<ResultadoTransaccion<BE_VentasCabecera>> RegistrarVentaCabecera(BE_VentasCabecera value)
+        public async Task<ResultadoTransaccion<BE_VentasGenerado>> RegistrarVentaCabecera(BE_VentasCabecera value)
         {
-            ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
+            ResultadoTransaccion<BE_VentasGenerado> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasGenerado>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
             vResultadoTransaccion.NombreMetodo = _metodoName;
@@ -619,7 +623,8 @@ namespace Net.Data
                         return vResultadoTransaccion;
                     }
 
-                } else
+                } 
+                else
                 {
                     vResultadoTransaccion.IdRegistro = -1;
                     vResultadoTransaccion.ResultadoCodigo = -1;
@@ -718,253 +723,205 @@ namespace Net.Data
                 // Conexion de Logistica
                 using (SqlConnection conn = new SqlConnection(_cnx))
                 {
-                    // Conexion de Clinica
-                    using (SqlConnection connClinica = new SqlConnection(_cnxClinica))
+                    using (CommittableTransaction transaction = new CommittableTransaction())
                     {
-                        using (CommittableTransaction transaction = new CommittableTransaction())
+                        // Conexion de Logistica
+                        await conn.OpenAsync();
+                        conn.EnlistTransaction(transaction);
+
+                        try
                         {
-                            // Conexion de Logistica
-                            await conn.OpenAsync();
-                            conn.EnlistTransaction(transaction);
+                            List<BE_VentasGenerado> listVentasGenerados = new List<BE_VentasGenerado>();
+                            string vCodigoPresotor = string.Empty;
 
-                            try
+                            if (!listVentasDetalleQuiebres.Count.Equals(0))
                             {
-                                using (CommittableTransaction transactionClinica = new CommittableTransaction())
+
+                                string vCodigoPrestacion = string.Empty;
+                                decimal vGncPorVenta = 0;
+                                BE_ValidaPresotor vValidaPresotor = new BE_ValidaPresotor();
+                                //string vGnc = string.Empty;
+                                string vNC = string.Empty;
+                                bool vNoCubierto = false;
+                                string vFlagPaquete = "N";
+
+                                foreach (BE_VentasDetalleQuiebre itemQuiebre in listVentasDetalleQuiebres)
                                 {
-                                    // Conexion de Clinica
-                                    await connClinica.OpenAsync();
-                                    connClinica.EnlistTransaction(transactionClinica);
 
-                                    try
+                                    ResultadoTransaccion<BE_VentasCabecera> resultadoTransaccionCalculoCabeceraVenta = CalculaTotales(itemQuiebre, value);
+
+                                    if (resultadoTransaccionCalculoCabeceraVenta.ResultadoCodigo == -1)
                                     {
-                                        if (!listVentasDetalleQuiebres.Count.Equals(0))
+                                        transaction.Rollback();
+                                        vResultadoTransaccion.IdRegistro = -1;
+                                        vResultadoTransaccion.ResultadoCodigo = -1;
+                                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionCalculoCabeceraVenta.ResultadoDescripcion;
+                                        return vResultadoTransaccion;
+                                    }
+
+                                    ResultadoTransaccion<string> resultadoTransaccionRegistraCabeceraVenta = await RegistraVentaCabecera(conn, value);
+
+                                    if (resultadoTransaccionRegistraCabeceraVenta.ResultadoCodigo == -1)
+                                    {
+                                        transaction.Rollback();
+                                        vResultadoTransaccion.IdRegistro = -1;
+                                        vResultadoTransaccion.ResultadoCodigo = -1;
+                                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionRegistraCabeceraVenta.ResultadoDescripcion;
+                                        return vResultadoTransaccion;
+                                    }
+
+                                    value.codventa = resultadoTransaccionRegistraCabeceraVenta.data;
+
+                                    if (value.codpedido != null)
+                                    {
+                                        if (value.codpedido.Length.Equals(14))
                                         {
+                                            // Obtiene los datos del pedido
+                                            PedidoRepository pedidoRepository = new PedidoRepository(context, _configuration);
+                                            ResultadoTransaccion<BE_Pedido> resultadoTransaccionPedido = await pedidoRepository.GetDatosPedidoPorPedido(value.codpedido);
 
-                                            string vCodigoPrestacion = string.Empty;
-                                            decimal vGncPorVenta = 0;
-                                            BE_ValidaPresotor vValidaPresotor = new BE_ValidaPresotor();
-                                            //string vGnc = string.Empty;
-                                            string vNC = string.Empty;
-                                            bool vNoCubierto = false;
-                                            string vCodigoPresotor = string.Empty;
-                                            string vFlagPaquete = "N";
-                                            List<BE_VentasGenerado> listVentasGenerados = new List<BE_VentasGenerado>();
-
-                                            foreach (BE_VentasDetalleQuiebre itemQuiebre in listVentasDetalleQuiebres)
+                                            if (resultadoTransaccionPedido.ResultadoCodigo == -1)
                                             {
-                                                using (SqlCommand cmd = new SqlCommand(SP_INSERT, conn))
+                                                transaction.Rollback();
+                                                vResultadoTransaccion.IdRegistro = -1;
+                                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPedido.ResultadoDescripcion;
+                                                return vResultadoTransaccion;
+                                            }
+
+                                            if (resultadoTransaccionPedido.dataList.Any())
+                                            {
+                                                vFlagPaquete = ((List<BE_Pedido>)resultadoTransaccionPedido.dataList)[0].flg_paquete;
+                                            }
+
+                                        }
+                                    }
+
+                                    List<BE_VentasDetalle> listVentasDetalle = value.listaVentaDetalle.FindAll(xFila => xFila.codtipoproducto == itemQuiebre.codtipoproducto && xFila.igvproducto == itemQuiebre.igvproducto && xFila.narcotico == itemQuiebre.narcotico).ToList();
+
+                                    foreach (BE_VentasDetalle item in listVentasDetalle)
+                                    {
+                                        if (vFlagPaquete.Equals("S"))
+                                        {
+                                            item.gnc = "N";
+                                        }
+
+                                        if (vNC.Equals("S"))
+                                        {
+                                            vNoCubierto = true;
+                                        }
+
+                                        ResultadoTransaccion<string> resultadoTransaccionDetalle = await RegistraVentaDetalle(conn, value.codventa, item, (int)value.RegIdUsuario);
+
+                                        if (resultadoTransaccionDetalle.ResultadoCodigo == -1)
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionDetalle.ResultadoDescripcion;
+                                            return vResultadoTransaccion;
+                                        }
+
+                                        item.coddetalle = resultadoTransaccionDetalle.data;
+
+                                        if (item.manBtchNum == "tYES")
+                                        {
+                                            BE_VentasDetalleLote itemLote = new BE_VentasDetalleLote();
+
+                                            if (item.flgbtchnum)
+                                            {
+                                                if (item.listStockLote.Count > 0)
                                                 {
-                                                    cmd.Parameters.Clear();
-                                                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
-
-                                                    SqlParameter oParam = new SqlParameter("@codigo", SqlDbType.Char, 8)
+                                                    foreach (var lote in item.listStockLote)
                                                     {
-                                                        Direction = ParameterDirection.Output
-                                                    };
-                                                    cmd.Parameters.Add(oParam);
-
-                                                    cmd.Parameters.Add(new SqlParameter("@codatencion", value.codatencion));
-                                                    cmd.Parameters.Add(new SqlParameter("@codpedido", value.codpedido));
-                                                    cmd.Parameters.Add(new SqlParameter("@codalmacen", value.codalmacen));
-                                                    cmd.Parameters.Add(new SqlParameter("@tipomovimiento", value.tipomovimiento));
-                                                    cmd.Parameters.Add(new SqlParameter("@codtipocliente", value.codtipocliente));
-                                                    cmd.Parameters.Add(new SqlParameter("@codempresa", value.codempresa));
-                                                    cmd.Parameters.Add(new SqlParameter("@codcliente", value.codcliente));
-                                                    cmd.Parameters.Add(new SqlParameter("@codpaciente", value.codpaciente));
-                                                    cmd.Parameters.Add(new SqlParameter("@nombre", value.nombre));
-                                                    cmd.Parameters.Add(new SqlParameter("@cama", value.cama));
-                                                    cmd.Parameters.Add(new SqlParameter("@codmedico", value.codmedico));
-                                                    cmd.Parameters.Add(new SqlParameter("@codpoliza", value.codpoliza));
-                                                    cmd.Parameters.Add(new SqlParameter("@deducible", value.deducible));
-                                                    cmd.Parameters.Add(new SqlParameter("@codaseguradora", value.codaseguradora));
-                                                    cmd.Parameters.Add(new SqlParameter("@codcia", value.codcia));
-                                                    cmd.Parameters.Add(new SqlParameter("@porcentajecoaseguro", value.porcentajecoaseguro));
-                                                    cmd.Parameters.Add(new SqlParameter("@montodctoplan", value.montodctoplan));
-                                                    cmd.Parameters.Add(new SqlParameter("@porcentajedctoplan", value.porcentajedctoplan));
-                                                    cmd.Parameters.Add(new SqlParameter("@moneda", value.moneda));
-                                                    cmd.Parameters.Add(new SqlParameter("@montototal", value.montototal));
-                                                    cmd.Parameters.Add(new SqlParameter("@montoigv", value.montoigv));
-                                                    cmd.Parameters.Add(new SqlParameter("@montoneto", value.montoneto));
-                                                    cmd.Parameters.Add(new SqlParameter("@codplan", value.codplan));
-                                                    cmd.Parameters.Add(new SqlParameter("@montopaciente", value.montopaciente));
-                                                    cmd.Parameters.Add(new SqlParameter("@montoaseguradora", value.montoaseguradora));
-                                                    cmd.Parameters.Add(new SqlParameter("@observacion", value.observacion));
-                                                    cmd.Parameters.Add(new SqlParameter("@nombremedico", value.nombremedico));
-                                                    cmd.Parameters.Add(new SqlParameter("@nombreaseguradora", value.nombreaseguradora));
-                                                    cmd.Parameters.Add(new SqlParameter("@nombrecia", value.nombrecia));
-                                                    cmd.Parameters.Add(new SqlParameter("@nombrediagnostico", value.nombrediagnostico));
-                                                    cmd.Parameters.Add(new SqlParameter("@flagpaquete", value.flagpaquete));
-                                                    cmd.Parameters.Add(new SqlParameter("@flg_gratuito", value.flg_gratuito));
-                                                    cmd.Parameters.Add(new SqlParameter("@usuario", value.usuario));
-                                                    cmd.Parameters.Add(new SqlParameter("@codcentro", value.codcentro));
-
-                                                    // Datos de Auditoria
-                                                    cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
-                                                    // Datos de Transaccion
-                                                    SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
-                                                    {
-                                                        Direction = ParameterDirection.Output
-                                                    };
-                                                    cmd.Parameters.Add(outputIdTransaccionParam);
-
-                                                    SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
-                                                    {
-                                                        Direction = ParameterDirection.Output
-                                                    };
-                                                    cmd.Parameters.Add(outputMsjTransaccionParam);
-
-                                                    await cmd.ExecuteNonQueryAsync();
-
-                                                    value.codventa = (string)oParam.Value;
-
-                                                    vResultadoTransaccion.IdRegistro = 0;
-                                                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
-                                                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
-                                                }
-
-                                                if (value.codpedido != null)
-                                                {
-                                                    if (value.codpedido.Length.Equals(14))
-                                                    {
-
-                                                        PedidoRepository pedidoRepository = new PedidoRepository(context, _configuration);
-                                                        ResultadoTransaccion<BE_Pedido> resultadoTransaccionPedido = await pedidoRepository.GetDatosPedidoPorPedido(value.codpedido);
-
-                                                        if (resultadoTransaccionPedido.ResultadoCodigo == -1)
+                                                        if (lote.Quantityinput > 0)
                                                         {
-                                                            transactionClinica.Rollback();
-                                                            transaction.Rollback();
-                                                            vResultadoTransaccion.IdRegistro = -1;
-                                                            vResultadoTransaccion.ResultadoCodigo = -1;
-                                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPedido.ResultadoDescripcion;
-                                                            return vResultadoTransaccion;
-                                                        }
+                                                            itemLote = new BE_VentasDetalleLote { lote = lote.BatchNum, cantidad = lote.Quantityinput, coddetalle = item.coddetalle, fechavencimiento = lote.ExpDate };
 
-                                                        if (resultadoTransaccionPedido.dataList.Any())
-                                                        {
-                                                            vFlagPaquete = ((List<BE_Pedido>)resultadoTransaccionPedido.dataList)[0].flg_paquete;
-                                                        }
+                                                            ResultadoTransaccion<bool> resultadoTransaccionRegistraVentaLote = await RegistraVentaDetalleLote(conn, itemLote, (int)value.RegIdUsuario);
 
-                                                    }
-                                                }
-
-                                                List<BE_VentasDetalle> listVentasDetalle = value.listaVentaDetalle.FindAll(xFila => xFila.codtipoproducto == itemQuiebre.codtipoproducto && xFila.igvproducto == itemQuiebre.igvproducto && xFila.narcotico == itemQuiebre.narcotico).ToList();
-
-                                                foreach (BE_VentasDetalle item in listVentasDetalle)
-                                                {
-                                                    using (SqlCommand cmdDetalle = new SqlCommand(SP_INSERT_DETALLE, conn))
-                                                    {
-                                                        if (vFlagPaquete.Equals("S"))
-                                                        {
-                                                            item.gnc = "N";
-                                                        }
-
-                                                        if (vNC.Equals("S"))
-                                                        {
-                                                            vNoCubierto = true;
-                                                        }
-
-                                                        cmdDetalle.Parameters.Clear();
-                                                        cmdDetalle.CommandType = System.Data.CommandType.StoredProcedure;
-
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@codventa", value.codventa));
-
-                                                        SqlParameter oParamDetalle = new SqlParameter("@coddetalle", SqlDbType.Char, 10)
-                                                        {
-                                                            Direction = ParameterDirection.Output
-                                                        };
-                                                        cmdDetalle.Parameters.Add(oParamDetalle);
-
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@codalmacen", item.codalmacen));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@tipomovimiento", item.tipomovimiento));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@codproducto", item.codproducto));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@dsc_producto", item.nombreproducto));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@cnt_unitario", item.cantidad));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@prc_unitario", item.precioventaPVP));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@preciounidadcondcto", 1));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@precioventaPVP", item.precioventaPVP));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@valorVVP", item.valorVVP));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@porcentajedctoproducto", item.porcentajedctoproducto));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@montototal", item.montototal));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@montopaciente", item.montopaciente));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@montoaseguradora", item.montoaseguradora));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@codpedido", item.codpedido));
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@gnc", item.gnc));
-
-                                                        // Datos de Auditoria
-                                                        cmdDetalle.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
-                                                        // Datos de Transaccion
-                                                        SqlParameter outputIdTransaccionParamDetalle = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
-                                                        {
-                                                            Direction = ParameterDirection.Output
-                                                        };
-                                                        cmdDetalle.Parameters.Add(outputIdTransaccionParamDetalle);
-
-                                                        SqlParameter outputMsjTransaccionParamDetalle = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
-                                                        {
-                                                            Direction = ParameterDirection.Output
-                                                        };
-                                                        cmdDetalle.Parameters.Add(outputMsjTransaccionParamDetalle);
-
-                                                        await cmdDetalle.ExecuteNonQueryAsync();
-
-                                                        item.codventa = value.codventa;
-                                                        item.coddetalle = (string)oParamDetalle.Value;
-                                                    }
-
-                                                    if (item.VentasDetalleDatos != null)
-                                                    {
-                                                        if (!item.VentasDetalleDatos.tipodocumentoautorizacion.Equals("00"))
-                                                        {
-                                                            using (SqlCommand cmdDatos = new SqlCommand(SP_INSERT_DETALLE_DATOS, conn))
+                                                            if (resultadoTransaccionRegistraVentaLote.ResultadoCodigo == -1)
                                                             {
-                                                                cmdDatos.Parameters.Clear();
-                                                                cmdDatos.CommandType = System.Data.CommandType.StoredProcedure;
+                                                                transaction.Rollback();
+                                                                vResultadoTransaccion.IdRegistro = -1;
+                                                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionRegistraVentaLote.ResultadoDescripcion;
+                                                                return vResultadoTransaccion;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            } 
+                                            else
+                                            {
+                                                StockRepository stockRepository = new StockRepository(_clientFactory, _configuration);
+                                                ResultadoTransaccion<BE_StockLote> resultadoTransaccionListLote = await stockRepository.GetListStockLotePorFiltro(item.codalmacen, item.codproducto, true);
 
-                                                                cmdDatos.Parameters.Add(new SqlParameter("@codventa", item.codventa));
-                                                                cmdDatos.Parameters.Add(new SqlParameter("@coddetalle", item.coddetalle));
+                                                if (resultadoTransaccionListLote.ResultadoCodigo == -1)
+                                                {
+                                                    transaction.Rollback();
+                                                    vResultadoTransaccion.IdRegistro = -1;
+                                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionListLote.ResultadoDescripcion;
+                                                    return vResultadoTransaccion;
+                                                }
 
-                                                                cmdDatos.Parameters.Add(new SqlParameter("@codproducto", item.codproducto));
-                                                                cmdDatos.Parameters.Add(new SqlParameter("@tipodocumentoautorizacion", item.VentasDetalleDatos.tipodocumentoautorizacion));
-                                                                cmdDatos.Parameters.Add(new SqlParameter("@numerodocumentoautorizacion", item.VentasDetalleDatos.numerodocumentoautorizacion));
+                                                decimal cantidadInput = item.cantidad;
+                                                List<BE_StockLote> listLote = new List<BE_StockLote>();
 
-                                                                // Datos de Auditoria
-                                                                cmdDatos.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
-                                                                // Datos de Transaccion
-                                                                SqlParameter outputIdTransaccionParamDato = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
-                                                                {
-                                                                    Direction = ParameterDirection.Output
-                                                                };
-                                                                cmdDatos.Parameters.Add(outputIdTransaccionParamDato);
+                                                listLote = (List<BE_StockLote>)resultadoTransaccionListLote.dataList;
 
-                                                                SqlParameter outputMsjTransaccionParamDato = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
-                                                                {
-                                                                    Direction = ParameterDirection.Output
-                                                                };
-                                                                cmdDatos.Parameters.Add(outputMsjTransaccionParamDato);
+                                                if (listLote.Any())
+                                                {
+                                                    foreach (BE_StockLote lote in listLote)
+                                                    {
+                                                        if (cantidadInput > 0)
+                                                        {
+                                                            if (cantidadInput <= lote.Quantity)
+                                                            {
+                                                                listLote.Find(xFila => xFila.BatchNum == lote.BatchNum).Quantityinput = cantidadInput;
+                                                                cantidadInput = 0;
+                                                            }
+                                                            else
+                                                            {
+                                                                listLote.Find(xFila => xFila.BatchNum == lote.BatchNum).Quantityinput = 0;
 
-                                                                await cmdDatos.ExecuteNonQueryAsync();
+                                                                decimal cantidad = listLote.Find(xFila => xFila.BatchNum == lote.BatchNum).Quantity;
+
+                                                                decimal newResul = (cantidadInput - cantidad);
+
+                                                                listLote.Find(xFila => xFila.BatchNum == lote.BatchNum).Quantityinput = cantidadInput - newResul;
+
+                                                                cantidadInput = newResul;
                                                             }
                                                         }
                                                     }
 
-                                                    // Validar
-                                                    if (value.codtipocliente.Equals("03"))
+                                                    if (cantidadInput > 0)
                                                     {
-                                                        if (value.codpedido != null)
+                                                        transaction.Rollback();
+                                                        vResultadoTransaccion.IdRegistro = -1;
+                                                        vResultadoTransaccion.ResultadoCodigo = -1;
+                                                        vResultadoTransaccion.ResultadoDescripcion = "No existe suficiente stock para el producto: " + item.codproducto;
+                                                        return vResultadoTransaccion;
+                                                    }
+
+                                                    if (listLote.Count > 0)
+                                                    {
+                                                        foreach (BE_StockLote lote in listLote)
                                                         {
-                                                            if (value.codpedido.Length.Equals(14))
+                                                            if (lote.Quantityinput > 0)
                                                             {
+                                                                itemLote = new BE_VentasDetalleLote { lote = lote.BatchNum, cantidad = lote.Quantityinput, coddetalle = item.coddetalle, fechavencimiento = lote.ExpDate };
 
-                                                                ResultadoTransaccion<BE_VentasDetalle> vResultadoTransaccionPedido = await PedidoxDevolverRecalculo(connClinica, item.codpedido, item.codproducto, item.cantidad, 0, 0);
+                                                                ResultadoTransaccion<bool> resultadoTransaccionRegistraVentaLote = await RegistraVentaDetalleLote(conn, itemLote, (int)value.RegIdUsuario);
 
-                                                                if (vResultadoTransaccionPedido.ResultadoCodigo == -1)
+                                                                if (resultadoTransaccionRegistraVentaLote.ResultadoCodigo == -1)
                                                                 {
-                                                                    transactionClinica.Rollback();
                                                                     transaction.Rollback();
                                                                     vResultadoTransaccion.IdRegistro = -1;
                                                                     vResultadoTransaccion.ResultadoCodigo = -1;
-                                                                    vResultadoTransaccion.ResultadoDescripcion = vResultadoTransaccionPedido.ResultadoDescripcion;
+                                                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionRegistraVentaLote.ResultadoDescripcion;
                                                                     return vResultadoTransaccion;
                                                                 }
                                                             }
@@ -972,348 +929,353 @@ namespace Net.Data
                                                     }
 
                                                 }
-
-                                                /*Genera transferencia automatica*/
-
-                                                if (value.codtipocliente.Equals("01"))
+                                                else
                                                 {
-                                                    if (value.codpedido != null)
-                                                    {
-                                                        if (value.codpedido.Length.Equals(14))
-                                                        {
-                                                            ResultadoTransaccion<string> resultadoTransaccionPrestacion = await GetTipoProductoPrestaciones(conn, value.codventa, itemQuiebre.codtipoproducto, "078");
-
-                                                            if (resultadoTransaccionPrestacion.ResultadoCodigo == -1)
-                                                            {
-                                                                transactionClinica.Rollback();
-                                                                transaction.Rollback();
-                                                                vResultadoTransaccion.IdRegistro = -1;
-                                                                vResultadoTransaccion.ResultadoCodigo = -1;
-                                                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPrestacion.ResultadoDescripcion;
-                                                                return vResultadoTransaccion;
-                                                            }
-
-                                                            vCodigoPrestacion = resultadoTransaccionPrestacion.data;
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        ResultadoTransaccion<string> resultadoTransaccionPrestacion = await GetTipoProductoPrestaciones(conn, value.codventa, itemQuiebre.codtipoproducto, string.Empty);
-
-                                                        if (resultadoTransaccionPrestacion.ResultadoCodigo == -1)
-                                                        {
-                                                            transactionClinica.Rollback();
-                                                            transaction.Rollback();
-                                                            vResultadoTransaccion.IdRegistro = -1;
-                                                            vResultadoTransaccion.ResultadoCodigo = -1;
-                                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPrestacion.ResultadoDescripcion;
-                                                            return vResultadoTransaccion;
-                                                        }
-
-                                                        vCodigoPrestacion = resultadoTransaccionPrestacion.data;
-                                                    }
-
-                                                    ResultadoTransaccion<decimal> resultadoTransaccionGncxVenta = await GetGncPorVenta(conn, value.codventa);
-
-                                                    if (resultadoTransaccionGncxVenta.ResultadoCodigo == -1)
-                                                    {
-                                                        transactionClinica.Rollback();
-                                                        transaction.Rollback();
-                                                        vResultadoTransaccion.IdRegistro = -1;
-                                                        vResultadoTransaccion.ResultadoCodigo = -1;
-                                                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionGncxVenta.ResultadoDescripcion;
-                                                        return vResultadoTransaccion;
-                                                    }
-
-                                                    vGncPorVenta = resultadoTransaccionGncxVenta.data;
-
-                                                    ResultadoTransaccion<BE_ValidaPresotor> resultadoTransaccionValidaPresotor = await GetValidaPresotor(conn, value.codatencion, value.codventa);
-
-                                                    if (resultadoTransaccionValidaPresotor.ResultadoCodigo == -1)
-                                                    {
-                                                        transactionClinica.Rollback();
-                                                        transaction.Rollback();
-                                                        vResultadoTransaccion.IdRegistro = -1;
-                                                        vResultadoTransaccion.ResultadoCodigo = -1;
-                                                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionValidaPresotor.ResultadoDescripcion;
-                                                        return vResultadoTransaccion;
-                                                    }
-
-                                                    vValidaPresotor = resultadoTransaccionValidaPresotor.data;
-
-                                                    if (vValidaPresotor.seguir_venta.Equals("N"))
-                                                    {
-                                                        transactionClinica.Rollback();
-                                                        transaction.Rollback();
-                                                        vResultadoTransaccion.IdRegistro = -1;
-                                                        vResultadoTransaccion.ResultadoCodigo = -1;
-                                                        vResultadoTransaccion.ResultadoDescripcion = "Error al generar la venta...!!!, Por favor grabar la venta de nuevo";
-                                                        return vResultadoTransaccion;
-                                                    }
-
-                                                    ResultadoTransaccion<string> resultadoTransaccionCodigoPresotor = await ResgistraPrestacion(connClinica ,value.codatencion, vCodigoPrestacion, (float)value.montototal, (float)vGncPorVenta, (float)value.montopaciente, 0, (float)value.porcentajecoaseguro, 0, value.codventa, 0, value.observacion, value.tipomovimiento);
-
-                                                    if (resultadoTransaccionCodigoPresotor.ResultadoCodigo == -1)
-                                                    {
-                                                        transactionClinica.Rollback();
-                                                        transaction.Rollback();
-                                                        vResultadoTransaccion.IdRegistro = -1;
-                                                        vResultadoTransaccion.ResultadoCodigo = -1;
-                                                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionCodigoPresotor.ResultadoDescripcion;
-                                                        return vResultadoTransaccion;
-                                                    }
-
-                                                    vCodigoPresotor = resultadoTransaccionCodigoPresotor.data;
-
-                                                    if (vValidaPresotor.codatencion_ver != vCodigoPresotor.Substring(0, 8))
-                                                    {
-                                                        transactionClinica.Rollback();
-                                                        transaction.Rollback();
-                                                        vResultadoTransaccion.IdRegistro = -1;
-                                                        vResultadoTransaccion.ResultadoCodigo = -1;
-                                                        vResultadoTransaccion.ResultadoDescripcion = "Error al generar la venta...!!!, Por favor grabar la venta de nuevo";
-                                                        return vResultadoTransaccion;
-                                                    }
-
-                                                    using (SqlCommand cmdUpdate = new SqlCommand(SP_UPDATE, conn))
-                                                    {
-                                                        cmdUpdate.Parameters.Clear();
-                                                        cmdUpdate.CommandType = System.Data.CommandType.StoredProcedure;
-
-                                                        cmdUpdate.Parameters.Add(new SqlParameter("@codventa", value.codventa));
-
-                                                        cmdUpdate.Parameters.Add(new SqlParameter("@codpresotor", vCodigoPresotor));
-
-                                                        // Datos de Auditoria
-                                                        cmdUpdate.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
-                                                        // Datos de Transaccion
-                                                        SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
-                                                        {
-                                                            Direction = ParameterDirection.Output
-                                                        };
-                                                        cmdUpdate.Parameters.Add(outputIdTransaccionParam);
-
-                                                        SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
-                                                        {
-                                                            Direction = ParameterDirection.Output
-                                                        };
-                                                        cmdUpdate.Parameters.Add(outputMsjTransaccionParam);
-
-                                                        await cmdUpdate.ExecuteNonQueryAsync();
-                                                    }
-
-                                                    ResultadoTransaccion<string> resultadoTransaccionPresotorConsultaVarios = await GetPresotorConsultaVarios(connClinica, value.codatencion, vCodigoPresotor, 3);
-
-                                                    if (resultadoTransaccionPresotorConsultaVarios.ResultadoCodigo == -1)
-                                                    {
-                                                        transactionClinica.Rollback();
-                                                        transaction.Rollback();
-                                                        vResultadoTransaccion.IdRegistro = -1;
-                                                        vResultadoTransaccion.ResultadoCodigo = -1;
-                                                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPresotorConsultaVarios.ResultadoDescripcion;
-                                                        return vResultadoTransaccion;
-                                                    }
-
-                                                    if (resultadoTransaccionPresotorConsultaVarios.data.Equals("N"))
-                                                    {
-                                                        transactionClinica.Rollback();
-                                                        transaction.Rollback();
-                                                        vResultadoTransaccion.IdRegistro = -1;
-                                                        vResultadoTransaccion.ResultadoCodigo = -1;
-                                                        vResultadoTransaccion.ResultadoDescripcion = "Error al generar la venta...!!!, Por favor grabar la venta de nuevo";
-                                                        return vResultadoTransaccion;
-                                                    }
-
-                                                    ResultadoTransaccion<bool> resultadoTransaccionActualizarPresotor = new ResultadoTransaccion<bool>();
-
-                                                    if (vFlagPaquete.Equals("S"))
-                                                    {
-                                                        resultadoTransaccionActualizarPresotor = await ActualizarPresotor(connClinica, "flagpaquete", vCodigoPresotor, "S");
-                                                    }
-                                                    else
-                                                    {
-                                                        resultadoTransaccionActualizarPresotor = await ActualizarPresotor(connClinica, "flagpaquete", vCodigoPresotor, "N");
-                                                    }
-
-                                                    if (resultadoTransaccionActualizarPresotor.ResultadoCodigo == -1)
-                                                    {
-                                                        transactionClinica.Rollback();
-                                                        transaction.Rollback();
-                                                        vResultadoTransaccion.IdRegistro = -1;
-                                                        vResultadoTransaccion.ResultadoCodigo = -1;
-                                                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionActualizarPresotor.ResultadoDescripcion;
-                                                        return vResultadoTransaccion;
-                                                    }
-
-                                                    if (!value.codatencion.Substring(1, 1).Equals("A"))
-                                                    {
-                                                        if (vNoCubierto)
-                                                        {
-                                                            ResultadoTransaccion<bool> resultadoTransaccionValorGNC = await ActualizarPresotor(connClinica, "valorgnc", vCodigoPresotor, vGncPorVenta.ToString());
-
-                                                            if (resultadoTransaccionValorGNC.ResultadoCodigo == -1)
-                                                            {
-                                                                transactionClinica.Rollback();
-                                                                transaction.Rollback();
-                                                                vResultadoTransaccion.IdRegistro = -1;
-                                                                vResultadoTransaccion.ResultadoCodigo = -1;
-                                                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionValorGNC.ResultadoDescripcion;
-                                                                return vResultadoTransaccion;
-                                                            }
-
-                                                            ResultadoTransaccion<bool> resultadoTransaccionLiqTerceroContratante = await ActualizarPresotor(connClinica, "liqtercerocontratante", vCodigoPresotor, "S");
-
-                                                            if (resultadoTransaccionLiqTerceroContratante.ResultadoCodigo == -1)
-                                                            {
-                                                                transactionClinica.Rollback();
-                                                                transaction.Rollback();
-                                                                vResultadoTransaccion.IdRegistro = -1;
-                                                                vResultadoTransaccion.ResultadoCodigo = -1;
-                                                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionLiqTerceroContratante.ResultadoDescripcion;
-                                                                return vResultadoTransaccion;
-                                                            }
-                                                        }
-                                                    }
-
-                                                    ResultadoTransaccion<bool> resultadoTransaccionAfectoImpuesto = new ResultadoTransaccion<bool>();
-
-                                                    if (itemQuiebre.igvproducto.Equals(0))
-                                                    {
-                                                        resultadoTransaccionAfectoImpuesto = await ActualizarPresotor(connClinica, "afectoimpuesto", vCodigoPresotor, "N");
-                                                    }
-                                                    else
-                                                    {
-                                                        resultadoTransaccionAfectoImpuesto = await ActualizarPresotor(connClinica, "afectoimpuesto", vCodigoPresotor, "S");
-                                                    }
-
-                                                    if (resultadoTransaccionAfectoImpuesto.ResultadoCodigo == -1)
-                                                    {
-                                                        transactionClinica.Rollback();
-                                                        transaction.Rollback();
-                                                        vResultadoTransaccion.IdRegistro = -1;
-                                                        vResultadoTransaccion.ResultadoCodigo = -1;
-                                                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionAfectoImpuesto.ResultadoDescripcion;
-                                                        return vResultadoTransaccion;
-                                                    }
-
-                                                    ResultadoTransaccion<bool> resultadoTransaccionCodMedicoEnvia = await ActualizarPresotor(connClinica, "codmedicoenvia", vCodigoPresotor, value.codmedico);
-
-                                                    if (resultadoTransaccionCodMedicoEnvia.ResultadoCodigo == -1)
-                                                    {
-                                                        transactionClinica.Rollback();
-                                                        transaction.Rollback();
-                                                        vResultadoTransaccion.IdRegistro = -1;
-                                                        vResultadoTransaccion.ResultadoCodigo = -1;
-                                                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionCodMedicoEnvia.ResultadoDescripcion;
-                                                        return vResultadoTransaccion;
-                                                    }
-                                                }
-
-                                                if (value.codtipocliente.Equals("03"))
-                                                {
-                                                    if (value.codpedido != null)
-                                                    {
-                                                        if (value.codpedido.Length.Equals(14))
-                                                        {
-
-                                                            ResultadoTransaccion<BE_VentasDetalle> vResultadoTransaccionPedido = await PedidoxDevolverRecalculo(connClinica, value.codpedido, string.Empty, 0, 0, 1);
-
-                                                            if (vResultadoTransaccionPedido.ResultadoCodigo == -1)
-                                                            {
-                                                                transactionClinica.Rollback();
-                                                                transaction.Rollback();
-                                                                vResultadoTransaccion.IdRegistro = -1;
-                                                                vResultadoTransaccion.ResultadoCodigo = -1;
-                                                                vResultadoTransaccion.ResultadoDescripcion = vResultadoTransaccionPedido.ResultadoDescripcion;
-                                                                return vResultadoTransaccion;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-
-                                                listVentasGenerados.Add(new BE_VentasGenerado { codventa = value.codventa, codpresotor = vCodigoPresotor });
-
-                                            }
-
-                                            using (SqlCommand cmdDscDetalle = new SqlCommand(SP_UPDATE_DSCTO_DETALLE, conn))
-                                            {
-                                                foreach (BE_VentasGenerado itemVenta in listVentasGenerados)
-                                                {
-                                                    cmdDscDetalle.Parameters.Clear();
-                                                    cmdDscDetalle.CommandType = System.Data.CommandType.StoredProcedure;
-
-                                                    cmdDscDetalle.Parameters.Add(new SqlParameter("@codventa", itemVenta.codventa));
-                                                    cmdDscDetalle.Parameters.Add(new SqlParameter("@codpresotor", itemVenta.codpresotor));
-                                                    // Datos de Auditoria
-                                                    cmdDscDetalle.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
-                                                    // Datos de Transaccion
-                                                    SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
-                                                    {
-                                                        Direction = ParameterDirection.Output
-                                                    };
-                                                    cmdDscDetalle.Parameters.Add(outputIdTransaccionParam);
-
-                                                    SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
-                                                    {
-                                                        Direction = ParameterDirection.Output
-                                                    };
-                                                    cmdDscDetalle.Parameters.Add(outputMsjTransaccionParam);
-
-                                                    await cmdDscDetalle.ExecuteNonQueryAsync();
-                                                }
-                                            }
-
-                                            if (value.codtipocliente.Equals("01"))
-                                            {
-                                                ResultadoTransaccion<bool> resultadoTransaccionVistoBueno = await ActualizarPedido(connClinica, "vistobueno", value.codpedido, "L", value.RegIdUsuario.ToString());
-
-                                                if (resultadoTransaccionVistoBueno.ResultadoCodigo == -1)
-                                                {
-                                                    transactionClinica.Rollback();
                                                     transaction.Rollback();
                                                     vResultadoTransaccion.IdRegistro = -1;
                                                     vResultadoTransaccion.ResultadoCodigo = -1;
-                                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionVistoBueno.ResultadoDescripcion;
+                                                    vResultadoTransaccion.ResultadoDescripcion = "No se encuentran lotes con stock para el producto " + item.codproducto;
                                                     return vResultadoTransaccion;
                                                 }
 
-                                                ResultadoTransaccion<bool> resultadoTransaccionFechaAtencion = await ActualizarPedido(connClinica, "fechaatencion_servidor", value.codpedido, "L", DateTime.Now.ToString());
+                                            }
+                                        }
 
-                                                if (resultadoTransaccionFechaAtencion.ResultadoCodigo == -1)
+                                        if (item.VentasDetalleDatos != null)
+                                        {
+                                            if (!item.VentasDetalleDatos.tipodocumentoautorizacion.Equals("00"))
+                                            {
+                                                ResultadoTransaccion<bool> resultadoTransaccionRegistraVentaDatos = await RegistraVentaDatos(conn, item, (int)value.RegIdUsuario);
+
+                                                if (resultadoTransaccionRegistraVentaDatos.ResultadoCodigo == -1)
                                                 {
-                                                    transactionClinica.Rollback();
                                                     transaction.Rollback();
                                                     vResultadoTransaccion.IdRegistro = -1;
                                                     vResultadoTransaccion.ResultadoCodigo = -1;
-                                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionFechaAtencion.ResultadoDescripcion;
+                                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionRegistraVentaDatos.ResultadoDescripcion;
                                                     return vResultadoTransaccion;
                                                 }
                                             }
                                         }
 
-                                        transactionClinica.Commit();
+                                        // Validar
+                                        if (value.codtipocliente.Equals("03"))
+                                        {
+                                            if (value.codpedido != null)
+                                            {
+                                                if (value.codpedido.Length.Equals(14))
+                                                {
+
+                                                    ResultadoTransaccion<bool> vResultadoTransaccionPedido = await PedidoxDevolverRecalculo(conn, item.codpedido, item.codproducto, item.cantidad, 0, 0);
+
+                                                    if (vResultadoTransaccionPedido.ResultadoCodigo == -1)
+                                                    {
+                                                        transaction.Rollback();
+                                                        vResultadoTransaccion.IdRegistro = -1;
+                                                        vResultadoTransaccion.ResultadoCodigo = -1;
+                                                        vResultadoTransaccion.ResultadoDescripcion = vResultadoTransaccionPedido.ResultadoDescripcion;
+                                                        return vResultadoTransaccion;
+                                                    }
+                                                }
+                                            }
+                                        }
+
                                     }
-                                    catch (Exception ex)
+
+                                    /*Genera transferencia automatica*/
+
+                                    if (value.codtipocliente.Equals("01"))
                                     {
-                                        transactionClinica.Rollback();
-                                        transaction.Rollback();
-                                        vResultadoTransaccion.IdRegistro = -1;
-                                        vResultadoTransaccion.ResultadoCodigo = -1;
-                                        vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                                        if (value.codpedido != null)
+                                        {
+                                            if (value.codpedido.Length.Equals(14))
+                                            {
+                                                ResultadoTransaccion<string> resultadoTransaccionPrestacion = await GetTipoProductoPrestaciones(conn, value.codventa, itemQuiebre.codtipoproducto, "078");
+
+                                                if (resultadoTransaccionPrestacion.ResultadoCodigo == -1)
+                                                {
+                                                    transaction.Rollback();
+                                                    vResultadoTransaccion.IdRegistro = -1;
+                                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPrestacion.ResultadoDescripcion;
+                                                    return vResultadoTransaccion;
+                                                }
+
+                                                vCodigoPrestacion = resultadoTransaccionPrestacion.data;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            ResultadoTransaccion<string> resultadoTransaccionPrestacion = await GetTipoProductoPrestaciones(conn, value.codventa, itemQuiebre.codtipoproducto, string.Empty);
+
+                                            if (resultadoTransaccionPrestacion.ResultadoCodigo == -1)
+                                            {
+                                                transaction.Rollback();
+                                                vResultadoTransaccion.IdRegistro = -1;
+                                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPrestacion.ResultadoDescripcion;
+                                                return vResultadoTransaccion;
+                                            }
+
+                                            vCodigoPrestacion = resultadoTransaccionPrestacion.data;
+                                        }
+
+                                        ResultadoTransaccion<decimal> resultadoTransaccionGncxVenta = await GetGncPorVenta(conn, value.codventa);
+
+                                        if (resultadoTransaccionGncxVenta.ResultadoCodigo == -1)
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionGncxVenta.ResultadoDescripcion;
+                                            return vResultadoTransaccion;
+                                        }
+
+                                        vGncPorVenta = resultadoTransaccionGncxVenta.data;
+
+                                        ResultadoTransaccion<BE_ValidaPresotor> resultadoTransaccionValidaPresotor = await GetValidaPresotor(conn, value.codatencion, value.codventa);
+
+                                        if (resultadoTransaccionValidaPresotor.ResultadoCodigo == -1)
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionValidaPresotor.ResultadoDescripcion;
+                                            return vResultadoTransaccion;
+                                        }
+
+                                        vValidaPresotor = resultadoTransaccionValidaPresotor.data;
+
+                                        if (vValidaPresotor.seguir_venta.Equals("N"))
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = "Error al generar la venta...!!!, Por favor grabar la venta de nuevo";
+                                            return vResultadoTransaccion;
+                                        }
+
+                                        ResultadoTransaccion<string> resultadoTransaccionCodigoPresotor = await ResgistraPrestacion(conn, value.codatencion, vCodigoPrestacion, (float)value.montototal, (float)vGncPorVenta, (float)value.montopaciente, 0, (float)value.porcentajecoaseguro, 0, value.codventa, 0, value.observacion, value.tipomovimiento);
+
+                                        if (resultadoTransaccionCodigoPresotor.ResultadoCodigo == -1)
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionCodigoPresotor.ResultadoDescripcion;
+                                            return vResultadoTransaccion;
+                                        }
+
+                                        vCodigoPresotor = resultadoTransaccionCodigoPresotor.data;
+
+                                        if (vValidaPresotor.codatencion_ver != vCodigoPresotor.Substring(0, 8))
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = "Error al generar la venta...!!!, Por favor grabar la venta de nuevo";
+                                            return vResultadoTransaccion;
+                                        }
+
+                                        ResultadoTransaccion<bool> resultadoTransaccionActualizarVenta = await ActualizarVenta(conn, value.codventa, vCodigoPresotor, (int)value.RegIdUsuario);
+
+                                        if (resultadoTransaccionActualizarVenta.ResultadoCodigo == -1)
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionActualizarVenta.ResultadoDescripcion;
+                                            return vResultadoTransaccion;
+                                        }
+
+                                        ResultadoTransaccion<string> resultadoTransaccionPresotorConsultaVarios = await GetPresotorConsultaVarios(conn, value.codatencion, vCodigoPresotor, 3);
+
+                                        if (resultadoTransaccionPresotorConsultaVarios.ResultadoCodigo == -1)
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPresotorConsultaVarios.ResultadoDescripcion;
+                                            return vResultadoTransaccion;
+                                        }
+
+                                        if (resultadoTransaccionPresotorConsultaVarios.data.Equals("N"))
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = "Error al generar la venta...!!!, Por favor grabar la venta de nuevo";
+                                            return vResultadoTransaccion;
+                                        }
+
+                                        ResultadoTransaccion<bool> resultadoTransaccionActualizarPresotor = new ResultadoTransaccion<bool>();
+
+                                        if (vFlagPaquete.Equals("S"))
+                                        {
+                                            resultadoTransaccionActualizarPresotor = await ActualizarPresotor(conn, "flagpaquete", vCodigoPresotor, "S");
+                                        }
+                                        else
+                                        {
+                                            resultadoTransaccionActualizarPresotor = await ActualizarPresotor(conn, "flagpaquete", vCodigoPresotor, "N");
+                                        }
+
+                                        if (resultadoTransaccionActualizarPresotor.ResultadoCodigo == -1)
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionActualizarPresotor.ResultadoDescripcion;
+                                            return vResultadoTransaccion;
+                                        }
+
+                                        if (!value.codatencion.Substring(1, 1).Equals("A"))
+                                        {
+                                            if (vNoCubierto)
+                                            {
+                                                ResultadoTransaccion<bool> resultadoTransaccionValorGNC = await ActualizarPresotor(conn, "valorgnc", vCodigoPresotor, vGncPorVenta.ToString());
+
+                                                if (resultadoTransaccionValorGNC.ResultadoCodigo == -1)
+                                                {
+                                                    transaction.Rollback();
+                                                    vResultadoTransaccion.IdRegistro = -1;
+                                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionValorGNC.ResultadoDescripcion;
+                                                    return vResultadoTransaccion;
+                                                }
+
+                                                ResultadoTransaccion<bool> resultadoTransaccionLiqTerceroContratante = await ActualizarPresotor(conn, "liqtercerocontratante", vCodigoPresotor, "S");
+
+                                                if (resultadoTransaccionLiqTerceroContratante.ResultadoCodigo == -1)
+                                                {
+                                                    transaction.Rollback();
+                                                    vResultadoTransaccion.IdRegistro = -1;
+                                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionLiqTerceroContratante.ResultadoDescripcion;
+                                                    return vResultadoTransaccion;
+                                                }
+                                            }
+                                        }
+
+                                        ResultadoTransaccion<bool> resultadoTransaccionAfectoImpuesto = new ResultadoTransaccion<bool>();
+
+                                        if (itemQuiebre.igvproducto.Equals(0))
+                                        {
+                                            resultadoTransaccionAfectoImpuesto = await ActualizarPresotor(conn, "afectoimpuesto", vCodigoPresotor, "N");
+                                        }
+                                        else
+                                        {
+                                            resultadoTransaccionAfectoImpuesto = await ActualizarPresotor(conn, "afectoimpuesto", vCodigoPresotor, "S");
+                                        }
+
+                                        if (resultadoTransaccionAfectoImpuesto.ResultadoCodigo == -1)
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionAfectoImpuesto.ResultadoDescripcion;
+                                            return vResultadoTransaccion;
+                                        }
+
+                                        ResultadoTransaccion<bool> resultadoTransaccionCodMedicoEnvia = await ActualizarPresotor(conn, "codmedicoenvia", vCodigoPresotor, value.codmedico);
+
+                                        if (resultadoTransaccionCodMedicoEnvia.ResultadoCodigo == -1)
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionCodMedicoEnvia.ResultadoDescripcion;
+                                            return vResultadoTransaccion;
+                                        }
+                                    }
+
+                                    if (value.codtipocliente.Equals("03"))
+                                    {
+                                        if (value.codpedido != null)
+                                        {
+                                            if (value.codpedido.Length.Equals(14))
+                                            {
+
+                                                ResultadoTransaccion<bool> vResultadoTransaccionPedido = await PedidoxDevolverRecalculo(conn, value.codpedido, string.Empty, 0, 0, 1);
+
+                                                if (vResultadoTransaccionPedido.ResultadoCodigo == -1)
+                                                {
+                                                    transaction.Rollback();
+                                                    vResultadoTransaccion.IdRegistro = -1;
+                                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                                    vResultadoTransaccion.ResultadoDescripcion = vResultadoTransaccionPedido.ResultadoDescripcion;
+                                                    return vResultadoTransaccion;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    listVentasGenerados.Add(new BE_VentasGenerado { codventa = value.codventa, codpresotor = vCodigoPresotor });
+
+                                }  
+                            }
+
+                            foreach (BE_VentasGenerado itemVenta in listVentasGenerados)
+                            {
+                                ResultadoTransaccion<bool> resultadoTransaccionActualizarVentaDcstDetalle = await ActualizarVentaDcstDetalle(conn, value.codventa, vCodigoPresotor, (int)value.RegIdUsuario);
+
+                                if (resultadoTransaccionActualizarVentaDcstDetalle.ResultadoCodigo == -1)
+                                {
+                                    transaction.Rollback();
+                                    vResultadoTransaccion.IdRegistro = -1;
+                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionActualizarVentaDcstDetalle.ResultadoDescripcion;
+                                    return vResultadoTransaccion;
+                                }
+                            }
+
+                            if (value.codtipocliente.Equals("01"))
+                            {
+                                if (value.codpedido != null)
+                                {
+                                    if (value.codpedido.Length.Equals(14))
+                                    {
+                                        ResultadoTransaccion<bool> resultadoTransaccionVistoBueno = await ActualizarPedido(conn, "vistobueno", value.codpedido, "L", value.RegIdUsuario.ToString());
+
+                                        if (resultadoTransaccionVistoBueno.ResultadoCodigo == -1)
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionVistoBueno.ResultadoDescripcion;
+                                            return vResultadoTransaccion;
+                                        }
+
+                                        ResultadoTransaccion<bool> resultadoTransaccionFechaAtencion = await ActualizarPedido(conn, "fechaatencion_servidor", value.codpedido, "L", DateTime.Now.ToString());
+
+                                        if (resultadoTransaccionFechaAtencion.ResultadoCodigo == -1)
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionFechaAtencion.ResultadoDescripcion;
+                                            return vResultadoTransaccion;
+                                        }
                                     }
                                 }
+                            }
 
-                                transaction.Commit();
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                vResultadoTransaccion.IdRegistro = -1;
-                                vResultadoTransaccion.ResultadoCodigo = -1;
-                                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
-                            }
+                            vResultadoTransaccion.IdRegistro = 0;
+                            vResultadoTransaccion.ResultadoCodigo = 0;
+                            vResultadoTransaccion.ResultadoDescripcion = "Se genero correctamente";
+
+                            vResultadoTransaccion.dataList = listVentasGenerados;
+
+                            transaction.Commit();
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
                         }
                     }
+
                 }
             }
             catch (Exception ex)
@@ -1326,15 +1288,415 @@ namespace Net.Data
             return vResultadoTransaccion;
         }
 
-        public async Task<ResultadoTransaccion<BE_VentasDetalle>> PedidoxDevolverRecalculo(SqlConnection conn, string codpedido, string codproducto, decimal entero, decimal menudeo,int orden)
+        public async Task<ResultadoTransaccion<string>> RegistraVentaCabecera(SqlConnection conn, BE_VentasCabecera value)
         {
-            ResultadoTransaccion<BE_VentasDetalle> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasDetalle>();
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
 
-            //using (SqlConnection connPedido = new SqlConnection(_cnxClinica))
+            //using (SqlConnection conn = new SqlConnection(_cnx))
+            //{
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(SP_INSERT, conn))
+                {
+                    cmd.Parameters.Clear();
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                    SqlParameter oParam = new SqlParameter("@codigo", SqlDbType.Char, 8)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmd.Parameters.Add(oParam);
+
+                    cmd.Parameters.Add(new SqlParameter("@codatencion", value.codatencion));
+                    cmd.Parameters.Add(new SqlParameter("@codpedido", value.codpedido));
+                    cmd.Parameters.Add(new SqlParameter("@codalmacen", value.codalmacen));
+                    cmd.Parameters.Add(new SqlParameter("@tipomovimiento", value.tipomovimiento));
+                    cmd.Parameters.Add(new SqlParameter("@codtipocliente", value.codtipocliente));
+                    cmd.Parameters.Add(new SqlParameter("@codempresa", value.codempresa));
+                    cmd.Parameters.Add(new SqlParameter("@codcliente", value.codcliente));
+                    cmd.Parameters.Add(new SqlParameter("@codpaciente", value.codpaciente));
+                    cmd.Parameters.Add(new SqlParameter("@nombre", value.nombre));
+                    cmd.Parameters.Add(new SqlParameter("@cama", value.cama));
+                    cmd.Parameters.Add(new SqlParameter("@codmedico", value.codmedico));
+                    cmd.Parameters.Add(new SqlParameter("@planpoliza", value.planpoliza));
+                    cmd.Parameters.Add(new SqlParameter("@codpoliza", value.codpoliza));
+                    cmd.Parameters.Add(new SqlParameter("@deducible", value.deducible));
+                    cmd.Parameters.Add(new SqlParameter("@codaseguradora", value.codaseguradora));
+                    cmd.Parameters.Add(new SqlParameter("@codcia", value.codcia));
+                    cmd.Parameters.Add(new SqlParameter("@porcentajecoaseguro", value.porcentajecoaseguro));
+                    cmd.Parameters.Add(new SqlParameter("@montodctoplan", value.montodctoplan));
+                    cmd.Parameters.Add(new SqlParameter("@porcentajedctoplan", value.porcentajedctoplan));
+                    cmd.Parameters.Add(new SqlParameter("@moneda", value.moneda));
+                    cmd.Parameters.Add(new SqlParameter("@montototal", value.montototal));
+                    cmd.Parameters.Add(new SqlParameter("@montoigv", value.montoigv));
+                    cmd.Parameters.Add(new SqlParameter("@montoneto", value.montoneto));
+                    cmd.Parameters.Add(new SqlParameter("@codplan", value.codplan));
+                    cmd.Parameters.Add(new SqlParameter("@montopaciente", value.montopaciente));
+                    cmd.Parameters.Add(new SqlParameter("@montoaseguradora", value.montoaseguradora));
+                    cmd.Parameters.Add(new SqlParameter("@observacion", value.observacion));
+                    cmd.Parameters.Add(new SqlParameter("@nombremedico", value.nombremedico));
+                    cmd.Parameters.Add(new SqlParameter("@nombreaseguradora", value.nombreaseguradora));
+                    cmd.Parameters.Add(new SqlParameter("@nombrecia", value.nombrecia));
+                    cmd.Parameters.Add(new SqlParameter("@tipocambio", value.tipocambio));
+                    cmd.Parameters.Add(new SqlParameter("@nombrediagnostico", value.nombrediagnostico));
+                    cmd.Parameters.Add(new SqlParameter("@flagpaquete", value.flagpaquete));
+                    cmd.Parameters.Add(new SqlParameter("@flg_gratuito", value.flg_gratuito));
+                    cmd.Parameters.Add(new SqlParameter("@usuario", value.usuario));
+                    cmd.Parameters.Add(new SqlParameter("@codcentro", value.codcentro));
+
+                    // Datos de Auditoria
+                    cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
+                    // Datos de Transaccion
+                    SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmd.Parameters.Add(outputIdTransaccionParam);
+
+                    SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmd.Parameters.Add(outputMsjTransaccionParam);
+
+                    await cmd.ExecuteNonQueryAsync();
+
+                    value.codventa = (string)oParam.Value;
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                    vResultadoTransaccion.data = value.codventa;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+            //}
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<string>> RegistraVentaDetalle(SqlConnection conn, string codventa, BE_VentasDetalle item, int RegIdUsuario)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            //using (SqlConnection conn = new SqlConnection(_cnx))
+            //{
+            try
+            {
+                using (SqlCommand cmdDetalle = new SqlCommand(SP_INSERT_DETALLE, conn))
+                {
+                    cmdDetalle.Parameters.Clear();
+                    cmdDetalle.CommandType = System.Data.CommandType.StoredProcedure;
+
+                    cmdDetalle.Parameters.Add(new SqlParameter("@codventa", codventa));
+
+                    SqlParameter oParamDetalle = new SqlParameter("@coddetalle", SqlDbType.Char, 10)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdDetalle.Parameters.Add(oParamDetalle);
+
+                    cmdDetalle.Parameters.Add(new SqlParameter("@codalmacen", item.codalmacen));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@tipomovimiento", item.tipomovimiento));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@codproducto", item.codproducto));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@dsc_producto", item.nombreproducto));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@cnt_unitario", item.cantidad));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@prc_unitario", item.valorVVP));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@preciounidadcondcto", item.preciounidadcondcto));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@precioventaPVP", item.precioventaPVP));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@valorVVP", item.valorVVP));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@porcentajedctoproducto", item.porcentajedctoproducto));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@montototal", item.montototal));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@montopaciente", item.montopaciente));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@montoaseguradora", item.montoaseguradora));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@codpedido", item.codpedido));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@gnc", item.gnc));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@manbtchnum", item.manBtchNum));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@flgbtchnum", item.flgbtchnum));
+
+                    // Datos de Auditoria
+                    cmdDetalle.Parameters.Add(new SqlParameter("@RegIdUsuario", RegIdUsuario));
+                    // Datos de Transaccion
+                    SqlParameter outputIdTransaccionParamDetalle = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdDetalle.Parameters.Add(outputIdTransaccionParamDetalle);
+
+                    SqlParameter outputMsjTransaccionParamDetalle = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdDetalle.Parameters.Add(outputMsjTransaccionParamDetalle);
+
+                    //await conn.OpenAsync();
+                    await cmdDetalle.ExecuteNonQueryAsync();
+
+                    item.coddetalle = (string)oParamDetalle.Value;
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParamDetalle.Value.ToString());
+                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParamDetalle.Value;
+                    vResultadoTransaccion.data = item.coddetalle;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+            //}
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<bool>> RegistraVentaDetalleLote(SqlConnection conn, BE_VentasDetalleLote item, int RegIdUsuario)
+        {
+            ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlCommand cmdDetalle = new SqlCommand(SP_INSERT_DETALLE_LOTE, conn))
+                {
+                    cmdDetalle.Parameters.Clear();
+                    cmdDetalle.CommandType = System.Data.CommandType.StoredProcedure;
+
+                    cmdDetalle.Parameters.Add(new SqlParameter("@coddetalle", item.coddetalle));
+
+                    cmdDetalle.Parameters.Add(new SqlParameter("@lote", item.lote));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@fechavencimiento", item.fechavencimiento));
+                    cmdDetalle.Parameters.Add(new SqlParameter("@cantidad", item.cantidad));
+
+                    // Datos de Auditoria
+                    cmdDetalle.Parameters.Add(new SqlParameter("@RegIdUsuario", RegIdUsuario));
+                    // Datos de Transaccion
+                    SqlParameter outputIdTransaccionParamDetalle = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdDetalle.Parameters.Add(outputIdTransaccionParamDetalle);
+
+                    SqlParameter outputMsjTransaccionParamDetalle = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdDetalle.Parameters.Add(outputMsjTransaccionParamDetalle);
+
+                    await cmdDetalle.ExecuteNonQueryAsync();
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParamDetalle.Value.ToString());
+                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParamDetalle.Value;
+                    vResultadoTransaccion.data = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<bool>> RegistraVentaDatos(SqlConnection conn, BE_VentasDetalle item, int RegIdUsuario)
+        {
+            ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            //using (SqlConnection conn = new SqlConnection(_cnx))
+            //{
+            try
+            {
+                using (SqlCommand cmdDatos = new SqlCommand(SP_INSERT_DETALLE_DATOS, conn))
+                {
+                    cmdDatos.Parameters.Clear();
+                    cmdDatos.CommandType = System.Data.CommandType.StoredProcedure;
+
+                    cmdDatos.Parameters.Add(new SqlParameter("@codventa", item.codventa));
+                    cmdDatos.Parameters.Add(new SqlParameter("@coddetalle", item.coddetalle));
+
+                    cmdDatos.Parameters.Add(new SqlParameter("@codproducto", item.codproducto));
+                    cmdDatos.Parameters.Add(new SqlParameter("@tipodocumentoautorizacion", item.VentasDetalleDatos.tipodocumentoautorizacion));
+                    cmdDatos.Parameters.Add(new SqlParameter("@numerodocumentoautorizacion", item.VentasDetalleDatos.numerodocumentoautorizacion));
+
+                    // Datos de Auditoria
+                    cmdDatos.Parameters.Add(new SqlParameter("@RegIdUsuario", RegIdUsuario));
+                    // Datos de Transaccion
+                    SqlParameter outputIdTransaccionParamDato = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdDatos.Parameters.Add(outputIdTransaccionParamDato);
+
+                    SqlParameter outputMsjTransaccionParamDato = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdDatos.Parameters.Add(outputMsjTransaccionParamDato);
+
+                    //await conn.OpenAsync();
+                    await cmdDatos.ExecuteNonQueryAsync();
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParamDato.Value.ToString());
+                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParamDato.Value;
+                    vResultadoTransaccion.data = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+            //}
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<bool>> ActualizarVenta(SqlConnection conn, string codventa, string codigopresotor, int RegIdUsuario)
+        {
+            ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            //using (SqlConnection conn = new SqlConnection(_cnx))
+            //{
+            try
+            {
+                using (SqlCommand cmdUpdate = new SqlCommand(SP_UPDATE, conn))
+                {
+                    cmdUpdate.Parameters.Clear();
+                    cmdUpdate.CommandType = System.Data.CommandType.StoredProcedure;
+
+                    cmdUpdate.Parameters.Add(new SqlParameter("@codventa", codventa));
+
+                    cmdUpdate.Parameters.Add(new SqlParameter("@codpresotor", codigopresotor));
+
+                    // Datos de Auditoria
+                    cmdUpdate.Parameters.Add(new SqlParameter("@RegIdUsuario", RegIdUsuario));
+                    // Datos de Transaccion
+                    SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdUpdate.Parameters.Add(outputIdTransaccionParam);
+
+                    SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdUpdate.Parameters.Add(outputMsjTransaccionParam);
+
+                    //await conn.OpenAsync();
+                    await cmdUpdate.ExecuteNonQueryAsync();
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                    vResultadoTransaccion.data = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+            //}
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<bool>> ActualizarVentaDcstDetalle(SqlConnection conn, string codventa, string codigopresotor, int RegIdUsuario)
+        {
+            ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            //using (SqlConnection conn = new SqlConnection(_cnx))
+            //{
+            try
+            {
+                using (SqlCommand cmdUpdate = new SqlCommand(SP_UPDATE_DSCTO_DETALLE, conn))
+                {
+                    cmdUpdate.Parameters.Clear();
+                    cmdUpdate.CommandType = System.Data.CommandType.StoredProcedure;
+
+                    cmdUpdate.Parameters.Add(new SqlParameter("@codventa", codventa));
+                    cmdUpdate.Parameters.Add(new SqlParameter("@codpresotor", codigopresotor));
+
+                    // Datos de Auditoria
+                    //cmdUpdate.Parameters.Add(new SqlParameter("@RegIdUsuario", RegIdUsuario));
+                    // Datos de Transaccion
+                    SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdUpdate.Parameters.Add(outputIdTransaccionParam);
+
+                    SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdUpdate.Parameters.Add(outputMsjTransaccionParam);
+
+                    //await conn.OpenAsync();
+                    await cmdUpdate.ExecuteNonQueryAsync();
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                    vResultadoTransaccion.data = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+            //}
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<bool>> PedidoxDevolverRecalculo(SqlConnection conn, string codpedido, string codproducto, decimal entero, decimal menudeo,int orden)
+        {
+            ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            //using (SqlConnection conn = new SqlConnection(_cnxClinica))
             //{
             try
             {
@@ -1350,12 +1712,26 @@ namespace Net.Data
                     cmdPedido.Parameters.Add(new SqlParameter("@cantM", menudeo));
                     cmdPedido.Parameters.Add(new SqlParameter("@orden", orden));
 
-                    //await connPedido.OpenAsync();
+                    // Datos de Transaccion
+                    // Datos de Transaccion
+                    SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdPedido.Parameters.Add(outputIdTransaccionParam);
+
+                    SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdPedido.Parameters.Add(outputMsjTransaccionParam);
+
                     await cmdPedido.ExecuteNonQueryAsync();
 
                     vResultadoTransaccion.IdRegistro = 0;
-                    vResultadoTransaccion.ResultadoCodigo = 0;
-                    vResultadoTransaccion.ResultadoDescripcion = "Se realizo correctamente";
+                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                    vResultadoTransaccion.data = true;
                 }
             }
             catch (Exception ex)
@@ -1408,14 +1784,26 @@ namespace Net.Data
                     };
                     cmdPedido.Parameters.Add(outputCodPresotorParam);
 
-                    //await connPedido.OpenAsync();
+                    SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdPedido.Parameters.Add(outputIdTransaccionParam);
+
+                    SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdPedido.Parameters.Add(outputMsjTransaccionParam);
+
+                    //await conn.OpenAsync();
                     await cmdPedido.ExecuteNonQueryAsync();
 
                     vCodPresotor = (string)outputCodPresotorParam.Value;
 
                     vResultadoTransaccion.IdRegistro = 0;
-                    vResultadoTransaccion.ResultadoCodigo = 0;
-                    vResultadoTransaccion.ResultadoDescripcion = "Se realizo correctamente";
+                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
                     vResultadoTransaccion.data = vCodPresotor;
                 }
             }
@@ -1451,7 +1839,7 @@ namespace Net.Data
 
                     string response = string.Empty;
 
-                    //await conn.OpenAsync();
+                    //await connTipoProducto.OpenAsync();
 
                     using (var reader = await cmdTipoProductoPrestaciones.ExecuteReaderAsync())
                     {
@@ -1498,7 +1886,7 @@ namespace Net.Data
 
                     decimal response = 0;
 
-                    //await connGnkcPorVenta.OpenAsync();
+                    //await connGncPorVenta.OpenAsync();
 
                     using (var reader = await cmdGncPorVenta.ExecuteReaderAsync())
                     {
@@ -1514,7 +1902,6 @@ namespace Net.Data
                     vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
                     vResultadoTransaccion.data = response;
                 }
-                //}
             }
             catch (Exception ex)
             {
@@ -1559,7 +1946,6 @@ namespace Net.Data
                         }
                     }
 
-
                     vResultadoTransaccion.IdRegistro = 0;
                     vResultadoTransaccion.ResultadoCodigo = 0;
                     vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
@@ -1588,7 +1974,7 @@ namespace Net.Data
 
             try
             {
-                //using (SqlConnection connPresotorConsultaVarios = new SqlConnection(_cnxClinica))
+                //using (SqlConnection connPresotorConsultaVarios = new SqlConnection(_cnx))
                 //{
                 using (SqlCommand cmdPresotorConsultaVarios = new SqlCommand(SP_GET_PRESOTOR_CONSULTAVARIOS, conn))
                 {
@@ -1636,7 +2022,7 @@ namespace Net.Data
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
 
-            //using (SqlConnection connPedido = new SqlConnection(_cnxClinica))
+            //using (SqlConnection connPresotor = new SqlConnection(_cnxClinica))
             //{
             try
             {
@@ -1648,13 +2034,23 @@ namespace Net.Data
                     cmdActualizarPresotor.Parameters.Add(new SqlParameter("@campo", campo));
                     cmdActualizarPresotor.Parameters.Add(new SqlParameter("@codigo", codpresotor));
                     cmdActualizarPresotor.Parameters.Add(new SqlParameter("@nuevovalor", nuevovalor));
+                    SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdActualizarPresotor.Parameters.Add(outputIdTransaccionParam);
 
-                    //await connPedido.OpenAsync();
+                    SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdActualizarPresotor.Parameters.Add(outputMsjTransaccionParam);
+                    //await connPresotor.OpenAsync();
                     await cmdActualizarPresotor.ExecuteNonQueryAsync();
 
                     vResultadoTransaccion.IdRegistro = 0;
-                    vResultadoTransaccion.ResultadoCodigo = 0;
-                    vResultadoTransaccion.ResultadoDescripcion = "Se realizo correctamente";
+                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
                 }
             }
             catch (Exception ex)
@@ -1676,7 +2072,7 @@ namespace Net.Data
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
 
-            //using (SqlConnection connPedido = new SqlConnection(_cnxClinica))
+            //using (SqlConnection connPedido = new SqlConnection(conn))
             //{
             try
             {
@@ -1689,13 +2085,23 @@ namespace Net.Data
                     cmdActualizarPedido.Parameters.Add(new SqlParameter("@codigo", codigo));
                     cmdActualizarPedido.Parameters.Add(new SqlParameter("@nuevovalor", nuevovalor));
                     cmdActualizarPedido.Parameters.Add(new SqlParameter("@coduser", coduser));
+                    SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdActualizarPedido.Parameters.Add(outputIdTransaccionParam);
 
+                    SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdActualizarPedido.Parameters.Add(outputMsjTransaccionParam);
                     //await connPedido.OpenAsync();
                     await cmdActualizarPedido.ExecuteNonQueryAsync();
 
                     vResultadoTransaccion.IdRegistro = 0;
-                    vResultadoTransaccion.ResultadoCodigo = 0;
-                    vResultadoTransaccion.ResultadoDescripcion = "Se realizo correctamente";
+                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
                 }
             }
             catch (Exception ex)
@@ -1705,6 +2111,112 @@ namespace Net.Data
                 vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
             }
             //}
+
+            return vResultadoTransaccion;
+        }
+
+        private ResultadoTransaccion<BE_VentasCabecera> CalculaTotales(BE_VentasDetalleQuiebre itemQuiebre, BE_VentasCabecera value)
+        {
+            ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                bool isTrabajaVariosIGV = true;
+                decimal isIGVTemp = 0;
+                decimal isIGV = 0;
+                decimal isSubTotal = 0;
+                decimal isTotalPaciente = 0;
+                decimal isTotalAseguradora = 0;
+
+                decimal isSubTotal_0 = 0;
+                decimal isTotalPaciente_0 = 0;
+                decimal isTotalAseguradora_0 = 0;
+
+                if (value.listaVentaDetalle.Any())
+                {
+                    List<BE_VentasDetalle> listVentasDetalle = value.listaVentaDetalle.FindAll(xFila => xFila.codtipoproducto == itemQuiebre.codtipoproducto && xFila.igvproducto == itemQuiebre.igvproducto && xFila.narcotico == itemQuiebre.narcotico).ToList();
+
+                    foreach (BE_VentasDetalle item in listVentasDetalle)
+                    {
+                        isIGV = item.igvproducto;
+
+                        if (isIGV > isIGVTemp)
+                        {
+                            isIGVTemp = isIGV;
+                        }
+
+                        if (!isTrabajaVariosIGV)
+                        {
+                            isSubTotal = isSubTotal + item.totalsinigv;
+                            isTotalPaciente = isTotalPaciente + item.montopaciente;
+                            isTotalAseguradora = isTotalAseguradora + item.montoaseguradora;
+                        }
+                        else
+                        {
+                            if (isIGV == 0)
+                            {
+                                isSubTotal_0 = isSubTotal_0 + item.totalsinigv;
+                                isTotalPaciente_0 = isTotalPaciente_0 + item.montopaciente;
+                                isTotalAseguradora_0 = isTotalAseguradora_0 + item.montoaseguradora;
+                            }
+                            else
+                            {
+                                isSubTotal = isSubTotal + item.totalsinigv;
+                                isTotalPaciente = isTotalPaciente + item.montopaciente;
+                                isTotalAseguradora = isTotalAseguradora + item.montoaseguradora;
+                            }
+                        }
+                    }
+
+                    isIGV = isIGVTemp;
+
+                    if (!isTrabajaVariosIGV)
+                    {
+                        value.montototal = Math.Round(isSubTotal, 2);
+                        value.montodctoplan = Math.Round(isSubTotal * (value.porcentajedctoplan / 100),2);
+                        value.montoigv = Math.Round(isSubTotal * (isIGV / 100), 2);
+                        value.montoneto = Math.Round(isSubTotal + (isSubTotal * (isIGV / 100)), 2);
+                        value.montopaciente = Math.Round(isTotalPaciente, 2);
+                        value.montoaseguradora = Math.Round(isTotalAseguradora, 2);
+                    }
+                    else
+                    {
+                        value.montototal = Math.Round(isSubTotal + isSubTotal_0, 2);
+                        value.montodctoplan = Math.Round((isSubTotal + isSubTotal_0) * (value.porcentajedctoplan / 100), 2);
+                        value.montoigv = Math.Round(isSubTotal * (isIGV / 100), 2);
+                        value.montoneto = Math.Round(isSubTotal + isSubTotal_0 + (isSubTotal * (isIGV / 100)), 2);
+                        value.montopaciente = Math.Round(isTotalPaciente + isTotalPaciente_0 + (isTotalPaciente * (isIGV / 100)), 2);
+                        value.montoaseguradora = Math.Round(isTotalAseguradora + isTotalAseguradora_0 + (isTotalAseguradora * (isIGV / 100)), 2);
+                    }
+                }
+                else
+                {
+                    value.montototal = Math.Round(isSubTotal + isSubTotal_0, 2);
+                    value.montodctoplan = Math.Round((isSubTotal + isSubTotal_0) * (value.porcentajedctoplan / 100), 2);
+                    value.montoigv = Math.Round(isSubTotal * (isIGV / 100), 2);
+                    value.montoneto = Math.Round((isSubTotal + isSubTotal_0) + (isSubTotal * (isIGV / 100)), 2);
+                    value.montopaciente = Math.Round(isTotalPaciente + isTotalPaciente_0 + (isTotalPaciente * (isIGV / 100)), 2);
+                    value.montoaseguradora = Math.Round(isTotalAseguradora + isTotalAseguradora_0 + (isTotalAseguradora * (isIGV / 100)), 2);
+                }
+
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = "Se realizo el calculo correctamente";
+                vResultadoTransaccion.data = value;
+
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+            
 
             return vResultadoTransaccion;
         }
