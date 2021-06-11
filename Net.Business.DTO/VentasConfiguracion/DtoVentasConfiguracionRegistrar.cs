@@ -10,6 +10,7 @@ namespace Net.Business.DTO
         public bool flgmanual { get; set; }
         public bool flgpedido { get; set; }
         public bool flgreceta { get; set; }
+        public bool flgimpresionautomatico { get; set; }
         public string codalmacen { get; set; }
         public string desalmacen { get; set; }
 
@@ -25,6 +26,7 @@ namespace Net.Business.DTO
                 flgreceta = this.flgreceta,
                 codalmacen = this.codalmacen,
                 desalmacen = this.desalmacen,
+                flgimpresionautomatico = this.flgimpresionautomatico,
                 RegIdUsuario = this.RegIdUsuario
             };
         }

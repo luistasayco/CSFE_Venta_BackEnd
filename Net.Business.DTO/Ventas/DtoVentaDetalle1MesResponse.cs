@@ -10,7 +10,7 @@ namespace Net.Business.DTO
         public DateTime fechaemision { get; set; }
         public string codproducto { get; set; }
         public string nombreproducto { get; set; }
-        public int cantidad { get; set; }
+        public decimal cantidad { get; set; }
 
         public DtoVentaDetalle1MesResponse RetornaVentaDetalle1MesResponse(BE_VentasDetalle value)
         {

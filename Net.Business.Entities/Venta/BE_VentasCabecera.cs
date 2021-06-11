@@ -151,7 +151,7 @@ namespace Net.Business.Entities
         [DBParameter(SqlDbType.VarChar, 20, ActionType.Everything)]
         public string nombremaquina { get; set; }
         public string usuario { get; set; }
-
+        public string motivoanulacion { get; set; }
         public List<BE_VentasGenerado> listVentasGenerado { get; set; }
     }
 }

@@ -13,6 +13,7 @@ namespace Net.Data
     class PersonalClinicaRepository : RepositoryBase<BE_PersonalClinica>, IPersonalClinicaRepository
     {
         private readonly string _cnx;
+        private readonly string _cnxLogistica;
 
         private string _aplicacionName;
         private string _metodoName;
@@ -20,6 +21,7 @@ namespace Net.Data
 
         const string DB_ESQUEMA = "";
         const string SP_GET = DB_ESQUEMA + "Fa_Personal_Consulta";
+
         const string SP_GET_LIMITE_CONSUMO = DB_ESQUEMA + "VEN_LimiteConsumoPersonalPorPersonalGet";
 
         public PersonalClinicaRepository(IConnectionSQL context, IConfiguration configuration)
@@ -27,6 +29,7 @@ namespace Net.Data
         {
             _aplicacionName = this.GetType().Name;
             _cnx = configuration.GetConnectionString("cnnSqlPlanilla");
+            _cnxLogistica = configuration.GetConnectionString("cnnSqlLogistica");
         }
         public async Task<ResultadoTransaccion<BE_PersonalClinica>> GetListPersonalClinicaPorNombre(string nombre)
         {
@@ -85,7 +88,7 @@ namespace Net.Data
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
             try
             {
-                using (SqlConnection conn = new SqlConnection(_cnx))
+                using (SqlConnection conn = new SqlConnection(_cnxLogistica))
                 {
                     using (SqlCommand cmd = new SqlCommand(SP_GET_LIMITE_CONSUMO, conn))
                     {

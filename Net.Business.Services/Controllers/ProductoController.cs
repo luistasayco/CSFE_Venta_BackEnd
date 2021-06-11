@@ -85,10 +85,10 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetProductoPorCodigo([FromQuery] string codalmacen, string codproducto, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente)
+        public async Task<IActionResult> GetProductoPorCodigo([FromQuery] string codalmacen, string codproducto, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
         {
 
-            var objectGetAll = await _repository.Producto.GetProductoPorCodigo(codalmacen, codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente);
+            var objectGetAll = await _repository.Producto.GetProductoPorCodigo(codalmacen, codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {
@@ -112,6 +112,38 @@ namespace Net.Business.Services.Controllers
             }
 
             return Ok(objectGetAll.data);
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetListDetalleProductoPorPedido([FromQuery] string codpedido, string codalmacen, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
+        {
+
+            var objectGetAll = await _repository.Producto.GetListDetalleProductoPorPedido(codpedido, codalmacen, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetListDetalleProductoPorReceta([FromQuery] int idereceta, string codalmacen, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
+        {
+
+            var objectGetAll = await _repository.Producto.GetListDetalleProductoPorReceta(idereceta, codalmacen, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
         }
     }
 }

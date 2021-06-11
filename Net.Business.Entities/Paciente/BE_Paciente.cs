@@ -36,9 +36,9 @@ namespace Net.Business.Entities
         public int numerodiasatencion { get; set; }
         public string nombretarifa { get; set; }
         public string nombreparentesco { get; set; }
-        public double? coaseguro { get; set; }
-        public double? deducible { get; set; }
-        public double? descuento { get; set; }
+        public double coaseguro { get; set; }
+        public double deducible { get; set; }
+        public double descuento { get; set; }
         public string nombreconcepto { get; set; }
         public string nombremoneda { get; set; }
         public int activo { get; set; }

@@ -15,6 +15,7 @@ namespace Net.Business.Entities
         /// <summary>
         /// Trabaja con Lote
         /// </summary>
+        public bool manbtchnum { get => ManageBatchNumbers.Equals("tYES") ? true : false; }
         public string ManageBatchNumbers { get; set; }
         public string ArTaxCode { get; set; }
         /// <summary>
@@ -76,19 +77,19 @@ namespace Net.Business.Entities
         /// <summary>
         /// Fraccion Venta
         /// </summary>
-        public int U_SYP_CS_FRVTA { get; set; }
+        public int? U_SYP_CS_FRVTA { get; set; }
         /// <summary>
         /// Fraccion Venta
         /// </summary>
-        public decimal fraccionVenta { get => U_SYP_CS_FRVTA.Equals(null) ? 0 : U_SYP_CS_FRVTA; }
+        public decimal? fraccionVenta { get => U_SYP_CS_FRVTA.Equals(null) ? 0 : U_SYP_CS_FRVTA; }
         /// <summary>
         /// Descuento del producto
         /// </summary>
-        public decimal U_SYP_CS_DCTO { get; set; }
+        public decimal? U_SYP_CS_DCTO { get; set; }
         /// <summary>
         /// Descuento del producto
         /// </summary>
-        public decimal valorDescuento { get => U_SYP_CS_DCTO.Equals(null) ? 0 : U_SYP_CS_DCTO; }
+        public decimal? valorDescuento { get => U_SYP_CS_DCTO.Equals(null) ? 0 : U_SYP_CS_DCTO; }
         public bool FlgConvenio { get; set; }
         /// <summary>
         /// Narcotico ?
@@ -98,6 +99,19 @@ namespace Net.Business.Entities
         /// Narcotico ?
         /// </summary>
         public bool Narcotico { get => Properties1.Equals("tSI") ? true: false; }
+
+        public bool GastoCubierto { get; set; }
+        public bool ProductoRestringido { get; set; }
+
+        /// <summary>
+        /// Cantidad del Pedido
+        /// </summary>
+        public decimal CantidadPedido { get; set; }
+        /// <summary>
+        /// CodPedido
+        /// </summary>
+        public string CodPedido { get; set; }
+        public decimal ProductoStock { get; set; }
 
         public List<BE_Stock> ListStockAlmacen { get; set; }
 

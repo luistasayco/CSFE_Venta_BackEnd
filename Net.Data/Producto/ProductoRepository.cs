@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System;
 using Microsoft.Data.SqlClient;
 using Net.Connection;
+using System.Linq;
 
 namespace Net.Data
 {
@@ -196,7 +197,7 @@ namespace Net.Data
 
         }
 
-        public async Task<ResultadoTransaccion<BE_Producto>> GetProductoPorCodigo(string codalmacen, string codproducto, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente)
+        public async Task<ResultadoTransaccion<BE_Producto>> GetProductoPorCodigo(string codalmacen, string codproducto, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
         {
             ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
@@ -213,116 +214,173 @@ namespace Net.Data
 
                 cadena = cadena + campos + filter;
 
-                BE_Producto data = await _connectServiceLayer.GetAsyncTo<BE_Producto>(cadena);
+                List<BE_Producto> listProductos = await _connectServiceLayer.GetAsync<BE_Producto>(cadena);
 
-                if (!string.IsNullOrEmpty(codaseguradora) && !string.IsNullOrEmpty(codcia))
+                if (listProductos.Any())
                 {
-                    ResultadoTransaccion<BE_Producto> dataAlternativo = await GetListProductoAlternativoPorCodigo(codproducto, codaseguradora, codcia);
 
-                    if (dataAlternativo.ResultadoCodigo == -1)
+                    BE_Producto data = listProductos[0];
+
+                    if (!string.IsNullOrEmpty(codaseguradora) && !string.IsNullOrEmpty(codcia))
+                    {
+                        ResultadoTransaccion<BE_Producto> dataAlternativo = await GetListProductoAlternativoPorCodigo(codproducto, codaseguradora, codcia);
+
+                        if (dataAlternativo.ResultadoCodigo == -1)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = dataAlternativo.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+
+                        if (((List<BE_Producto>)dataAlternativo.dataList).Count > 0)
+                        {
+                            data.flgrestringido = true;
+                        }
+                    }
+
+                    IGVRepository iGVRepository = new IGVRepository(_clientFactory, _configuration);
+                    ResultadoTransaccion<BE_IGV> resultadoTransaccionIGV = await iGVRepository.GetIGVPorCodigo(data.ArTaxCode);
+
+                    if (resultadoTransaccionIGV.ResultadoCodigo == -1)
                     {
                         vResultadoTransaccion.IdRegistro = -1;
                         vResultadoTransaccion.ResultadoCodigo = -1;
-                        vResultadoTransaccion.ResultadoDescripcion = dataAlternativo.ResultadoDescripcion;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionIGV.ResultadoDescripcion;
                         return vResultadoTransaccion;
                     }
 
-                    if (((List<BE_Producto>)dataAlternativo.dataList).Count > 0)
+                    if (((List<BE_IGV>)resultadoTransaccionIGV.dataList).Count > 0)
                     {
-                        data.flgrestringido = true;
-                    }
-                }
-
-                //if (data.ManageBatchNumbers.Equals("tYES"))
-                //{
-                //    StockRepository stockRepository = new StockRepository(_clientFactory, _configuration);
-                //    ResultadoTransaccion<BE_StockLote> resultadoTransaccionStockLote = await stockRepository.GetListStockLotePorFiltro(codalmacen, codproducto, true);
-
-                //    if (resultadoTransaccionStockLote.ResultadoCodigo == -1)
-                //    {
-                //        vResultadoTransaccion.IdRegistro = -1;
-                //        vResultadoTransaccion.ResultadoCodigo = -1;
-                //        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionStockLote.ResultadoDescripcion;
-                //        return vResultadoTransaccion;
-                //    }
-
-                //    data.ListStockLote = (List<BE_StockLote>)resultadoTransaccionStockLote.dataList;
-                //}
-
-                IGVRepository iGVRepository = new IGVRepository(_clientFactory, _configuration);
-                ResultadoTransaccion<BE_IGV> resultadoTransaccionIGV = await iGVRepository.GetIGVPorCodigo(data.ArTaxCode);
-
-                if (resultadoTransaccionIGV.ResultadoCodigo == -1)
-                {
-                    vResultadoTransaccion.IdRegistro = -1;
-                    vResultadoTransaccion.ResultadoCodigo = -1;
-                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionIGV.ResultadoDescripcion;
-                    return vResultadoTransaccion;
-                }
-
-                if (((List<BE_IGV>)resultadoTransaccionIGV.dataList).Count > 0)
-                {
-                    data.valorIGV = ((List<BE_IGV>)resultadoTransaccionIGV.dataList)[0].Rate;
-                } else
-                {
-                    data.valorIGV = 0;
-                }
-
-                ConveniosRepository conveniosRepository = new ConveniosRepository(_clientFactory, context, _configuration);
-
-                ResultadoTransaccion<BE_Convenios> resultadoTransaccionConvenios = new ResultadoTransaccion<BE_Convenios>();
-
-                if (codtipocliente.Equals("01"))
-                {
-                    resultadoTransaccionConvenios = await conveniosRepository.GetConveniosPorFiltros(null, tipomovimiento, codtipocliente, null, codpaciente, codaseguradora, codcia, codproducto);
-                } else
-                {
-                    resultadoTransaccionConvenios = await conveniosRepository.GetConveniosPorFiltros(null, tipomovimiento, codtipocliente, null, null, null, null, codproducto);
-                }
-
-                if (resultadoTransaccionConvenios.ResultadoCodigo == -1)
-                {
-                    vResultadoTransaccion.IdRegistro = -1;
-                    vResultadoTransaccion.ResultadoCodigo = -1;
-                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionConvenios.ResultadoDescripcion;
-                    return vResultadoTransaccion;
-                }
-
-                if (((List<BE_Convenios>)resultadoTransaccionConvenios.dataList).Count == 0)
-                {
-                    ListaPrecioRepository listaPrecioRepository = new ListaPrecioRepository(_clientFactory, _configuration);
-                    ResultadoTransaccion<BE_ListaPrecio> resultadoTransaccionListaPrecio = await listaPrecioRepository.GetPrecioPorCodigo(codproducto, 1);
-
-                    if (resultadoTransaccionListaPrecio.ResultadoCodigo == -1)
-                    {
-                        vResultadoTransaccion.IdRegistro = -1;
-                        vResultadoTransaccion.ResultadoCodigo = -1;
-                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionListaPrecio.ResultadoDescripcion;
-                        return vResultadoTransaccion;
-                    }
-
-                    if (((List<BE_ListaPrecio>)resultadoTransaccionListaPrecio.dataList).Count > 0)
-                    {
-                        data.valorVVP = ((List<BE_ListaPrecio>)resultadoTransaccionListaPrecio.dataList)[0].Price;
+                        data.valorIGV = ((List<BE_IGV>)resultadoTransaccionIGV.dataList)[0].Rate;
                     }
                     else
                     {
-                        data.valorVVP = 0;
+                        data.valorIGV = 0;
                     }
 
-                } else
-                {
-                    if (((List<BE_Convenios>)resultadoTransaccionConvenios.dataList)[0].tipomonto.Equals("M"))
+                    StockRepository stockRepository = new StockRepository(_clientFactory, _configuration);
+                    ResultadoTransaccion<BE_Stock> resultadoTransaccionStock = await stockRepository.GetListStockPorProductoAlmacen(codalmacen, codproducto);
+
+                    if (resultadoTransaccionStock.ResultadoCodigo == -1)
                     {
-                        data.valorVVP = decimal.Parse(((List<BE_Convenios>)resultadoTransaccionConvenios.dataList)[0].monto.ToString());
-                        data.FlgConvenio = true;
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionStock.ResultadoDescripcion;
+                        return vResultadoTransaccion;
                     }
-                }
 
-                vResultadoTransaccion.IdRegistro = 0;
-                vResultadoTransaccion.ResultadoCodigo = 0;
-                vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
-                vResultadoTransaccion.data = data;
+                    if (resultadoTransaccionStock.dataList.Any())
+                    {
+                        BE_Stock stockProducto = ((List<BE_Stock>)resultadoTransaccionStock.dataList)[0];
+
+                        data.ProductoStock = stockProducto.OnHand_1;
+                        data.valorVVP = stockProducto.Price;
+                    }
+
+                    ConveniosRepository conveniosRepository = new ConveniosRepository(_clientFactory, context, _configuration);
+
+                    ResultadoTransaccion<BE_Convenios> resultadoTransaccionConvenios = new ResultadoTransaccion<BE_Convenios>();
+
+                    if (codtipocliente.Equals("01"))
+                    {
+                        resultadoTransaccionConvenios = await conveniosRepository.GetConveniosPorFiltros(null, tipomovimiento, codtipocliente, null, codpaciente, codaseguradora, codcia, codproducto);
+                    }
+                    else
+                    {
+                        resultadoTransaccionConvenios = await conveniosRepository.GetConveniosPorFiltros(null, tipomovimiento, codtipocliente, null, null, null, null, codproducto);
+                    }
+
+                    if (resultadoTransaccionConvenios.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionConvenios.ResultadoDescripcion;
+                        return vResultadoTransaccion;
+                    }
+
+                    if (((List<BE_Convenios>)resultadoTransaccionConvenios.dataList).Count == 0)
+                    {
+                        ListaPrecioRepository listaPrecioRepository = new ListaPrecioRepository(_clientFactory, _configuration);
+                        ResultadoTransaccion<BE_ListaPrecio> resultadoTransaccionListaPrecio = await listaPrecioRepository.GetPrecioPorCodigo(codproducto, 1);
+
+                        if (resultadoTransaccionListaPrecio.ResultadoCodigo == -1)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionListaPrecio.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+
+                        BE_ListaPrecio precio = ((List<BE_ListaPrecio>)resultadoTransaccionListaPrecio.dataList)[0];
+
+                        if (((List<BE_ListaPrecio>)resultadoTransaccionListaPrecio.dataList).Count > 0)
+                        {
+                            var datap = precio.Price == null ? 0 : precio.Price;
+
+                            data.valorVVP = (decimal)datap;
+                        }
+                        else
+                        {
+                            data.valorVVP = 0;
+                        }
+
+                    }
+                    else
+                    {
+                        if (((List<BE_Convenios>)resultadoTransaccionConvenios.dataList)[0].tipomonto.Equals("M"))
+                        {
+                            data.valorVVP = decimal.Parse(((List<BE_Convenios>)resultadoTransaccionConvenios.dataList)[0].monto.ToString());
+                            data.FlgConvenio = true;
+                        }
+                    }
+
+                    VentaRepository ventaRepository = new VentaRepository(_clientFactory, context, _configuration);
+                    ResultadoTransaccion<bool> resultadoTransaccionGastoCubierto = await ventaRepository.GetGastoCubiertoPorFiltro(codaseguradora, codproducto, 1);
+
+                    data.GastoCubierto = false;
+
+                    if (resultadoTransaccionGastoCubierto.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionGastoCubierto.ResultadoDescripcion;
+                        return vResultadoTransaccion;
+                    }
+
+                    data.GastoCubierto = resultadoTransaccionGastoCubierto.data;
+
+                    ResultadoTransaccion<BE_Producto> resultadoTransaccionListProductoAlternativo = await GetListProductoAlternativoPorCodigo(codproducto, codaseguradora, codcia);
+
+                    if (resultadoTransaccionListProductoAlternativo.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionListProductoAlternativo.ResultadoDescripcion;
+                        return vResultadoTransaccion;
+                    }
+
+                    data.ProductoRestringido = false;
+
+                    if (resultadoTransaccionListProductoAlternativo.dataList.Any())
+                    {
+                        data.ProductoRestringido = true;
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                    vResultadoTransaccion.data = data;
+                    vResultadoTransaccion.dataList = listProductos;
+                }
+                else
+                {
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Producto no existe", 0);
+                    vResultadoTransaccion.data = null;
+                    vResultadoTransaccion.dataList = listProductos;
+                }
             }
             catch (Exception ex)
             {
@@ -381,5 +439,166 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
+
+        public async Task<ResultadoTransaccion<BE_Producto>> GetListDetalleProductoPorPedido(string codpedido, string codalmacen, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
+        {
+            ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+
+                List<BE_Producto> listProductos = new List<BE_Producto>();
+
+                PedidoRepository pedidoRepository = new PedidoRepository(context, _configuration);
+                ResultadoTransaccion<BE_PedidoDetalle> resultadoTransaccionDetallePedido = await pedidoRepository.GetListPedidoDetallePorPedido(codpedido);
+
+                if (resultadoTransaccionDetallePedido.ResultadoCodigo == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionDetallePedido.ResultadoDescripcion;
+                    return vResultadoTransaccion;
+                }
+
+                if (resultadoTransaccionDetallePedido.dataList.Any())
+                {
+
+                    List<BE_PedidoDetalle> listPedidoDetalle = (List<BE_PedidoDetalle>)resultadoTransaccionDetallePedido.dataList;
+
+
+                    foreach (BE_PedidoDetalle item in listPedidoDetalle)
+                    {
+                        ResultadoTransaccion<BE_Producto> resultadoTransaccionProducto = await GetProductoPorCodigo(codalmacen, item.codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
+
+                        if (resultadoTransaccionProducto.ResultadoCodigo == -1 && resultadoTransaccionProducto.IdRegistro == -1)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionProducto.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+
+                        if (resultadoTransaccionProducto.IdRegistro == 0 && resultadoTransaccionProducto.ResultadoCodigo == -1)
+                        {
+
+                        } else
+                        {
+                            resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
+                            resultadoTransaccionProducto.data.CodPedido = item.codpedido;
+
+                            listProductos.Add(resultadoTransaccionProducto.data);
+                        }
+
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", listProductos.Count);
+                    vResultadoTransaccion.dataList = listProductos;
+
+                } 
+                else
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = "No existe detalle para el pedido nro. " + codpedido;
+                    return vResultadoTransaccion;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+        public async Task<ResultadoTransaccion<BE_Producto>> GetListDetalleProductoPorReceta(int idereceta, string codalmacen, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
+        {
+            ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+
+                List<BE_Producto> listProductos = new List<BE_Producto>();
+
+                RecetaRepository recetaRepository = new RecetaRepository(context, _configuration);
+                ResultadoTransaccion<BE_RecetaDetalle> resultadoTransaccionDetalleReceta = await recetaRepository.GetListRecetaDetallePorReceta(idereceta);
+
+                if (resultadoTransaccionDetalleReceta.ResultadoCodigo == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionDetalleReceta.ResultadoDescripcion;
+                    return vResultadoTransaccion;
+                }
+
+                if (resultadoTransaccionDetalleReceta.dataList.Any())
+                {
+
+                    List<BE_RecetaDetalle> lisDetalleReceta = (List<BE_RecetaDetalle>)resultadoTransaccionDetalleReceta.dataList;
+
+
+                    foreach (BE_RecetaDetalle item in lisDetalleReceta)
+                    {
+                        ResultadoTransaccion<BE_Producto> resultadoTransaccionProducto = await GetProductoPorCodigo(codalmacen, item.codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
+
+                        if (resultadoTransaccionProducto.ResultadoCodigo == -1 && resultadoTransaccionProducto.IdRegistro == -1)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionProducto.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+
+                        if (resultadoTransaccionProducto.IdRegistro == 0 && resultadoTransaccionProducto.ResultadoCodigo == -1)
+                        {
+
+                        }
+                        else
+                        {
+                            //resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
+                            //resultadoTransaccionProducto.data.CodPedido = item.codpedido;
+
+                            listProductos.Add(resultadoTransaccionProducto.data);
+                        }
+
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", listProductos.Count);
+                    vResultadoTransaccion.dataList = listProductos;
+
+                }
+                else
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = "No existe detalle para la receta nro. " + idereceta.ToString();
+                    return vResultadoTransaccion;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
     }
 }

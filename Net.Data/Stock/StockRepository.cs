@@ -98,12 +98,12 @@ namespace Net.Data
 
                 modelo = modelo + campos + filter + filterConStock;
 
-                BE_Stock data = await _connectServiceLayer.GetAsyncTo<BE_Stock>(modelo);
+                List<BE_Stock> data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
 
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;
                 vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
-                vResultadoTransaccion.data = data;
+                vResultadoTransaccion.dataList = data;
             }
             catch (Exception ex)
             {

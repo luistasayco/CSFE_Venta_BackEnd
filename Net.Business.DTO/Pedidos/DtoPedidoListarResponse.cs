@@ -34,6 +34,7 @@ namespace Net.Business.DTO
                     orden = value.orden,
                     codtipopedido = value.codtipopedido,
                     tipopedido = value.tipopedido,
+                    tipomovimiento = value.tipomovimiento,
                     key = value.key
                 }
             );

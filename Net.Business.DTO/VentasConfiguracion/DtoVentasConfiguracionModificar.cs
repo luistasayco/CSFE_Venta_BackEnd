@@ -10,6 +10,7 @@ namespace Net.Business.DTO
         public bool flgmanual { get; set; }
         public bool flgpedido { get; set; }
         public bool flgreceta { get; set; }
+        public bool flgimpresionautomatico { get; set; }
 
         public BE_VentasConfiguracion RetornaVentasConfiguracion()
         {
@@ -21,6 +22,7 @@ namespace Net.Business.DTO
                 flgmanual = this.flgmanual,
                 flgpedido = this.flgpedido,
                 flgreceta = this.flgreceta,
+                flgimpresionautomatico = this.flgimpresionautomatico,
                 RegIdUsuario = this.RegIdUsuario
             };
         }

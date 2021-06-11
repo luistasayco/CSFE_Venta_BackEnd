@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Text.RegularExpressions;
+using Net.CrossCotting;
 
 namespace Net.Data
 {
@@ -34,6 +35,10 @@ namespace Net.Data
 
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            fecinicio = Utilidades.GetFechaHoraInicioActual(fecinicio);
+            fecfin = Utilidades.GetFechaHoraFinActual(fecfin);
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(_cnx))

@@ -72,6 +72,7 @@ namespace Net.Data
                         cmd.Parameters.Add(new SqlParameter("@flgmanual", item.flgmanual));
                         cmd.Parameters.Add(new SqlParameter("@flgpedido", item.flgpedido));
                         cmd.Parameters.Add(new SqlParameter("@flgreceta", item.flgreceta));
+                        cmd.Parameters.Add(new SqlParameter("@flgimpresionautomatico", item.flgimpresionautomatico));
                         cmd.Parameters.Add(new SqlParameter("@codalmacen", item.codalmacen));
                         cmd.Parameters.Add(new SqlParameter("@desalmacen", item.desalmacen));
                         cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", item.RegIdUsuario));
@@ -129,6 +130,7 @@ namespace Net.Data
                         cmd.Parameters.Add(new SqlParameter("@flgmanual", item.flgmanual));
                         cmd.Parameters.Add(new SqlParameter("@flgpedido", item.flgpedido));
                         cmd.Parameters.Add(new SqlParameter("@flgreceta", item.flgreceta));
+                        cmd.Parameters.Add(new SqlParameter("@flgimpresionautomatico", item.flgimpresionautomatico));
                         cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", item.RegIdUsuario));
 
                         SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)

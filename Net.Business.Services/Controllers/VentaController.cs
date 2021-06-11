@@ -192,5 +192,83 @@ namespace Net.Business.Services.Controllers
             }
 
         }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetVentasChequea1MesAntes([FromQuery] string codpaciente, int cuantosmesesantes)
+        {
+
+            var objectGetAll = await _repository.Venta.GetVentasChequea1MesAntes(codpaciente, cuantosmesesantes);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            var obj = new DtoVentaDetalle1MesListarResponse().RetornarVentaDetalle1MesListarResponse(objectGetAll.dataList);
+
+            return Ok(obj.ListaVentaDetalle);
+        }
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ValidacionAnularVenta([FromBody] DtoVentaAnular value)
+        {
+            try
+            {
+                if (value == null)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var response = await _repository.Venta.ValidacionAnularVenta(value.RetornaVentaAnular());
+
+                if (response.ResultadoCodigo == -1)
+                {
+                    return BadRequest(response);
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+            }
+
+        }
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RegistrarAnularVenta([FromBody] DtoVentaAnular value)
+        {
+            try
+            {
+                if (value == null)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var response = await _repository.Venta.RegistrarAnularVenta(value.RetornaVentaAnular());
+
+                if (response.ResultadoCodigo == -1)
+                {
+                    return BadRequest(response);
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+            }
+
+        }
     }
 }

@@ -86,7 +86,24 @@ namespace Net.Business.Services.Controllers
 
             var obj = new DtoPedidoListarResponse().RetornarListaPedido(objectGetAll.dataList);
 
+
             return Ok(obj.ListaPedido);
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetDatosPedidoPorPedido([FromQuery] string codpedido)
+        {
+
+            var objectGetAll = await _repository.Pedido.GetDatosPedidoPorPedido(codpedido);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
         }
     }
 }

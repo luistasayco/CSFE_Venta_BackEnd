@@ -78,9 +78,12 @@ namespace Net.Business.Entities
         public bool narcotico { get; set; }
         public decimal igvproducto { get; set; }
         public string codtipoproducto { get; set; }
-        public string manBtchNum { get; set; }
+        public bool manBtchNum { get; set; }
         public bool flgbtchnum { get; set; }
+        public bool flgnarcotico { get; set; }
         public BE_VentasDetalleDatos VentasDetalleDatos { get; set; }
         public List<BE_StockLote> listStockLote { get; set; }
+
+        public List<BE_VentasDetalleLote> listVentasDetalleLotes { get; set; }
     }
 }

@@ -12,6 +12,7 @@ namespace Net.Business.Entities
         public bool flgreceta { get; set; }
         public bool flgpedido { get; set; }
         public bool flgmanual { get; set; }
+        public bool flgimpresionautomatico { get; set; }
         public string codalmacen { get; set; }
         public string desalmacen { get; set; }
     }

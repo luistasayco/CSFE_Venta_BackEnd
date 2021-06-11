@@ -121,6 +121,14 @@ namespace Net.Data
 
                         conn.Close();
 
+                        if (response == null)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = "Atención no existe";
+                            return vResultadoTransaccion;
+                        }
+
                         PlanesRepository planesRepository = new PlanesRepository(context, _configuration);
 
                         if (response.codaseguradora == "0019")
