@@ -152,6 +152,7 @@ namespace Net.Business.Entities
         public string nombremaquina { get; set; }
         public string usuario { get; set; }
         public string motivoanulacion { get; set; }
+        public bool flgsinstock { get; set; }
         public List<BE_VentasGenerado> listVentasGenerado { get; set; }
     }
 }

@@ -194,6 +194,15 @@ namespace Net.Data
 
                         conn.Close();
 
+                        if (response.Count == 0)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = "Atención no existe";
+                            vResultadoTransaccion.dataList = response;
+                            return vResultadoTransaccion;
+                        }
+
                         vResultadoTransaccion.IdRegistro = 0;
                         vResultadoTransaccion.ResultadoCodigo = 0;
                         vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);

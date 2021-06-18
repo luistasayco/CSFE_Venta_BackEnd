@@ -27,5 +27,6 @@
         IConveniosRepository Convenios { get; }
         IAseguradoraxProductoRepository AseguradoraxProducto { get; }
         IStockRepository Stock { get; }
+        IGenericoRepository Generico { get; }
     }
 }

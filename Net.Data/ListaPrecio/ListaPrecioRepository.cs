@@ -37,7 +37,7 @@ namespace Net.Data
             {
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
 
-                var cadena = "sml.svc/SBALDPR";
+                var cadena = "sml.svc/SBALDPRParameters(CODITEM='" + codproducto + "',PRICELIST=" + pricelist + ")/SBALDPR";
                 var filter = "&$filter = ItemCode eq '" + codproducto + "' and PriceList eq " + pricelist;
                 var campos = "?$select=ItemCode, PriceList, Price, Factor ";
 

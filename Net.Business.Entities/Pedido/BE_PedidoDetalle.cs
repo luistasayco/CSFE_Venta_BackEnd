@@ -7,5 +7,6 @@
         public double cantidad { get; set; }
         public string tipoproducto { get; set; }
         public string codpedido { get; set; }
+        public decimal igv { get; set; }
     }
 }

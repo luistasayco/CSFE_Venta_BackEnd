@@ -35,6 +35,7 @@ namespace Net.Data
         private IConveniosRepository _Convenios;
         private IAseguradoraxProductoRepository _AseguradoraxProducto;
         private IStockRepository _Stock;
+        private IGenericoRepository _Generico;
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
             _repoContext = repoContext;
@@ -322,6 +323,17 @@ namespace Net.Data
                     _Stock = new StockRepository(_clientFactory, _configuration);
                 }
                 return _Stock;
+            }
+        }
+        public IGenericoRepository Generico
+        {
+            get
+            {
+                if (_Generico == null)
+                {
+                    _Generico = new GenericoRepository(_clientFactory, _configuration);
+                }
+                return _Generico;
             }
         }
     }

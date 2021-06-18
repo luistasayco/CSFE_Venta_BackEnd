@@ -48,7 +48,7 @@ namespace Net.Business.DTO
         public string nombrecia { get; set; }
         public string nombremaquina { get; set; }
         public string usuario { get; set; }
-        //public string tipdocidentidad { get; set; }
+        public bool flgsinstock { get; set; }
         //public string docidentidad { get; set; }
         //public string correocliente { get; set; }
         public List<BE_VentasDetalle> listaVentaDetalle { get; set; }
@@ -92,7 +92,7 @@ namespace Net.Business.DTO
                 nombrecia = this.nombrecia,
                 nombremaquina = this.nombremaquina,
                 usuario = this.usuario,
-                //ruccliente = this.ruccliente,
+                flgsinstock = this.flgsinstock,
                 //dircliente = this.dircliente,
                 //tipdocidentidad = this.tipdocidentidad,
                 //docidentidad = this.docidentidad,

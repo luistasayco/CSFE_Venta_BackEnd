@@ -37,11 +37,11 @@ namespace Net.Data
             {
                 nombre = nombre == null ? "" : nombre.ToUpper();
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
-
-                var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTKG";
+                var ceros = constock ? "N" : "Y";
+                var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='" + codalmacen + "',CEROS='" + ceros + "')/SBASTKG";
                 var campos = "?$select=* ";
-                var filter = "&$filter = WhsCode eq '" + codalmacen + "' ";
-                var filterConStock = "and OnHand_1 gt 0";
+                var filter = "&$filter = WhsCode eq '" + codalmacen + "' and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
+                var filterConStock = " and OnHandALM gt 0";
 
 
                 if (!string.IsNullOrEmpty(codproducto))
@@ -79,7 +79,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<BE_Stock>> GetListStockPorProductoAlmacen(string codalmacen, string codproducto)
         {
             ResultadoTransaccion<BE_Stock> vResultadoTransaccion = new ResultadoTransaccion<BE_Stock>();
@@ -91,10 +90,10 @@ namespace Net.Data
             {
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
 
-                var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTKG";
+                var modelo = "sml.svc/SBASTKGParameters(CODITEM='" + codproducto + "',CODALM='" + codalmacen + "',CEROS='N')/SBASTKG";
                 var campos = "?$select=* ";
-                var filter = "&$filter = WhsCode eq '" + codalmacen + "' and ItemCode eq '" + codproducto + "'";
-                var filterConStock = "and OnHand_1 gt 0";
+                var filter = "&$filter = WhsCode eq '" + codalmacen + "' and ItemCode eq '" + codproducto + "'  and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
+                var filterConStock = "and OnHandALM gt 0";
 
                 modelo = modelo + campos + filter + filterConStock;
 
@@ -114,7 +113,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<BE_StockLote>> GetListStockLotePorFiltro(string codalmacen, string codproducto, bool constock)
         {
             ResultadoTransaccion<BE_StockLote> vResultadoTransaccion = new ResultadoTransaccion<BE_StockLote>();
@@ -126,11 +124,13 @@ namespace Net.Data
             {
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
 
-                var modelo = "sml.svc/SBASTCKParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTCK";
-                var campos = "?$select= ItemCode, ItemName, BatchNum, Quantity, IsCommited_2, OnOrder_2 , ExpDate";
-                var filter = "&$filter = WhsCode eq '" + codalmacen + "' and ItemCode eq '" + codproducto + "' ";
-                var filterConStock = "and Quantity gt 0 ";
-                var orderby = "&$orderby = ExpDate";
+                var ceros = constock ? "N" : "Y";
+
+                var modelo = "sml.svc/SBASTCKParameters(CODITEM='" + codproducto + "',CODALM='" + codalmacen + "',CEROS='"+ ceros + "')/SBASTCK";
+                var campos = "?$select= ItemCode, ItemName, BatchNum, QuantityLote, IsCommitedLote, OnOrderLote , ExpDate";
+                var filter = "&$filter = WhsCode eq '" + codalmacen + "' and ItemCode eq '" + codproducto + "'  and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
+                var filterConStock = " and QuantityLote gt 0 ";
+                var orderby = " &$orderby = ExpDate";
 
                 if (constock)
                 {
@@ -167,11 +167,11 @@ namespace Net.Data
             try
             {
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
-
-                var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTKG";
+                var ceros = constock ? "N" : "Y";
+                var modelo = "sml.svc/SBASTKGParameters(CODITEM='" + codproducto + "',CODALM='',CEROS='" + ceros + "')/SBASTKG";
                 var campos = "?$select=* ";
-                var filter = "&$filter = ItemCode eq '" + codproducto + "' ";
-                var filterConStock = "and OnHand_1 gt 0";
+                var filter = "&$filter = ItemCode eq '" + codproducto + "' and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
+                var filterConStock = "and OnHandALM gt 0";
 
                 if (constock)
                 {
@@ -183,6 +183,147 @@ namespace Net.Data
                 }
 
                 List<BE_Stock> data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", data.Count);
+                vResultadoTransaccion.dataList = data;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<BE_Stock>> GetListProductoGenericoPorCodigo(string codalmacen, string codprodci, bool constock)
+        {
+            ResultadoTransaccion<BE_Stock> vResultadoTransaccion = new ResultadoTransaccion<BE_Stock>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+
+                List<BE_Stock> listDCI = await _connectServiceLayer.GetAsync<BE_Stock>("U_SYP_CS_PRODCI?$select=U_SYP_CS_DCI&$filter = Code eq '" + codprodci + "'");
+
+                List<BE_Stock> data = new List<BE_Stock>();
+
+                if (listDCI.Count > 0)
+                {
+                    string vCodDCI = listDCI[0].U_SYP_CS_DCI == null ? string.Empty: listDCI[0].U_SYP_CS_DCI;
+
+                    if (!string.IsNullOrEmpty(vCodDCI))
+                    {
+                        List<BE_Stock> listProdDCI = await _connectServiceLayer.GetAsync<BE_Stock>("U_SYP_CS_PRODCI?$select=Code&$filter = U_SYP_CS_DCI eq '" + vCodDCI + "'");
+
+                        if (listProdDCI.Count > 0)
+                        {
+                            var filterProDci = string.Empty;
+
+                            foreach (var item in listProdDCI)
+                            {
+                                if (!string.IsNullOrEmpty(item.Code))
+                                {
+                                    if (string.IsNullOrEmpty(filterProDci))
+                                    {
+                                        filterProDci += " U_SYP_CS_PRODCI eq '" + item.Code + "' ";
+                                    }
+                                    else
+                                    {
+                                        filterProDci += " or U_SYP_CS_PRODCI eq '" + item.Code + "' ";
+                                    }
+                                }
+                            }
+
+                            var ceros = constock ? "N" : "Y";
+                            var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='"+ codalmacen + "',CEROS='" + ceros + "')/SBASTKG";
+                            var campos = "?$select=* ";
+                            var filter = "&$filter = " + filterProDci + " and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
+                            var filterConStock = "and OnHandALM gt 0";
+
+                            if (constock)
+                            {
+                                modelo = modelo + campos + filter + filterConStock;
+                            }
+                            else
+                            {
+                                modelo = modelo + campos + filter;
+                            }
+
+                            data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
+                        }
+                    }
+                }
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", data.Count);
+                vResultadoTransaccion.dataList = data;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<BE_Stock>> GetListProductoGenericoPorDCI(string codalmacen, string coddci, bool constock)
+        {
+            ResultadoTransaccion<BE_Stock> vResultadoTransaccion = new ResultadoTransaccion<BE_Stock>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                List<BE_Stock> data = new List<BE_Stock>();
+
+                List<BE_Stock> listProdDCI = await _connectServiceLayer.GetAsync<BE_Stock>("U_SYP_CS_PRODCI?$select=Code&$filter = U_SYP_CS_DCI eq '" + coddci + "'");
+
+                if (listProdDCI.Count > 0)
+                {
+                    var filterProDci = string.Empty;
+
+                    foreach (var item in listProdDCI)
+                    {
+                        if (!string.IsNullOrEmpty(item.Code))
+                        {
+                            if (string.IsNullOrEmpty(filterProDci))
+                            {
+                                filterProDci += " U_SYP_CS_PRODCI eq '" + item.Code + "' ";
+                            }
+                            else
+                            {
+                                filterProDci += " or U_SYP_CS_PRODCI eq '" + item.Code + "' ";
+                            }
+                        }
+                    }
+
+                    var ceros = constock ? "N" : "Y";
+                    var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='" + codalmacen + "',CEROS='" + ceros + "')/SBASTKG";
+                    var campos = "?$select=* ";
+                    var filter = "&$filter = " + filterProDci + " and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
+                    var filterConStock = "and OnHandALM gt 0";
+
+                    if (constock)
+                    {
+                        modelo = modelo + campos + filter + filterConStock;
+                    }
+                    else
+                    {
+                        modelo = modelo + campos + filter;
+                    }
+
+                    data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
+                }
 
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;

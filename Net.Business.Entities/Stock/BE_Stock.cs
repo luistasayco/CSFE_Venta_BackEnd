@@ -27,11 +27,6 @@
         /// </summary>
         public string U_SYP_CS_FAMILIA { get; set; }
         /// <summary>
-        /// Codigo de producto de CSFE
-        /// </summary>
-        public string U_SYP_CS_SIC { get; set; }
-        public string codproducto { get => U_SYP_CS_SIC; }
-        /// <summary>
         /// Estado de Abastecimiento
         /// N => Normal
         /// A => Agotado
@@ -78,28 +73,30 @@
         /// <summary>
         /// Stock Total (Solo del almacén)
         /// </summary>
-        public decimal OnHand_1 { get; set; }
+        public decimal OnHandALM { get; set; }
         /// <summary>
         /// Cantidad Solicitada (Solo del almacén)
         /// </summary>
-        public decimal OnOrder_1 { get; set; }
+        public decimal OnOrderALM { get; set; }
         /// <summary>
         /// Cantidad Comprometida (Solo del almacén)
         /// </summary>
-        public decimal IsCommited_1 { get; set; }
+        public decimal IsCommitedALM { get; set; }
         /// <summary>
         /// Stock Lote (Solo del almacén)
         /// </summary>
-        public decimal Quantity { get; set; }
-        
+        public decimal QuantityLote { get; set; }
         /// <summary>
         /// Cantidad Solicitada Lote (Solo del almacén)
         /// </summary>
-        public decimal IsCommited_2 { get; set; }
+        public decimal IsCommitedLote { get; set; }
         /// <summary>
         /// Cantidad Comprometida Lote (Solo del almacén)
         /// </summary>
-        public decimal OnOrder_2 { get; set; }
+        public decimal OnOrderLote { get; set; }
         public string WhsName { get; set; }
+        public string U_SYP_CS_DCI { get; set; }
+        public string U_SYP_CS_PRODCI { get; set; }
+        public string Code { get; set; }
     }
 }

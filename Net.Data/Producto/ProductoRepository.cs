@@ -210,7 +210,7 @@ namespace Net.Data
 
                 var cadena = "Items";
                 var filter = "&$filter=ItemCode eq '" + codproducto + "'";
-                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, U_SYP_FAMILIA, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART, ItemsGroupCode, ManageBatchNumbers, ArTaxCode, Properties1, U_SYP_CS_DCTO, U_SYP_CS_FRVTA ";
+                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, U_SYP_FAMILIA, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART, ItemsGroupCode, ManageBatchNumbers, ArTaxCode, Properties1, U_SYP_CS_DCTO, U_SYP_CS_FRVTA, U_SYP_CS_PRODCI ";
 
                 cadena = cadena + campos + filter;
 
@@ -274,8 +274,8 @@ namespace Net.Data
                     {
                         BE_Stock stockProducto = ((List<BE_Stock>)resultadoTransaccionStock.dataList)[0];
 
-                        data.ProductoStock = stockProducto.OnHand_1;
-                        data.valorVVP = stockProducto.Price;
+                        data.ProductoStock = stockProducto.OnHandALM;
+                        data.valorVVP = (decimal)stockProducto.Price;
                     }
 
                     ConveniosRepository conveniosRepository = new ConveniosRepository(_clientFactory, context, _configuration);
@@ -405,7 +405,7 @@ namespace Net.Data
 
                 var cadena = "Items";
                 var filter = "&$filter=ItemCode eq '" + codproducto + "'";
-                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, U_SYP_FAMILIA, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART, ItemsGroupCode, Properties1 ";
+                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, U_SYP_FAMILIA, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART, ItemsGroupCode, Properties1, ManageBatchNumbers, U_SYP_CS_PRODCI ";
 
                 cadena = cadena + campos + filter;
 

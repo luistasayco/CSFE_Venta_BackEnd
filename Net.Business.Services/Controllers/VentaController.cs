@@ -175,7 +175,7 @@ namespace Net.Business.Services.Controllers
                     return BadRequest(ModelState);
                 }
 
-                var response = await _repository.Venta.RegistrarVentaCabecera(value.RetornaVentasCabecera());
+                var response = await _repository.Venta.RegistrarVentaCabecera(value.RetornaVentasCabecera(), false);
 
                 if (response.ResultadoCodigo == -1)
                 {
@@ -262,6 +262,33 @@ namespace Net.Business.Services.Controllers
                 else
                 {
                     return NoContent();
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+            }
+
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GeneraVentaAutomatica()
+        {
+            try
+            {
+
+                var response = await _repository.Venta.GeneraVentaAutomatica(string.Empty);
+
+                if (response.ResultadoCodigo == -1)
+                {
+                    return BadRequest(response);
+                }
+                else
+                {
+                    return Ok(response.dataList);
                 }
             }
             catch (Exception ex)

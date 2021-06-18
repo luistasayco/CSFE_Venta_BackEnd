@@ -54,6 +54,38 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetListProductoGenericoPorCodigo([FromQuery] string codalmacen, string codprodci, bool constock)
+        {
+
+            var objectGetAll = await _repository.Stock.GetListProductoGenericoPorCodigo(codalmacen, codprodci, constock);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetListProductoGenericoPorDCI([FromQuery] string codalmacen, string coddci, bool constock)
+        {
+
+            var objectGetAll = await _repository.Stock.GetListProductoGenericoPorDCI(codalmacen, coddci, constock);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetListStockLotePorFiltro([FromQuery] string codalmacen, string codproducto, bool constock)
         {
 
