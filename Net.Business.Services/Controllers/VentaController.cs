@@ -297,5 +297,18 @@ namespace Net.Business.Services.Controllers
             }
 
         }
+
+        [HttpGet("{codventa}", Name = "GenerarValeVentaPrint")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> GenerarValeVentaPrint(string codventa)
+        {
+            var objectGetById = await _repository.Venta.GenerarValeVentaPrint(codventa);
+
+            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", codventa + ".pdf");
+
+            return pdf;
+        }
     }
 }

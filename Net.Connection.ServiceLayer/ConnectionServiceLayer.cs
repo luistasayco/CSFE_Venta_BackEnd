@@ -274,7 +274,7 @@ namespace Net.Connection.ServiceLayer
                     // DEFINIMOS EL Accept, EN ESTE CASO ES "application/json"
                     request_.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/json"));
                     request_.Headers.Add("cache-control", "no-cache");
-                    //request_.Headers.Add("Prefer", "odata.maxpagesize=0");
+                    request_.Headers.Add("Prefer", "odata.maxpagesize=0");
 
 
                     // ASIGNAMOS A LA CABECERA DE LA PETICIÓN EL TOKEN JWT.

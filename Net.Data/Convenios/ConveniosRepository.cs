@@ -21,7 +21,8 @@ namespace Net.Data
         private readonly IHttpClientFactory _clientFactory;
 
         const string DB_ESQUEMA = "";
-        const string SP_GET = DB_ESQUEMA + "VEN_ConveniosPorFiltroGet";
+        //const string SP_GET = DB_ESQUEMA + "VEN_ConveniosPorFiltroGet";
+        const string SP_GET = DB_ESQUEMA + "VEN_ConveniosListaPrecioPorFiltroGet";
 
         public ConveniosRepository(IHttpClientFactory clientFactory, IConnectionSQL context, IConfiguration configuration)
             : base(context)
@@ -57,7 +58,6 @@ namespace Net.Data
                         cmd.Parameters.Add(new SqlParameter("@codpaciente", codpaciente == null ? string.Empty : codpaciente));
                         cmd.Parameters.Add(new SqlParameter("@codaseguradora", codaseguradora == null ? string.Empty : codaseguradora));
                         cmd.Parameters.Add(new SqlParameter("@codcia", codcia == null ? string.Empty : codcia));
-                        cmd.Parameters.Add(new SqlParameter("@codproducto", codproducto == null ? string.Empty : codproducto));
 
                         conn.Open();
 

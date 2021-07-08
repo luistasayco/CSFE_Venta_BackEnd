@@ -1,6 +1,7 @@
 ﻿using Net.Business.Entities;
 using Net.Connection;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Net.Data
@@ -19,5 +20,6 @@ namespace Net.Data
         Task<ResultadoTransaccion<BE_VentasCabecera>> ValidacionAnularVenta(BE_VentasCabecera value);
         Task<ResultadoTransaccion<BE_VentasCabecera>> RegistrarAnularVenta(BE_VentasCabecera value);
         Task<ResultadoTransaccion<bool>> GeneraVentaAutomatica(string codpedido);
+        Task<ResultadoTransaccion<MemoryStream>> GenerarValeVentaPrint(string codventa);
     }
 }

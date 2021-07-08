@@ -87,7 +87,7 @@ namespace Net.CrossCotting
                 cb.SetColorFill(new BaseColor(103, 93, 152));
                 //cb.SetRgbColorFillF(103, 93, 152);
 
-                WriteWaterMark(document, "sss");
+                //WriteWaterMark(document, "sss");
                 cb.SetTextMatrix(pageSize.GetLeft(40), pageSize.GetTop(40));
                 cb.ShowText(Title);
                 cb.EndText();
@@ -115,13 +115,13 @@ namespace Net.CrossCotting
                 //HeaderTable.WriteSelectedRows(0, -1, pageSize.GetLeft(0), pageSize.GetTop(0), cb);
             }
 
-            iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(Path.Combine(Environment.CurrentDirectory, "img", "header.png"));
-            float w = document.PageSize.Width;
-            float h = 80;
-            logo.Alignment = Element.ALIGN_CENTER;
-            templateHeader.AddImage(logo, w, 0, 0, h, 0, 0);
+            //iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(Path.Combine(Environment.CurrentDirectory, "img", "header.png"));
+            //float w = document.PageSize.Width;
+            //float h = 80;
+            //logo.Alignment = Element.ALIGN_CENTER;
+            //templateHeader.AddImage(logo, w, 0, 0, h, 0, 0);
 
-            cb.AddTemplate(templateHeader, pageSize.GetLeft(0), pageSize.GetTop(80));
+            //cb.AddTemplate(templateHeader, pageSize.GetLeft(0), pageSize.GetTop(80));
         }
 
         public override void OnEndPage(PdfWriter writer, Document document)
@@ -138,13 +138,13 @@ namespace Net.CrossCotting
             //cb.ShowText(text);
             cb.EndText();
 
-            iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(Path.Combine(Environment.CurrentDirectory, "img", "footer.png"));
-            float w = document.PageSize.Width;
-            float h = 80;
-            logo.Alignment = Element.ALIGN_CENTER;
-            template.AddImage(logo, w, 0, 0, h, 0, 0);
+            //iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(Path.Combine(Environment.CurrentDirectory, "img", "footer.png"));
+            //float w = document.PageSize.Width;
+            //float h = 80;
+            //logo.Alignment = Element.ALIGN_CENTER;
+            //template.AddImage(logo, w, 0, 0, h, 0, 0);
 
-            cb.AddTemplate(template, pageSize.GetLeft(0), pageSize.GetBottom(0));
+            //cb.AddTemplate(template, pageSize.GetLeft(0), pageSize.GetBottom(0));
             //cb.BeginText();
             //cb.SetFontAndSize(bf, 8);
             //cb.ShowTextAligned(PdfContentByte.ALIGN_RIGHT,

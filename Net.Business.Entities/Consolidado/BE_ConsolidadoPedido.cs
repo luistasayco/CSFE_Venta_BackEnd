@@ -8,5 +8,6 @@
         public string codproducto { get; set; }
         public decimal cantidad { get; set; }
         public bool flgpicking { get; set; }
+        public decimal cantidadpicking { get; set; }
     }
 }

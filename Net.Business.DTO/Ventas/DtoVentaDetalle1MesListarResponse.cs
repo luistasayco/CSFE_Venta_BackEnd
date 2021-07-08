@@ -19,7 +19,8 @@ namespace Net.Business.DTO
                     fechaemision = value.fechaemision,
                     codproducto = value.codproducto,
                     nombreproducto = value.nombreproducto,
-                    cantidad = value.cantidad
+                    cantidad = value.cantidad,
+                    stockfraccion = value.stockfraccion
                 }
             );
 

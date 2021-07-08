@@ -409,21 +409,35 @@ namespace Net.Data
 
                 cadena = cadena + campos + filter;
 
-                BE_Producto data = await _connectServiceLayer.GetAsyncTo<BE_Producto>(cadena);
+                List<BE_Producto> listproducto = await _connectServiceLayer.GetAsync<BE_Producto>(cadena);
 
-                StockRepository stockRepository = new StockRepository(_clientFactory, _configuration);
-                ResultadoTransaccion<BE_Stock> resultadoTransaccionStock = await stockRepository.GetListStockPorProducto(codproducto, true);
+                BE_Producto data = new BE_Producto();
 
-                if (resultadoTransaccionStock.ResultadoCodigo == -1)
+                if (listproducto.Count > 0)
+                {
+
+                    data = listproducto[0];
+
+                    StockRepository stockRepository = new StockRepository(_clientFactory, _configuration);
+                    ResultadoTransaccion<BE_Stock> resultadoTransaccionStock = await stockRepository.GetListStockPorProducto(codproducto, true);
+
+                    if (resultadoTransaccionStock.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionStock.ResultadoDescripcion;
+
+                        return vResultadoTransaccion;
+                    }
+
+                    data.ListStockAlmacen = (List<BE_Stock>)resultadoTransaccionStock.dataList;
+                } else
                 {
                     vResultadoTransaccion.IdRegistro = -1;
                     vResultadoTransaccion.ResultadoCodigo = -1;
-                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionStock.ResultadoDescripcion;
-
+                    vResultadoTransaccion.ResultadoDescripcion = "Producto no existe en SAP HANA";
                     return vResultadoTransaccion;
                 }
-
-                data.ListStockAlmacen = (List<BE_Stock>)resultadoTransaccionStock.dataList;
 
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;

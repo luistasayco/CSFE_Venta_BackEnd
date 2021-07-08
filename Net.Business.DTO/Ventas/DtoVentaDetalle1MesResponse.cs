@@ -11,6 +11,7 @@ namespace Net.Business.DTO
         public string codproducto { get; set; }
         public string nombreproducto { get; set; }
         public decimal cantidad { get; set; }
+        public int stockfraccion { get; set; }
 
         public DtoVentaDetalle1MesResponse RetornaVentaDetalle1MesResponse(BE_VentasDetalle value)
         {
@@ -21,7 +22,8 @@ namespace Net.Business.DTO
                 fechaemision = value.fechaemision,
                 codproducto = value.codproducto,
                 nombreproducto = value.nombreproducto,
-                cantidad = value.cantidad
+                cantidad = value.cantidad,
+                stockfraccion = value.stockfraccion
             };
         }
     }

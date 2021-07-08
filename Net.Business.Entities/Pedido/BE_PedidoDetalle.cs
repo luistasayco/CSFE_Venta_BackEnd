@@ -8,5 +8,6 @@
         public string tipoproducto { get; set; }
         public string codpedido { get; set; }
         public decimal igv { get; set; }
+        public decimal cantidadpicking { get; set; }
     }
 }

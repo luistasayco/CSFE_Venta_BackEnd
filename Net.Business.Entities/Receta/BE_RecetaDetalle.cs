@@ -8,5 +8,6 @@
         public string num_frecuencia { get; set; }
         public string num_dosis { get; set; }
         public string nombreproducto { get; set; }
+        public decimal cantidadpicking { get; set; }
     }
 }
