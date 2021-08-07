@@ -5,7 +5,7 @@ namespace Net.Business.DTO
 {
     public class DtoPlanesRegistrar: EntityBase
     {
-        public int IdPlan { get; set; }
+        //public int IdPlan { get; set; }
         public string Nombre { get; set; }
         public decimal PorcentajeDescuento { get; set; }
         public Boolean FlgEstado { get; set; }
@@ -14,7 +14,7 @@ namespace Net.Business.DTO
         {
             return new BE_Planes
             {
-                IdPlan = this.IdPlan,
+                //IdPlan = this.IdPlan,
                 Nombre = this.Nombre,
                 FlgEstado = this.FlgEstado,
                 PorcentajeDescuento = this.PorcentajeDescuento,

@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace Net.Data
 {
-    class ConveniosRepository : RepositoryBase<BE_Convenios>, IConveniosRepository
+    class ConveniosRepository : RepositoryBase<BE_ConveniosListaPrecio>, IConveniosRepository
     {
         private readonly string _cnx;
         private string _aplicacionName;
@@ -33,9 +33,9 @@ namespace Net.Data
             _aplicacionName = this.GetType().Name;
         }
 
-        public async Task<ResultadoTransaccion<BE_Convenios>> GetConveniosPorFiltros(string codalmacen, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, string codaseguradora, string codcia, string codproducto)
+        public async Task<ResultadoTransaccion<BE_ConveniosListaPrecio>> GetConveniosPorFiltros(string codalmacen, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, string codaseguradora, string codcia, string codproducto)
         {
-            ResultadoTransaccion<BE_Convenios> vResultadoTransaccion = new ResultadoTransaccion<BE_Convenios>();
+            ResultadoTransaccion<BE_ConveniosListaPrecio> vResultadoTransaccion = new ResultadoTransaccion<BE_ConveniosListaPrecio>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
             vResultadoTransaccion.NombreMetodo = _metodoName;
@@ -44,7 +44,7 @@ namespace Net.Data
             try
             {
 
-                var response = new List<BE_Convenios>();
+                var response = new List<BE_ConveniosListaPrecio>();
 
                 using (SqlConnection conn = new SqlConnection(_cnx))
                 {
@@ -63,7 +63,7 @@ namespace Net.Data
 
                         using (var reader = await cmd.ExecuteReaderAsync())
                         {
-                            response = (List<BE_Convenios>)context.ConvertTo<BE_Convenios>(reader);
+                            response = (List<BE_ConveniosListaPrecio>)context.ConvertTo<BE_ConveniosListaPrecio>(reader);
                         }
 
                         conn.Close();

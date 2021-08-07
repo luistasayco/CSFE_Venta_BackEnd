@@ -52,9 +52,9 @@ namespace Net.Business.Entities
         [DBParameter(SqlDbType.DateTime, 0, ActionType.Everything)]
         public DateTime fechaemision { get; set; }
         [DBParameter(SqlDbType.DateTime, 0, ActionType.Everything)]
-        public DateTime fechacancelacion { get; set; }
+        public DateTime? fechacancelacion { get; set; }
         [DBParameter(SqlDbType.DateTime, 0, ActionType.Everything)]
-        public DateTime fechaanulacion { get; set; }
+        public DateTime? fechaanulacion { get; set; }
         [DBParameter(SqlDbType.Decimal, 0, ActionType.Everything)]
         public decimal montodctoplan { get; set; }
         [DBParameter(SqlDbType.Decimal, 0, ActionType.Everything)]
@@ -102,9 +102,9 @@ namespace Net.Business.Entities
         [DBParameter(SqlDbType.Char, 1, ActionType.Everything)]
         public string flagpaquete { get; set; }
         [DBParameter(SqlDbType.DateTime, 0, ActionType.Everything)]
-        public string fecha_envio { get; set; }
+        public DateTime? fecha_envio { get; set; }
         [DBParameter(SqlDbType.DateTime, 0, ActionType.Everything)]
-        public DateTime fecha_entrega { get; set; }
+        public DateTime? fecha_entrega { get; set; }
         [DBParameter(SqlDbType.Bit, 0, ActionType.Everything)]
         public Boolean flg_gratuito { get; set; }
         [DBParameter(SqlDbType.Bit, 0, ActionType.Everything)]

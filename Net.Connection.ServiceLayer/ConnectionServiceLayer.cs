@@ -438,6 +438,132 @@ namespace Net.Connection.ServiceLayer
                 // PASAMOS LA EXCEPCIÓN A LA APP.
             }
         }
+        public async Task<T> PostAsync<T>(string Query, object obj)
+        {
 
+            try
+            {
+                // CONSTRUIMOS LA URL DE LA ACCIÓN
+                var urlBuilder_ = new StringBuilder();
+                urlBuilder_.Append(_url != null ? _url.TrimEnd('/') : "")
+                           .Append("/" + Query);
+                var url_ = urlBuilder_.ToString();
+
+                // RECUPERAMOS EL HttpClient
+                var client_ = _httpClient.CreateClient("bypass-ssl-validation");
+
+                int NumError = 0;
+
+            band:
+
+                using (var request_ = new HttpRequestMessage())
+                {
+                    ///////////////////////////////////////
+                    // CONSTRUIMOS LA PETICIÓN (REQUEST) //
+                    ///////////////////////////////////////
+                    // DEFINIMOS EL MÉTODO HTTP GET
+                    request_.Method = new HttpMethod("POST");
+
+                    // DEFINIMOS LA URI
+                    request_.RequestUri = new Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    // DEFINIMOS EL Accept, EN ESTE CASO ES "application/json"
+                    request_.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/json"));
+                    //request_.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("odata=minimalmetadata"));
+                    //request_.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("charset=utf-8"));
+                    request_.Content = new StringContent(JsonConvert.SerializeObject(obj), System.Text.Encoding.UTF8, "application/json");
+
+                    // ASIGNAMOS A LA CABECERA DE LA PETICIÓN EL TOKEN JWT.
+                    if (_responseLoginServiceLayer.ServicioActivo)
+                        request_.Headers.Add("Cookie", "B1SESSION=" + _responseLoginServiceLayer.SessionId);
+
+                    /////////////////////////////////////////
+                    // CONSTRUIMOS LA RESPUESTA (RESPONSE) //
+                    /////////////////////////////////////////
+                    // Utilizamos ConfigureAwait(false) para evitar el DeadLock.
+                    var response_ = await client_.SendAsync(request_, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+
+                    // OBTENEMOS EL Content DEL RESPONSE como un String
+                    // Utilizamos ConfigureAwait(false) para evitar el DeadLock.
+                    var responseText_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    // SI ES LA RESPUESTA ESPERADA !! ...
+                    if (response_.StatusCode == System.Net.HttpStatusCode.OK || response_.StatusCode == System.Net.HttpStatusCode.Created) // 200 or Created
+                    {
+                        // DESERIALIZAMOS Content DEL RESPONSE
+                        dynamic responseBody = JsonConvert.DeserializeObject<T>(responseText_);
+                        responseBody.Exito = true;
+                        var estado = (int)response_.StatusCode;
+                        responseBody.CodigoHttp = estado.ToString();
+                        responseBody.Mensaje = "SE ENVIO CORRECTAMENTE A SAP BO ";
+                        return responseBody;
+                    }
+                    else
+                    // SI NO SE ESTÁ AUTORIZADO ...
+                    if (response_.StatusCode == System.Net.HttpStatusCode.Unauthorized) // 401
+                    {
+
+                        NumError += 1;
+
+                        _responseLoginServiceLayer = JsonConvert.DeserializeObject<ResponseLoginServiceLayer>(responseText_);
+                        _responseLoginServiceLayer.ServicioActivo = false;
+
+                        if (NumError == 2)
+                        {
+                            dynamic responseBody = JsonConvert.DeserializeObject<T>(responseText_);
+                            responseBody.Exito = false;
+                            var estado = (int)response_.StatusCode;
+                            responseBody.CodigoHttp = estado.ToString();
+                            responseBody.Mensaje = "Services Unauthorized : " + _responseLoginServiceLayer.error.message.ToString();
+                            return responseBody;
+                        }
+
+
+                        if (_responseLoginServiceLayer.error.code.ToString() == "301")
+                        {
+                            await Login();
+                        }
+
+                        goto band;
+                    }
+                    else
+                    // CUALQUIER OTRA RESPUESTA ...
+                    if (response_.StatusCode != System.Net.HttpStatusCode.OK && // 200
+                        response_.StatusCode != System.Net.HttpStatusCode.NoContent) // 204
+                    {
+
+                        NumError += 1;
+
+                        _responseLoginServiceLayer = JsonConvert.DeserializeObject<ResponseLoginServiceLayer>(responseText_);
+                        _responseLoginServiceLayer.ServicioActivo = false;
+
+                        if (NumError == 2)
+                        {
+                            dynamic responseBody = JsonConvert.DeserializeObject<T>(responseText_);
+                            responseBody.Exito = false;
+                            var estado = (int)response_.StatusCode;
+                            responseBody.CodigoHttp = estado.ToString();
+                            responseBody.Mensaje = "Error Services : " + _responseLoginServiceLayer.error.message.ToString();
+                            return responseBody;
+                        }
+
+                        if (_responseLoginServiceLayer.error.code.ToString() == "301")
+                        {
+                            await Login();
+                        }
+
+                        goto band;
+                    }
+
+                    // RETORNAMOS EL OBJETO POR DEFECTO ESPERADO
+                    return default(T);
+                }
+            }
+            finally
+            {
+                // NO UTILIZAMOS CATCH, 
+                // PASAMOS LA EXCEPCIÓN A LA APP.
+            }
+        }
     }
 }

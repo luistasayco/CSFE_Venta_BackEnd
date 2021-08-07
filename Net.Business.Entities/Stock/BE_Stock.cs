@@ -94,9 +94,22 @@
         /// Cantidad Comprometida Lote (Solo del almacén)
         /// </summary>
         public decimal OnOrderLote { get; set; }
+        /// <summary>
+        /// Descripción del Almacén
+        /// </summary>
         public string WhsName { get; set; }
+        /// <summary>
+        /// Codigo de DCI
+        /// </summary>
         public string U_SYP_CS_DCI { get; set; }
+        /// <summary>
+        /// Codigo de PRODCI
+        /// </summary>
         public string U_SYP_CS_PRODCI { get; set; }
         public string Code { get; set; }
+        /// <summary>
+        /// Indicador que si se maneja Ubicación
+        /// </summary>
+        public string BinActivat { get; set; }
     }
 }

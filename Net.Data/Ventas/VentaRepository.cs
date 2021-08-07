@@ -29,6 +29,7 @@ namespace Net.Data
 
         const string DB_ESQUEMA = "";
         const string SP_GET = DB_ESQUEMA + "VEN_ListaVentasCabeceraPorFiltrosGet";
+        const string SP_GET_SIN_STOCK = DB_ESQUEMA + "VEN_ListaVentasCabeceraSinStockPorFiltrosGet";
         const string SP_GET_VENTA_CABECERA = DB_ESQUEMA + "VEN_ListaVentasCabeceraPorCodVentaGet";
         const string SP_GET_CABECERA_VENTA_POR_CODVENTA = DB_ESQUEMA + "VEN_ObtieneVentasCabeceraPorCodVentaGet";
         const string SP_GET_DETALLEVENTA_POR_CODVENTA = DB_ESQUEMA + "VEN_ListaVentaDetallePorCodVentaGet";
@@ -36,6 +37,10 @@ namespace Net.Data
         const string SP_GET_CABECERA_VENTA_PENDIENTE_POR_FILTRO = DB_ESQUEMA + "VEN_ListaVentasCabeceraPendientesPorFiltrosGet";
         const string SP_GET_VENTAS_CHEQUEA_1MES_ANTES = DB_ESQUEMA + "VEN_VentasChequea1MesAntesGet";
         const string SP_GET_VALIDA_EXISTE_VENTA_ANULACION = DB_ESQUEMA + "VEN_VentaValidaExisteAnulacionGet";
+
+        // SIN STOCK
+        const string SP_UPDATE_CABECERA_SIN_STOCK = DB_ESQUEMA + "VEN_VentaSinStockUpd";
+        const string SP_UPDATE_CABECERA_SAP = DB_ESQUEMA + "VEN_VentaSAPUpd";
 
         // Validaciones de la venta
         const string SP_GET_TIPOPRODUCTOPRESTACIONES = DB_ESQUEMA + "VEN_TipoproductoPrestacionesPorFiltroGet";
@@ -50,6 +55,7 @@ namespace Net.Data
         const string SP_INSERT_DETALLE = DB_ESQUEMA + "VEN_VentaDetalleIns";
         const string SP_INSERT_DETALLE_DATOS = DB_ESQUEMA + "VEN_VentaDetalleDatosIns";
         const string SP_INSERT_DETALLE_LOTE = DB_ESQUEMA + "VEN_VentaDetalleLoteIns";
+        const string SP_INSERT_DEVOLUCION = DB_ESQUEMA + "VEN_VentaDevolucionIns";
 
         const string SP_UPDATE = DB_ESQUEMA + "VEN_VentaCabeceraUpd";
         const string SP_UPDATE_DSCTO_DETALLE = DB_ESQUEMA + "VEN_VentaCabeceraUpdDscDet";
@@ -91,6 +97,55 @@ namespace Net.Data
                 {
                     var response = new List<BE_VentasCabecera>();
                     using (SqlCommand cmd = new SqlCommand(SP_GET, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codcomprobante", codcomprobante));
+                        cmd.Parameters.Add(new SqlParameter("@codventa", codventa));
+                        cmd.Parameters.Add(new SqlParameter("@fecinicio", fecinicio));
+                        cmd.Parameters.Add(new SqlParameter("@fecfin", fecfin));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_VentasCabecera>)context.ConvertTo<BE_VentasCabecera>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+        public async Task<ResultadoTransaccion<BE_VentasCabecera>> GetAllSinStock(string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin)
+        {
+            ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            fecinicio = Utilidades.GetFechaHoraInicioActual(fecinicio);
+            fecfin = Utilidades.GetFechaHoraFinActual(fecfin);
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_VentasCabecera>();
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_SIN_STOCK, conn))
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@codcomprobante", codcomprobante));
@@ -860,6 +915,8 @@ namespace Net.Data
                                         return vResultadoTransaccion;
                                     }
 
+                                    value = resultadoTransaccionCalculoCabeceraVenta.data;
+
                                     value.porcentajeimpuesto = itemQuiebre.igvproducto;
 
                                     ResultadoTransaccion<string> resultadoTransaccionRegistraCabeceraVenta = await RegistraVentaCabecera(conn, value);
@@ -941,7 +998,7 @@ namespace Net.Data
                                                     {
                                                         if (lote.Quantityinput > 0)
                                                         {
-                                                            itemLote = new BE_VentasDetalleLote { lote = lote.BatchNum, cantidad = lote.Quantityinput, coddetalle = item.coddetalle, fechavencimiento = lote.ExpDate };
+                                                            itemLote = new BE_VentasDetalleLote { lote = lote.BatchNum, cantidad = lote.Quantityinput, coddetalle = item.coddetalle, fechavencimiento = (DateTime)lote.ExpDate };
 
                                                             ResultadoTransaccion<bool> resultadoTransaccionRegistraVentaLote = await RegistraVentaDetalleLote(conn, itemLote, (int)value.RegIdUsuario);
 
@@ -1017,7 +1074,7 @@ namespace Net.Data
                                                         {
                                                             if (lote.Quantityinput > 0)
                                                             {
-                                                                itemLote = new BE_VentasDetalleLote { lote = lote.BatchNum, cantidad = lote.Quantityinput, coddetalle = item.coddetalle, fechavencimiento = lote.ExpDate };
+                                                                itemLote = new BE_VentasDetalleLote { lote = lote.BatchNum, cantidad = lote.Quantityinput, coddetalle = item.coddetalle, fechavencimiento = (DateTime)lote.ExpDate };
 
                                                                 ResultadoTransaccion<bool> resultadoTransaccionRegistraVentaLote = await RegistraVentaDetalleLote(conn, itemLote, (int)value.RegIdUsuario);
 
@@ -1607,6 +1664,7 @@ namespace Net.Data
                     cmdDetalle.Parameters.Add(new SqlParameter("@coddetalle", item.coddetalle));
 
                     cmdDetalle.Parameters.Add(new SqlParameter("@lote", item.lote));
+                    //cmdDetalle.Parameters.Add(new SqlParameter("@ubicacion", item.ubicacion));
                     cmdDetalle.Parameters.Add(new SqlParameter("@fechavencimiento", item.fechavencimiento));
                     cmdDetalle.Parameters.Add(new SqlParameter("@cantidad", item.cantidad));
 
@@ -2871,7 +2929,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<bool>> VentaAutomatica(BE_Pedido pedido)
         {
             ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
@@ -3182,7 +3239,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<string>> GetListaCamaPorAtencion(string codatencion, string codcentro)
         {
             ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
@@ -3230,7 +3286,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<string>> GetListaTipoProductoPrestacionVentaAutomatica(string pcodprestacionpaq)
         {
             ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
@@ -3277,7 +3332,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<bool>> RegistrarVentaPedidoError(string codpedido, string observacion, int RegIdUsuario)
         {
             ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
@@ -3329,7 +3383,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<MemoryStream>> GenerarValeVentaPrint(string codventa)
         {
 
@@ -3383,6 +3436,7 @@ namespace Net.Data
                 tbl.AddCell(c1);
                 doc.Add(tbl);
 
+                doc.Add(new Phrase(" "));
                 //Obtenemos los datos de la venta
 
                 ResultadoTransaccion<BE_VentasCabecera> resultadoTransaccionVenta = await GetVentaPorCodVenta(codventa);
@@ -3467,6 +3521,8 @@ namespace Net.Data
                 c1 = new PdfPCell(new Phrase(string.Format(": {0}", ""), parrafoNegro)) { Border = 0 };
                 tbl.AddCell(c1);
                 doc.Add(tbl);
+
+                doc.Add(new Phrase(" "));
 
                 // Generamos el detalle del vale de venta
                 tbl = new PdfPTable(new float[] { 30f, 15f, 8f, 8f, 8f, 8f, 8f }) { WidthPercentage = 100 };
@@ -3609,6 +3665,322 @@ namespace Net.Data
                 vResultadoTransaccion.ResultadoCodigo = -1;
                 vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
             }
+            return vResultadoTransaccion;
+        }
+        public async Task<ResultadoTransaccion<MemoryStream>> GenerarValeVentaLotePrint(string codventa)
+        {
+
+            ResultadoTransaccion<MemoryStream> vResultadoTransaccion = new ResultadoTransaccion<MemoryStream>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                Document doc = new Document();
+                doc.SetPageSize(PageSize.Letter);
+                // points to cm
+                doc.SetMargins(20f, 20f, 15f, 15f);
+                MemoryStream ms = new MemoryStream();
+                PdfWriter write = PdfWriter.GetInstance(doc, ms);
+                doc.AddAuthor("Grupo SBA");
+                doc.AddTitle("Cliníca San Felipe");
+                var pe = new PageEventHelper();
+                write.PageEvent = pe;
+                // Colocamos la fuente que deseamos que tenga el documento
+                BaseFont helvetica = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1250, true);
+                // Titulo
+                iTextSharp.text.Font titulo = new iTextSharp.text.Font(helvetica, 14f, iTextSharp.text.Font.BOLD, BaseColor.Black);
+                iTextSharp.text.Font subTitulo = new iTextSharp.text.Font(helvetica, 12f, iTextSharp.text.Font.BOLD, BaseColor.Black);
+                iTextSharp.text.Font parrafoNegroNegrita = new iTextSharp.text.Font(helvetica, 10f, iTextSharp.text.Font.BOLD, BaseColor.Black);
+                iTextSharp.text.Font parrafoNegro = new iTextSharp.text.Font(helvetica, 10f, iTextSharp.text.Font.NORMAL, BaseColor.Black);
+                pe.HeaderLeft = " ";
+                pe.HeaderFont = parrafoNegroNegrita;
+                pe.HeaderRight = " ";
+                doc.Open();
+
+                var tbl = new PdfPTable(new float[] { 30f, 40f, 30f }) { WidthPercentage = 100 };
+
+                var title = string.Format("VENTAS Nro {0}", codventa, titulo);
+
+                var c1 = new PdfPCell(new Phrase("Cliníca San Felipe S.A.", parrafoNegro)) { Border = 0 };
+                c1.HorizontalAlignment = Element.ALIGN_LEFT;
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                tbl.AddCell(c1);
+
+                c1 = new PdfPCell(new Phrase(title, titulo)) { Border = 0 };
+                c1.HorizontalAlignment = Element.ALIGN_CENTER;
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                tbl.AddCell(c1);
+
+                c1 = new PdfPCell(new Phrase(DateTime.Now.ToString(), parrafoNegro)) { Border = 0 };
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                c1.HorizontalAlignment = Element.ALIGN_RIGHT;
+                tbl.AddCell(c1);
+                doc.Add(tbl);
+
+                doc.Add(new Phrase(" "));
+                //Obtenemos los datos de la venta
+
+                ResultadoTransaccion<BE_VentasCabecera> resultadoTransaccionVenta = await GetVentaPorCodVenta(codventa);
+
+                if (resultadoTransaccionVenta.ResultadoCodigo == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionVenta.ResultadoDescripcion;
+
+                    return vResultadoTransaccion;
+                }
+
+                // Generamos la Cabecera del vale de venta
+                tbl = new PdfPTable(new float[] { 15f, 75f }) { WidthPercentage = 100 };
+                //Linea 1
+                c1 = new PdfPCell(new Phrase("ALMACEN", parrafoNegroNegrita)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", resultadoTransaccionVenta.data.nombrealmacen), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("FECHA MOV", parrafoNegroNegrita)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", resultadoTransaccionVenta.data.fechaemision.ToString()), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                doc.Add(tbl);
+
+                doc.Add(new Phrase(" "));
+
+                // Generamos el detalle del vale de venta
+                tbl = new PdfPTable(new float[] { 40f, 20f, 10f, 15f, 15f }) { WidthPercentage = 100 };
+                c1 = new PdfPCell(new Phrase("Producto", parrafoNegroNegrita));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Lab.", parrafoNegroNegrita));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Cant.", parrafoNegroNegrita));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Lote", parrafoNegroNegrita));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("F. Vencimiento", parrafoNegroNegrita));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+
+                foreach (BE_VentasDetalle item in resultadoTransaccionVenta.data.listaVentaDetalle)
+                {
+                    if (item.listVentasDetalleLotes != null)
+                    {
+                        if (item.listVentasDetalleLotes.Any())
+                        {
+                            foreach (var itemLote in item.listVentasDetalleLotes)
+                            {
+                                c1 = new PdfPCell(new Phrase(item.nombreproducto, parrafoNegro)) { Border = 0 };
+                                tbl.AddCell(c1);
+                                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                                tbl.AddCell(c1);
+                                c1 = new PdfPCell(new Phrase(itemLote.cantidad.ToString(), parrafoNegro)) { Border = 0 };
+                                tbl.AddCell(c1);
+                                c1 = new PdfPCell(new Phrase(itemLote.lote, parrafoNegro)) { Border = 0 };
+                                tbl.AddCell(c1);
+                                c1 = new PdfPCell(new Phrase(itemLote.fechavencimiento.ToShortDateString(), parrafoNegro)) { Border = 0 };
+                                tbl.AddCell(c1);
+                            }
+
+                        }
+                    }
+                    
+                }
+                doc.Add(tbl);
+
+                write.Close();
+                doc.Close();
+                ms.Seek(0, SeekOrigin.Begin);
+                var file = ms;
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = "Se genero correctamente Vale de Venta";
+                vResultadoTransaccion.data = file;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+            return vResultadoTransaccion;
+        }
+        public async Task<ResultadoTransaccion<bool>> UpdateSAPVenta(BE_VentasCabecera value)
+        {
+            ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            using (SqlConnection conn = new SqlConnection(_cnx))
+            {
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_UPDATE_CABECERA_SAP, conn))
+                    {
+                        cmd.Parameters.Clear();
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add(new SqlParameter("@codventa", value.codventa));
+                        cmd.Parameters.Add(new SqlParameter("@ide_docentrysap", value.ide_docentrysap));
+                        cmd.Parameters.Add(new SqlParameter("@fec_docentrysap", value.fec_docentrysap));
+                        cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
+
+                        SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputIdTransaccionParam);
+
+                        SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputMsjTransaccionParam);
+                        await conn.OpenAsync();
+                        await cmd.ExecuteNonQueryAsync();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                        vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                        vResultadoTransaccion.data = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                }
+            }
+
+            return vResultadoTransaccion;
+        }
+        public async Task<ResultadoTransaccion<bool>> UpdateSinStockVenta(BE_VentasCabecera value)
+        {
+            ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            using (SqlConnection conn = new SqlConnection(_cnx))
+            {
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_UPDATE_CABECERA_SIN_STOCK, conn))
+                    {
+                        cmd.Parameters.Clear();
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add(new SqlParameter("@codventa", value.codventa));
+                        cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
+
+                        SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputIdTransaccionParam);
+
+                        SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputMsjTransaccionParam);
+                        await conn.OpenAsync();
+                        await cmd.ExecuteNonQueryAsync();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                        vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                        vResultadoTransaccion.data = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                }
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<BE_VentasGenerado>> RegistrarVentaDevolucion(BE_VentaXml value)
+        {
+            ResultadoTransaccion<BE_VentasGenerado> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasGenerado>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            using (SqlConnection conn = new SqlConnection(_cnxClinica))
+            {
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_INSERT_DEVOLUCION, conn))
+                    {
+                        cmd.Parameters.Clear();
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        SqlParameter oParam = new SqlParameter("@codventa", SqlDbType.Char, 8)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(oParam);
+
+                        cmd.Parameters.Add(new SqlParameter("@XmlData", value.XmlData));
+                        cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
+                        SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputIdTransaccionParam);
+
+                        SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputMsjTransaccionParam);
+                        await conn.OpenAsync();
+                        await cmd.ExecuteNonQueryAsync();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                        vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                }
+            }
+
             return vResultadoTransaccion;
         }
     }

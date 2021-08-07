@@ -38,6 +38,23 @@ namespace Net.Business.Services.Controllers
 
             return Ok(obj.ListaVentaCabecera);
         }
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetAllSinStock([FromQuery] string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin)
+        {
+
+            var objectGetAll = await _repository.Venta.GetAllSinStock(codcomprobante, codventa, fecinicio, fecfin);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            var obj = new DtoVentaCabeceraListarResponse().RetornarListaVentaCabecera(objectGetAll.dataList);
+
+            return Ok(obj.ListaVentaCabecera);
+        }
 
         /// <summary>
         /// 
@@ -193,6 +210,36 @@ namespace Net.Business.Services.Controllers
 
         }
 
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RegistrarVentaDevolucion([FromBody] DtoVentaDevolucionRegistrar value)
+        {
+            try
+            {
+                if (value == null)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var response = await _repository.Venta.RegistrarVentaDevolucion(value.RetornaModelo());
+
+                if (response.ResultadoCodigo == -1)
+                {
+                    return BadRequest(response);
+                }
+                else
+                {
+                    return Ok(response.dataList);
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+            }
+
+        }
+
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -309,6 +356,106 @@ namespace Net.Business.Services.Controllers
             var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", codventa + ".pdf");
 
             return pdf;
+        }
+
+        //[HttpPost]
+        //[AllowAnonymous]
+        //[ProducesResponseType(StatusCodes.Status204NoContent)]
+        //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+        //public async Task<IActionResult> GeneraVentaAutomatica()
+        //{
+        //    try
+        //    {
+
+        //        var response = await _repository.Venta.GeneraVentaAutomatica(string.Empty);
+
+        //        if (response.ResultadoCodigo == -1)
+        //        {
+        //            return BadRequest(response);
+        //        }
+        //        else
+        //        {
+        //            return Ok(response.dataList);
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+        //    }
+
+        //}
+
+        [HttpGet("{codventa}", Name = "GenerarValeVentaLotePrint")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> GenerarValeVentaLotePrint(string codventa)
+        {
+            var objectGetById = await _repository.Venta.GenerarValeVentaLotePrint(codventa);
+
+            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", codventa + ".pdf");
+
+            return pdf;
+        }
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateSinStockVenta([FromBody] DtoVentaUpdateSinStock value)
+        {
+            try
+            {
+                if (value == null)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var response = await _repository.Venta.UpdateSinStockVenta(value.RetornaVentaUpdateSinStock());
+
+                if (response.ResultadoCodigo == -1)
+                {
+                    return BadRequest(response);
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+            }
+
+        }
+
+        [HttpPut]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateSeguimiento([FromBody] DtoSeguimientoRegistrar value)
+        {
+            try
+            {
+                if (value == null)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var response = await _repository.Seguimiento.SetUpdateSeguimiento(value.RetornaModelo());
+
+                if (response.ResultadoCodigo == -1)
+                {
+                    return BadRequest(response);
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+            }
+
         }
     }
 }

@@ -36,6 +36,10 @@ namespace Net.Data
         private IAseguradoraxProductoRepository _AseguradoraxProducto;
         private IStockRepository _Stock;
         private IGenericoRepository _Generico;
+        private ISapDocumentsRepository _SapDocuments;
+        private IVentaDevolucionRepository _VentaDevolucion;
+        private ISeguimientoRepository _Seguimiento;
+        private IValeDeliveryRepository _ValeDelivery;
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
             _repoContext = repoContext;
@@ -334,6 +338,51 @@ namespace Net.Data
                     _Generico = new GenericoRepository(_clientFactory, _configuration);
                 }
                 return _Generico;
+            }
+        }
+        public ISapDocumentsRepository SapDocuments
+        {
+            get
+            {
+                if (_SapDocuments == null)
+                {
+                    _SapDocuments = new SapDocumentsRepository(_clientFactory, _configuration, _repoContext);
+                }
+                return _SapDocuments;
+            }
+        }
+        public IVentaDevolucionRepository VentaDevolucion
+        {
+            get
+            {
+                if (_VentaDevolucion == null)
+                {
+                    _VentaDevolucion = new VentaDevolucionRepository(_repoContext, _configuration);
+                }
+                return _VentaDevolucion;
+            }
+        }
+
+        public ISeguimientoRepository Seguimiento
+        {
+            get
+            {
+                if (_Seguimiento == null)
+                {
+                    _Seguimiento = new SeguimientoRepository(_repoContext, _configuration);
+                }
+                return _Seguimiento;
+            }
+        }
+        public IValeDeliveryRepository ValeDelivery
+        {
+            get
+            {
+                if (_ValeDelivery == null)
+                {
+                    _ValeDelivery = new ValeDeliveryRepository(_repoContext, _configuration);
+                }
+                return _ValeDelivery;
             }
         }
     }

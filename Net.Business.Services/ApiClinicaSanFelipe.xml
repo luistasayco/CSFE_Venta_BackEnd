@@ -137,7 +137,7 @@
             <response code="200">Devuelve el listado completo </response>
             <response code="404">Si no existen datos</response>   
         </member>
-        <member name="M:Net.Business.Services.Controllers.PlanesController.GetbyId(System.Int32)">
+        <member name="M:Net.Business.Services.Controllers.PlanesController.GetbyCodigo(System.String)">
             <summary>
             Obtener un registro individual segun el ID
             </summary>
@@ -288,6 +288,15 @@
             </summary>
             <param name="fecha"></param>
             <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.VentaDevolucionController.GetVentasPorAtencion(Net.Business.DTO.DtoVentaDevolucionFind)">
+            <summary>
+            Obtener lista de registros
+            </summary>
+            <param name="value">Este es el cuerpo para enviar los parametros</param>
+            <returns>Retorna lista</returns>
+            <response code="200">Devuelve el listado completo </response>
+            <response code="404">Si no existen datos</response>   
         </member>
         <member name="M:Net.Business.Services.Controllers.WarehousesController.GetListWarehousesContains(System.String)">
             <summary>

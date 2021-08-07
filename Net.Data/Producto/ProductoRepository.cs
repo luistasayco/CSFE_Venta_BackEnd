@@ -280,7 +280,7 @@ namespace Net.Data
 
                     ConveniosRepository conveniosRepository = new ConveniosRepository(_clientFactory, context, _configuration);
 
-                    ResultadoTransaccion<BE_Convenios> resultadoTransaccionConvenios = new ResultadoTransaccion<BE_Convenios>();
+                    ResultadoTransaccion<BE_ConveniosListaPrecio> resultadoTransaccionConvenios = new ResultadoTransaccion<BE_ConveniosListaPrecio>();
 
                     if (codtipocliente.Equals("01"))
                     {
@@ -299,7 +299,7 @@ namespace Net.Data
                         return vResultadoTransaccion;
                     }
 
-                    if (((List<BE_Convenios>)resultadoTransaccionConvenios.dataList).Count == 0)
+                    if (((List<BE_ConveniosListaPrecio>)resultadoTransaccionConvenios.dataList).Count == 0)
                     {
                         ListaPrecioRepository listaPrecioRepository = new ListaPrecioRepository(_clientFactory, _configuration);
                         ResultadoTransaccion<BE_ListaPrecio> resultadoTransaccionListaPrecio = await listaPrecioRepository.GetPrecioPorCodigo(codproducto, 1);
@@ -328,11 +328,13 @@ namespace Net.Data
                     }
                     else
                     {
-                        if (((List<BE_Convenios>)resultadoTransaccionConvenios.dataList)[0].tipomonto.Equals("M"))
+                        BE_ConveniosListaPrecio conveniosListaPrecio = ((List<BE_ConveniosListaPrecio>)resultadoTransaccionConvenios.dataList)[0];
+
+                        if (!conveniosListaPrecio.monto.Equals(0))
                         {
-                            data.valorVVP = decimal.Parse(((List<BE_Convenios>)resultadoTransaccionConvenios.dataList)[0].monto.ToString());
-                            data.FlgConvenio = true;
+                            data.valorVVP = decimal.Parse(conveniosListaPrecio.monto.ToString());
                         }
+                        data.FlgConvenio = true;
                     }
 
                     VentaRepository ventaRepository = new VentaRepository(_clientFactory, context, _configuration);

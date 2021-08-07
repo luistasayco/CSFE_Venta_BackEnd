@@ -98,5 +98,21 @@ namespace Net.Business.Services.Controllers
 
             return Ok(objectGetAll.dataList);
         }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetListStockUbicacionPorFiltro([FromQuery] string codalmacen, string codproducto, bool constock)
+        {
+
+            var objectGetAll = await _repository.Stock.GetListStockUbicacionPorFiltro(codalmacen, codproducto, constock);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
     }
 }

@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Net.Business.Entities\Net.Business.Entities.csproj" />
+    <ProjectReference Include="..\Net.CrossCotting\Net.CrossCotting.csproj" />
   </ItemGroup>
 
 </Project>

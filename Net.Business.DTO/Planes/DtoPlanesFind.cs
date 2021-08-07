@@ -4,7 +4,7 @@ namespace Net.Business.DTO
 {
     public class DtoPlanesFind
     {
-        public int? IdPlan { get; set; }
+        //public int? IdPlan { get; set; }
         public string Nombre { get; set; }
         public string CodPlan { get; set; }
 
@@ -12,7 +12,7 @@ namespace Net.Business.DTO
         {
             return new BE_Planes
             {
-                IdPlan = this.IdPlan,
+                //IdPlan = this.IdPlan,
                 Nombre = this.Nombre,
                 CodPlan = this.CodPlan
             };

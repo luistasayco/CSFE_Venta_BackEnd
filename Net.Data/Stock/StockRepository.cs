@@ -38,9 +38,22 @@ namespace Net.Data
                 nombre = nombre == null ? "" : nombre.ToUpper();
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
                 var ceros = constock ? "N" : "Y";
-                var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='" + codalmacen + "',CEROS='" + ceros + "')/SBASTKG";
+
+                var codalmacenFind = codalmacen == "*" ? string.Empty : codalmacen;
+
+                var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='" + codalmacenFind + "',CEROS='" + ceros + "')/SBASTKG";
                 var campos = "?$select=* ";
-                var filter = "&$filter = WhsCode eq '" + codalmacen + "' and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
+
+                var filter = "&$filter = validFor eq 'Y' ";
+
+                if (codalmacen.Equals("*"))
+                {
+                    filter += "and SellItem eq 'Y' and InvntItem eq 'Y' ";
+                } else
+                {
+                    filter += "and WhsCode eq '" + codalmacenFind + "' and SellItem eq 'Y' and InvntItem eq 'Y' ";
+                }
+                
                 var filterConStock = " and OnHandALM gt 0";
 
 
@@ -157,6 +170,50 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
+        public async Task<ResultadoTransaccion<BE_StockLote>> GetListStockUbicacionPorFiltro(string codalmacen, string codproducto, bool constock)
+        {
+            ResultadoTransaccion<BE_StockLote> vResultadoTransaccion = new ResultadoTransaccion<BE_StockLote>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                codproducto = codproducto == null ? "" : codproducto.ToUpper();
+
+                var ceros = constock ? "N" : "Y";
+
+                var modelo = "sml.svc/SBAVSFNParameters(CODITEM='" + codproducto + "',CODALM='" + codalmacen + "',CEROS='" + ceros + "', CODUBI=0)/SBAVSFN";
+                var campos = "?$select= ItemCode, ItemName, BatchNum, QuantityLote, IsCommitedLote, OnOrderLote , ExpDate, BinAbs, BinCode, OnHandQty";
+                var filter = "&$filter = WhsCode eq '" + codalmacen + "' and ItemCode eq '" + codproducto + "'  and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
+                var filterConStock = " and OnHandQty gt 0 ";
+                var orderby = " &$orderby = ExpDate";
+
+                if (constock)
+                {
+                    modelo = modelo + campos + filter + filterConStock + orderby;
+                }
+                else
+                {
+                    modelo = modelo + campos + filter + orderby;
+                }
+
+                List<BE_StockLote> data = await _connectServiceLayer.GetAsync<BE_StockLote>(modelo);
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", data.Count);
+                vResultadoTransaccion.dataList = data;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
         public async Task<ResultadoTransaccion<BE_Stock>> GetListStockPorProducto(string codproducto, bool constock)
         {
             ResultadoTransaccion<BE_Stock> vResultadoTransaccion = new ResultadoTransaccion<BE_Stock>();
@@ -198,7 +255,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<BE_Stock>> GetListProductoGenericoPorCodigo(string codalmacen, string codprodci, bool constock)
         {
             ResultadoTransaccion<BE_Stock> vResultadoTransaccion = new ResultadoTransaccion<BE_Stock>();
@@ -274,7 +330,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<BE_Stock>> GetListProductoGenericoPorDCI(string codalmacen, string coddci, bool constock)
         {
             ResultadoTransaccion<BE_Stock> vResultadoTransaccion = new ResultadoTransaccion<BE_Stock>();

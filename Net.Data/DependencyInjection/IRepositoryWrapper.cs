@@ -28,5 +28,9 @@
         IAseguradoraxProductoRepository AseguradoraxProducto { get; }
         IStockRepository Stock { get; }
         IGenericoRepository Generico { get; }
+        ISapDocumentsRepository SapDocuments { get; }
+        IVentaDevolucionRepository VentaDevolucion { get; }
+        ISeguimientoRepository Seguimiento { get; }
+        IValeDeliveryRepository ValeDelivery { get; }
     }
 }

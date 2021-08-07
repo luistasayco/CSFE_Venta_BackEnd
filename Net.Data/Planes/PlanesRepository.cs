@@ -92,7 +92,7 @@ namespace Net.Data
                     using (SqlCommand cmd = new SqlCommand(SP_GET_ID, conn))
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                        cmd.Parameters.Add(new SqlParameter("@IdPlan", value.IdPlan));
+                        cmd.Parameters.Add(new SqlParameter("@CodPlan", value.CodPlan));
 
                         var response = new BE_Planes();
 
@@ -193,10 +193,10 @@ namespace Net.Data
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
 
-                        SqlParameter oParam = new SqlParameter("@IdPlan", item.IdPlan);
-                        oParam.SqlDbType = SqlDbType.Int;
-                        oParam.Direction = ParameterDirection.Output;
-                        cmd.Parameters.Add(oParam);
+                        //SqlParameter oParam = new SqlParameter("@CodPlan", item.CodPlan);
+                        //oParam.SqlDbType = SqlDbType.Int;
+                        //oParam.Direction = ParameterDirection.Output;
+                        //cmd.Parameters.Add(oParam);
 
                         cmd.Parameters.Add(new SqlParameter("@Nombre", item.Nombre));
                         cmd.Parameters.Add(new SqlParameter("@PorcentajeDescuento", item.PorcentajeDescuento));
@@ -217,7 +217,7 @@ namespace Net.Data
                         await conn.OpenAsync();
                         await cmd.ExecuteNonQueryAsync();
 
-                        vResultadoTransaccion.IdRegistro = (int)cmd.Parameters["@IdPlan"].Value;
+                        vResultadoTransaccion.IdRegistro = 0;
                         vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
                         vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
                     }
@@ -249,7 +249,7 @@ namespace Net.Data
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
 
-                        cmd.Parameters.Add(new SqlParameter("@IdPlan", item.IdPlan));
+                        cmd.Parameters.Add(new SqlParameter("@CodPlan", item.CodPlan));
                         cmd.Parameters.Add(new SqlParameter("@Nombre", item.Nombre));
                         cmd.Parameters.Add(new SqlParameter("@FlgEstado", item.FlgEstado));
                         cmd.Parameters.Add(new SqlParameter("@PorcentajeDescuento", item.PorcentajeDescuento));
@@ -270,7 +270,7 @@ namespace Net.Data
                         await conn.OpenAsync();
                         await cmd.ExecuteNonQueryAsync();
 
-                        vResultadoTransaccion.IdRegistro = int.Parse(item.IdPlan.ToString());
+                        vResultadoTransaccion.IdRegistro = 0;
                         vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
                         vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
                     }
@@ -302,7 +302,7 @@ namespace Net.Data
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
 
-                        cmd.Parameters.Add(new SqlParameter("@IdPlan", value.IdPlan));
+                        cmd.Parameters.Add(new SqlParameter("@CodPlan", value.CodPlan));
                         cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
 
                         SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
@@ -320,7 +320,7 @@ namespace Net.Data
                         await conn.OpenAsync();
                         await cmd.ExecuteNonQueryAsync();
 
-                        vResultadoTransaccion.IdRegistro = int.Parse(value.IdPlan.ToString());
+                        vResultadoTransaccion.IdRegistro = 0;
                         vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
                         vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
                     }

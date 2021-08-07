@@ -50,20 +50,20 @@ namespace Net.Business.Services.Controllers
         /// <returns>Devuelve un solo registro</returns>
         /// <response code="200">Devuelve el listado completo </response>
         /// <response code="404">Si no existen datos</response>  
-        [HttpGet("{id}", Name = "GetbyIdPlanes")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetbyId(int id)
-        {
-            var objectGetById = await _repository.Planes.GetbyId(new DtoPlanesFind { IdPlan = id }.RetornaPlanes());
+        //[HttpGet("{id}", Name = "GetbyIdPlanes")]
+        //[ProducesResponseType(StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status404NotFound)]
+        //public async Task<IActionResult> GetbyId(string CodPlan)
+        //{
+        //    var objectGetById = await _repository.Planes.GetbyId(new DtoPlanesFind { CodPlan = CodPlan }.RetornaPlanes());
 
-            if (objectGetById.ResultadoCodigo == -1)
-            {
-                return BadRequest(objectGetById);
-            }
+        //    if (objectGetById.ResultadoCodigo == -1)
+        //    {
+        //        return BadRequest(objectGetById);
+        //    }
 
-            return Ok(objectGetById.data);
-        }
+        //    return Ok(objectGetById.data);
+        //}
 
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
