@@ -94,7 +94,6 @@ namespace Net.Business.Services.Controllers
             {
                 return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
             }
-
         }
     }
 }

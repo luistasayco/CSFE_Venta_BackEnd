@@ -106,14 +106,20 @@ namespace Net.Business.Entities
         public decimal preciounidad { get; set; }
         [DataMember, XmlAttribute]
         public int cnt_dev { get; set; }
-        [DataMember, XmlIgnore ]
+        [DataMember, XmlAttribute]
+        public int cntxdev { get; set; }
+        [DataMember]
+        [XmlElement(ElementName = "VentasDetalleDatos", Type = typeof(BE_VentasDetalleDatos))]
         public BE_VentasDetalleDatos VentasDetalleDatos { get; set; }
         [DataMember, XmlIgnore]
         public List<BE_StockLote> listStockLote { get; set; }
-        [DataMember, XmlIgnore]
-        public bool binActivat { get; set; }
+        [DataMember, XmlAttribute]
+        public bool binactivat { get; set; }
+        [DataMember, XmlAttribute]
+        public bool flgbin { get; set; }
         [DataMember]
         [XmlElement(ElementName = "ListVentasDetalleLote", Type = typeof(List<BE_VentasDetalleLote>))]
         public List<BE_VentasDetalleLote> listVentasDetalleLotes { get; set; }
+
     }
 }

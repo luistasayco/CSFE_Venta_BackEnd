@@ -52,7 +52,7 @@ namespace Net.Business.DTO
         //public string docidentidad { get; set; }
         //public string correocliente { get; set; }
         public List<BE_VentasDetalle> listaVentaDetalle { get; set; }
-
+        public List<BE_VentasDetalleUbicacion> listVentasDetalleUbicacion { get; set; }
         public BE_VentasCabecera RetornaVentasCabecera()
         {
             return new BE_VentasCabecera
@@ -98,6 +98,7 @@ namespace Net.Business.DTO
                 //docidentidad = this.docidentidad,
                 //correocliente = this.correocliente,
                 listaVentaDetalle = this.listaVentaDetalle,
+                listVentasDetalleUbicacion = this.listVentasDetalleUbicacion,
                 RegIdUsuario = this.RegIdUsuario
             };
         }

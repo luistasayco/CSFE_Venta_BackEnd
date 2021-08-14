@@ -225,9 +225,9 @@ namespace Net.Data
             {
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
                 var ceros = constock ? "N" : "Y";
-                var modelo = "sml.svc/SBASTKGParameters(CODITEM='" + codproducto + "',CODALM='',CEROS='" + ceros + "')/SBASTKG";
+                var modelo = "sml.svc/SBASTKGParameters(CODITEM='" + codproducto.Trim() + "',CODALM='',CEROS='" + ceros + "')/SBASTKG";
                 var campos = "?$select=* ";
-                var filter = "&$filter = ItemCode eq '" + codproducto + "' and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
+                var filter = "&$filter = ItemCode eq '" + codproducto.Trim() + "' and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
                 var filterConStock = "and OnHandALM gt 0";
 
                 if (constock)

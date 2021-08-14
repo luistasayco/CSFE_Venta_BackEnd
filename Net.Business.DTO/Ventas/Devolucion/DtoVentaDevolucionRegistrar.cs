@@ -11,7 +11,7 @@ namespace Net.Business.DTO
 {
     [DataContract]
     [Serializable]
-    [XmlRoot("VentaDevolucion")]
+    [XmlRoot("Cabecera")]
     public class DtoVentaDevolucionRegistrar : EntityBase
     {
         [DataMember, XmlAttribute]
@@ -91,7 +91,9 @@ namespace Net.Business.DTO
         [DataMember]
         [XmlElement(ElementName = "ListVentasDetalle", Type = typeof(List<BE_VentasDetalle>))]
         public List<BE_VentasDetalle> listaVentaDetalle { get; set; }
-
+        [DataMember]
+        [XmlElement(ElementName = "ListVentasDetalleUbicacion", Type = typeof(List<BE_VentasDetalleUbicacion>))]
+        public List<BE_VentasDetalleUbicacion> listVentasDetalleUbicacion { get; set; }
         public BE_VentaXml RetornaModelo()
         {
 

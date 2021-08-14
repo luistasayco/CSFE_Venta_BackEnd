@@ -24,10 +24,10 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetListaComprobantesPorFiltro([FromQuery] string codcomprobante, DateTime fecinicio, DateTime fecfin)
+        public async Task<IActionResult> GetListaComprobantesPorFiltro([FromQuery] string codcomprobante, DateTime fecinicio, DateTime fecfin, int opcion)
         {
 
-            var objectGetAll = await _repository.Comprobante.GetListaComprobantesPorFiltro(codcomprobante, fecinicio, fecfin);
+            var objectGetAll = await _repository.Comprobante.GetListaComprobantesPorFiltro(codcomprobante, fecinicio, fecfin, opcion);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {

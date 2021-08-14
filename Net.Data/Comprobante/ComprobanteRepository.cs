@@ -28,7 +28,7 @@ namespace Net.Data
             _aplicacionName = this.GetType().Name;
         }
 
-        public async Task<ResultadoTransaccion<BE_Comprobante>> GetListaComprobantesPorFiltro(string codcomprobante, DateTime fecinicio, DateTime fecfin)
+        public async Task<ResultadoTransaccion<BE_Comprobante>> GetListaComprobantesPorFiltro(string codcomprobante, DateTime fecinicio, DateTime fecfin, int opcion)
         {
             ResultadoTransaccion<BE_Comprobante> vResultadoTransaccion = new ResultadoTransaccion<BE_Comprobante>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
@@ -50,6 +50,7 @@ namespace Net.Data
                         cmd.Parameters.Add(new SqlParameter("@codcomprobante", codcomprobante));
                         cmd.Parameters.Add(new SqlParameter("@fecinicio", fecinicio));
                         cmd.Parameters.Add(new SqlParameter("@fecfin", fecfin));
+                        cmd.Parameters.Add(new SqlParameter("@opcion", opcion));
 
                         conn.Open();
 

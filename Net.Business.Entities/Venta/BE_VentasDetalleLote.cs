@@ -23,5 +23,13 @@ namespace Net.Business.Entities
         public DateTime fechavencimiento { get; set; }
         [DataMember, XmlAttribute]
         public decimal cantidad { get; set; }
+        [DataMember, XmlIgnore]
+        public int? ubicacion { get; set; }
+        [DataMember, XmlIgnore]
+        public string ubicaciondescripcion { get; set; }
+        [DataMember, XmlIgnore]
+        public decimal cantidaddev { get; set; }
+        [DataMember, XmlAttribute]
+        public decimal cantidadxdev { get; set; }
     }
 }
