@@ -32,5 +32,6 @@
         IVentaDevolucionRepository VentaDevolucion { get; }
         ISeguimientoRepository Seguimiento { get; }
         IValeDeliveryRepository ValeDelivery { get; }
+        IComprobanteElectronicoRepository ComprobanteElectronico { get; }
     }
 }

@@ -15,6 +15,8 @@ namespace Net.Business.DTO
     public class DtoVentaDevolucionRegistrar : EntityBase
     {
         [DataMember, XmlAttribute]
+        public string tipodevolucion { get; set; }
+        [DataMember, XmlAttribute]
         public string codalmacen { get; set; }
         [DataMember, XmlAttribute]
         public string tipomovimiento { get; set; }
@@ -94,6 +96,32 @@ namespace Net.Business.DTO
         [DataMember]
         [XmlElement(ElementName = "ListVentasDetalleUbicacion", Type = typeof(List<BE_VentasDetalleUbicacion>))]
         public List<BE_VentasDetalleUbicacion> listVentasDetalleUbicacion { get; set; }
+        /// <summary>
+        /// codcomprobante
+        /// </summary>
+        /// <returns></returns>
+        [DataMember, XmlAttribute]
+        public string codcomprobante { get; set; }
+        [DataMember, XmlAttribute]
+        public string tipo { get; set; }
+        [DataMember, XmlAttribute]
+        public string anombredequien { get; set; }
+        [DataMember, XmlAttribute]
+        public string concepto { get; set; }
+        [DataMember, XmlAttribute]
+        public string direccion { get; set; }
+        [DataMember, XmlAttribute]
+        public string ruc { get; set; }
+        [DataMember, XmlAttribute]
+        public string codmotivo { get; set; }
+        [DataMember, XmlAttribute]
+        public string cardcode { get; set; }
+        [DataMember, XmlAttribute]
+        public bool  flg_gratuito { get; set; }
+        /// <summary>
+        /// Devuelve el XML
+        /// </summary>
+        /// <returns></returns>
         public BE_VentaXml RetornaModelo()
         {
 

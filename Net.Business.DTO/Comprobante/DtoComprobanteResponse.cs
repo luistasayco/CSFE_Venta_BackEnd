@@ -24,6 +24,11 @@ namespace Net.Business.DTO
         public string nombretipocliente { get; set; }
         public string codatencion { get; set; }
         public bool flg_gratuito { get; set; }
+        public string direccion { get; set; }
+        public string ruc { get; set; }
+        public decimal porcentajeimpuesto { get; set; }
+        public string cardcode { get; set; }
+        public decimal tipodecambio { get; set; }
 
         public DtoComprobanteResponse RetornaDtoVentaCabeceraResponse(BE_Comprobante value)
         {
@@ -47,7 +52,12 @@ namespace Net.Business.DTO
                 nombreestado = value.nombreestado,
                 nombretipocliente = value.nombretipocliente,
                 codatencion = value.codatencion,
-                flg_gratuito = value.flg_gratuito
+                flg_gratuito = value.flg_gratuito,
+                direccion = value.direccion,
+                ruc = value.ruc,
+                porcentajeimpuesto = value.porcentajeimpuesto,
+                cardcode = value.cardcode,
+                tipodecambio = value.tipodecambio
             };
         }
     }

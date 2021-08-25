@@ -40,6 +40,7 @@ namespace Net.Data
         private IVentaDevolucionRepository _VentaDevolucion;
         private ISeguimientoRepository _Seguimiento;
         private IValeDeliveryRepository _ValeDelivery;
+        private IComprobanteElectronicoRepository _ComprobanteElectronico;
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
             _repoContext = repoContext;
@@ -383,6 +384,18 @@ namespace Net.Data
                     _ValeDelivery = new ValeDeliveryRepository(_repoContext, _configuration);
                 }
                 return _ValeDelivery;
+            }
+        }
+
+        public IComprobanteElectronicoRepository ComprobanteElectronico
+        {
+            get
+            {
+                if (_ComprobanteElectronico == null)
+                {
+                    _ComprobanteElectronico = new ComprobanteElectronicoRepository(_repoContext, _configuration);
+                }
+                return _ComprobanteElectronico;
             }
         }
     }

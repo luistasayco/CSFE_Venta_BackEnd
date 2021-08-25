@@ -48,6 +48,7 @@ namespace Net.Business.Entities
         public int? exclusiones { get; set; }
         public string codatenciondestino { get; set; }
         public int idegctipoatencionmae { get; set; }
+        public string descripcionpaquete { get; set; }
 
     }
 }

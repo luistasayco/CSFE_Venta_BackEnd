@@ -38,6 +38,22 @@ namespace Net.Business.Services.Controllers
             return Ok(objectGetAll.dataList);
         }
 
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetListConfigDocumentoPorNombreMaquina([FromQuery] string nombremaquina)
+        {
+
+            var objectGetAll = await _repository.Serie.GetListConfigDocumentoPorNombreMaquina(nombremaquina);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
+
         /// <summary>
         /// Crear una nueva registro
         /// </summary>
