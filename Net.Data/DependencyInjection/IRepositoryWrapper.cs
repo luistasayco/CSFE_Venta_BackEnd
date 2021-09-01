@@ -33,5 +33,14 @@
         ISeguimientoRepository Seguimiento { get; }
         IValeDeliveryRepository ValeDelivery { get; }
         IComprobanteElectronicoRepository ComprobanteElectronico { get; }
+        IPlanillaRepository Planilla { get; }
+        ICuadreCajaRepository CuadreCaja { get; }
+        IUsuarioRepository Usuario { get; }
+        IPerfilUsuarioRepository PerfilUsuario { get; }
+        IInformeRepository Informe { get; }
+        IVentaCajaRepository VentaCaja { get; }
+        ITipoComprobanteRepository TipoComprobante { get; }
+        ITerminalRepository Terminal { get; }
+        ISalaOperacionRepository SalaOperacion { get; }
     }
 }

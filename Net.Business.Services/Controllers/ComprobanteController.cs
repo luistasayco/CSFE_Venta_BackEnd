@@ -38,5 +38,36 @@ namespace Net.Business.Services.Controllers
 
             return Ok(obj.ListaVentaCabecera);
         }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetComprobantesElectronico([FromQuery] string codcomprobantee, string codsistema)
+        {
+
+            var objectComprobante = await _repository.Comprobante.GetComprobantesElectronico(codcomprobantee, codsistema);
+            //objectComprobante.
+            if (objectComprobante.ResultadoCodigo == -1) return BadRequest(objectComprobante);
+            if (objectComprobante.data.codcomprobante == null) return BadRequest($"No existe el comprobante {codcomprobantee}");
+            var obj = new DtoComprobanteResponse().RetornaDtoComprobanteResponse(objectComprobante.data);
+            return Ok(obj);
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetListaCuadreCaja([FromQuery] string documento)
+        {
+            var objectGetAll = await _repository.Comprobante.GetListaCuadreCaja(documento.Trim());
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            var obj = new DtoComprobanteListaTipoPagoResponse().RetornarListaCuadreCaja(objectGetAll.dataList);
+            return Ok(obj.lista);
+
+        }
     }
 }

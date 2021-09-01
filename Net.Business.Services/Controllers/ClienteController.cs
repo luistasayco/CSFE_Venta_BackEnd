@@ -35,5 +35,21 @@ namespace Net.Business.Services.Controllers
 
             return Ok(objectGetAll.dataList);
         }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetListClienteLogisticaPorFiltro([FromQuery] string ruc, string nombre)
+        {
+
+            var objectGetAll = await _repository.Cliente.GetListClienteLogisticaPorFiltro(ruc, nombre);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
     }
 }

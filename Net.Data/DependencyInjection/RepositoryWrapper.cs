@@ -41,6 +41,16 @@ namespace Net.Data
         private ISeguimientoRepository _Seguimiento;
         private IValeDeliveryRepository _ValeDelivery;
         private IComprobanteElectronicoRepository _ComprobanteElectronico;
+        private IPlanillaRepository _Planilla;
+        private ICuadreCajaRepository _CuadreCaja;
+        private IUsuarioRepository _Usuario;
+        private IPerfilUsuarioRepository _PerfilUsuario;
+        private IInformeRepository _Informe;
+        private IVentaCajaRepository _VentaCaja;
+        private ITipoComprobanteRepository _TipoComprobante;
+        private ITerminalRepository _Terminal;
+        private ISalaOperacionRepository _SalaOperacion;
+
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
             _repoContext = repoContext;
@@ -69,7 +79,6 @@ namespace Net.Data
                 return _Venta;
             }
         }
-
         public ITipoCambioRepository TipoCambio
         {
             get
@@ -81,7 +90,6 @@ namespace Net.Data
                 return _TipoCambio;
             }
         }
-
         public IPlanesRepository Planes
         {
             get
@@ -93,7 +101,6 @@ namespace Net.Data
                 return _Planes;
             }
         }
-
         public IWarehousesRepository Warehouses
         {
             get
@@ -122,7 +129,7 @@ namespace Net.Data
             {
                 if (_Cliente == null)
                 {
-                    _Cliente = new ClienteRepository(_clientFactory, _configuration);
+                    _Cliente = new ClienteRepository(_repoContext, _clientFactory, _configuration);
                 }
                 return _Cliente;
             }
@@ -160,7 +167,6 @@ namespace Net.Data
                 return _Paciente;
             }
         }
-
         public IComprobanteRepository Comprobante
         {
             get
@@ -183,7 +189,6 @@ namespace Net.Data
                 return _Pedido;
             }
         }
-
         public IProductoRepository Producto
         {
             get
@@ -206,7 +211,6 @@ namespace Net.Data
                 return _SeriePorMaquina;
             }
         }
-
         public IVentaConfiguracion VentaConfiguracion
         {
             get
@@ -273,7 +277,6 @@ namespace Net.Data
                 return _CentroCosto;
             }
         }
-
         public IPickingRepository Picking
         {
             get
@@ -318,7 +321,6 @@ namespace Net.Data
                 return _AseguradoraxProducto;
             }
         }
-
         public IStockRepository Stock
         {
             get
@@ -363,7 +365,6 @@ namespace Net.Data
                 return _VentaDevolucion;
             }
         }
-
         public ISeguimientoRepository Seguimiento
         {
             get
@@ -386,7 +387,6 @@ namespace Net.Data
                 return _ValeDelivery;
             }
         }
-
         public IComprobanteElectronicoRepository ComprobanteElectronico
         {
             get
@@ -396,6 +396,107 @@ namespace Net.Data
                     _ComprobanteElectronico = new ComprobanteElectronicoRepository(_repoContext, _configuration);
                 }
                 return _ComprobanteElectronico;
+            }
+        }
+
+        public IPlanillaRepository Planilla
+        {
+            get
+            {
+                if (_Planilla == null)
+                {
+                    _Planilla = new PlanillaRepository(_repoContext, _configuration);
+                }
+                return _Planilla;
+            }
+        }
+        public ICuadreCajaRepository CuadreCaja
+        {
+            get
+            {
+                if (_CuadreCaja == null)
+                {
+                    _CuadreCaja = new CuadreCajaRepository(_repoContext, _configuration);
+                }
+                return _CuadreCaja;
+            }
+        }
+        public IUsuarioRepository Usuario
+        {
+            get
+            {
+                if (_Usuario == null)
+                {
+                    _Usuario = new UsuarioRepository(_repoContext, _configuration);
+                }
+                return _Usuario;
+            }
+        }
+        public IPerfilUsuarioRepository PerfilUsuario
+        {
+            get
+            {
+                if (_PerfilUsuario == null)
+                {
+                    _PerfilUsuario = new PerfilUsuarioRepository(_repoContext, _configuration);
+                }
+                return _PerfilUsuario;
+            }
+        }
+        public IInformeRepository Informe
+        {
+            get
+            {
+                if (_Informe == null)
+                {
+                    _Informe = new InformeRepository(_repoContext, _configuration);
+                }
+                return _Informe;
+            }
+        }
+        public IVentaCajaRepository VentaCaja
+        {
+            get
+            {
+                if (_VentaCaja == null)
+                {
+                    _VentaCaja = new VentaCajaRepository(_clientFactory ,_repoContext, _configuration);
+                }
+                return _VentaCaja;
+            }
+        }
+        public ITipoComprobanteRepository TipoComprobante
+        {
+            get
+            {
+                if (_TipoComprobante == null)
+                {
+                    _TipoComprobante = new TipoComprobanteRepository(_clientFactory, _configuration);
+                }
+                return _TipoComprobante;
+            }
+        }
+
+        public ITerminalRepository Terminal
+        {
+            get
+            {
+                if (_Terminal == null)
+                {
+                    _Terminal = new TerminalRepository(_clientFactory, _repoContext, _configuration);
+                }
+                return _Terminal;
+            }
+        }
+        public ISalaOperacionRepository SalaOperacion
+        {
+            get
+            {
+                if (_SalaOperacion == null)
+                {
+                    _SalaOperacion = new SalaOperacionRepository(_repoContext, _configuration);
+                }
+                return _SalaOperacion;
             }
         }
     }

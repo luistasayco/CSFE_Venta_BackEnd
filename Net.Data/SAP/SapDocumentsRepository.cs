@@ -119,8 +119,6 @@ namespace Net.Data
 
                     document.DocumentLines.Add(linea);
                 }
-
-
                 var cadena = "DeliveryNotes";
                 SapDocument data = await _connectServiceLayer.PostAsync<SapDocument>(cadena, document);
                 //if (data.DocEntry > 0)

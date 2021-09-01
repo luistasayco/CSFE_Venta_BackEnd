@@ -7,5 +7,6 @@ namespace Net.Data
     public interface IClienteRepository
     {
         Task<ResultadoTransaccion<BE_Cliente>> GetListClientePorFiltro(string opcion, string ruc, string nombre);
+        Task<ResultadoTransaccion<BE_Cliente>> GetListClienteLogisticaPorFiltro(string ruc, string nombre);
     }
 }

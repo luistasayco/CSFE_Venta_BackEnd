@@ -21,6 +21,7 @@ namespace Net.Data
         const string DB_ESQUEMA = "";
         const string SP_GET_CLINICA = DB_ESQUEMA + "Sp_Tablas_Consulta";
         const string SP_GET_LOGISTICA = DB_ESQUEMA + "SHR_TablasGet";
+        const string SP_GET_TCI_WEBSERVICE = DB_ESQUEMA + "Sp_TCI_WebService_Consulta";
 
         public TablaRepository(IConnectionSQL context, IConfiguration configuration)
             : base(context)
@@ -263,5 +264,54 @@ namespace Net.Data
         //        }
         //    }
         //}
+        public async Task<ResultadoTransaccion<BE_Tabla>> GetTablasTCIWebService(string codtabla)
+        {
+            ResultadoTransaccion<BE_Tabla> vResultadoTransaccion = new ResultadoTransaccion<BE_Tabla>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx_clinica))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_TCI_WEBSERVICE, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codtabla", codtabla));
+
+                        var response = new BE_Tabla();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = context.Convert<BE_Tabla>(reader);
+
+                            if (response == null)
+                            {
+                                response = new BE_Tabla();
+                            }
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                        vResultadoTransaccion.data = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
     }
 }

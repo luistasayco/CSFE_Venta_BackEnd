@@ -51,7 +51,9 @@ namespace Net.Data
                     using (SqlCommand cmd = new SqlCommand(SP_GET, conn))
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@opcion", value.opcion));
                         cmd.Parameters.Add(new SqlParameter("@codatencion", value.codatencion));
+                        cmd.Parameters.Add(new SqlParameter("@codalmacen", value.codalmacen));
 
                         conn.Open();
 

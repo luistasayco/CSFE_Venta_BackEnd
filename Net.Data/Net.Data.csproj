@@ -14,6 +14,7 @@
     <ProjectReference Include="..\Net.Connection.ServiceLayer\Net.Connection.ServiceLayer.csproj" />
     <ProjectReference Include="..\Net.Connection\Net.Connection.csproj" />
     <ProjectReference Include="..\Net.CrossCotting\Net.CrossCotting.csproj" />
+    <ProjectReference Include="..\Net.TCI\Net.TCI.csproj" />
   </ItemGroup>
 
 </Project>

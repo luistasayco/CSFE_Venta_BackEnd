@@ -317,6 +317,55 @@ namespace Net.Data
 
         }
 
+        public async Task<ResultadoTransaccion<BE_VentasDetalleLote>> GetDetalleLoteVentaPorCodDetalle(string coddetalle)
+        {
+            ResultadoTransaccion<BE_VentasDetalleLote> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasDetalleLote>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    
+
+                    var responseDetalleLote = new List<BE_VentasDetalleLote>();
+
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_DETALLEVENTA_LOTE_POR_CODVENTA, conn))
+                    {
+                        cmd.Parameters.Clear();
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@coddetalle", coddetalle));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            responseDetalleLote = (List<BE_VentasDetalleLote>)context.ConvertTo<BE_VentasDetalleLote>(reader);
+                        }
+
+                        conn.Close();
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                    vResultadoTransaccion.dataList = responseDetalleLote;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
         public async Task<ResultadoTransaccion<BE_VentasCabecera>> GetVentaCabeceraPendientePorFiltro(DateTime fecha)
         {
             ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
@@ -1065,49 +1114,51 @@ namespace Net.Data
                 // Conexion de Logistica
                 using (SqlConnection conn = new SqlConnection(_cnx))
                 {
-                    using (CommittableTransaction transaction = new CommittableTransaction())
+                    // Conexion de Logistica
+                    conn.Open();
+                    SqlTransaction transaction = conn.BeginTransaction();
+
+
+                    try
                     {
-                        // Conexion de Logistica
-                        await conn.OpenAsync();
-                        conn.EnlistTransaction(transaction);
+                        // Insertaremos las ventas generadas
+                        List<BE_VentasGenerado> listVentasGenerados = new List<BE_VentasGenerado>();
 
-                        try
+                        foreach (BE_VentaXml ventaXml in listNewVentasCabeceraXml)
                         {
-                            // Insertaremos las ventas generadas
-                            List<BE_VentasGenerado> listVentasGenerados = new List<BE_VentasGenerado>();
+                            ResultadoTransaccion<BE_VentasGenerado> resultadoTransaccionVentasGenerado = await RegistraVentaXml(conn, transaction, ventaXml, (int)value.RegIdUsuario);
 
-                            foreach (BE_VentaXml ventaXml in listNewVentasCabeceraXml)
+                            if (resultadoTransaccionVentasGenerado.ResultadoCodigo == -1)
                             {
-                                ResultadoTransaccion<BE_VentasGenerado> resultadoTransaccionVentasGenerado = await RegistraVentaXml(conn, ventaXml, (int)value.RegIdUsuario);
-
-                                if (resultadoTransaccionVentasGenerado.ResultadoCodigo == -1)
-                                {
-                                    transaction.Rollback();
-                                    vResultadoTransaccion.IdRegistro = -1;
-                                    vResultadoTransaccion.ResultadoCodigo = -1;
-                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionVentasGenerado.ResultadoDescripcion + " ; [RegistraVentaXml]";
-                                    return vResultadoTransaccion;
-                                }
-
-                                listVentasGenerados.Add(new BE_VentasGenerado { codventa = resultadoTransaccionVentasGenerado.data.codventa, codpresotor = resultadoTransaccionVentasGenerado.data.codpresotor });
+                                transaction.Rollback();
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionVentasGenerado.ResultadoDescripcion + " ; [RegistraVentaXml]";
+                                return vResultadoTransaccion;
                             }
 
-                            vResultadoTransaccion.IdRegistro = 0;
-                            vResultadoTransaccion.ResultadoCodigo = 0;
-                            vResultadoTransaccion.ResultadoDescripcion = "Se genero correctamente";
-
-                            vResultadoTransaccion.dataList = listVentasGenerados;
-
-                            transaction.Commit();
+                            listVentasGenerados.Add(new BE_VentasGenerado { codventa = resultadoTransaccionVentasGenerado.data.codventa, codpresotor = resultadoTransaccionVentasGenerado.data.codpresotor });
                         }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            vResultadoTransaccion.IdRegistro = -1;
-                            vResultadoTransaccion.ResultadoCodigo = -1;
-                            vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
-                        }
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = "Se genero correctamente";
+
+                        vResultadoTransaccion.dataList = listVentasGenerados;
+
+                        transaction.Commit();
+                        transaction.Dispose();
                     }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                    }
+
+
+                    conn.Close();
                 }
             }
             catch (Exception ex)
@@ -1120,7 +1171,7 @@ namespace Net.Data
             return vResultadoTransaccion;
         }
 
-        public async Task<ResultadoTransaccion<BE_VentasGenerado>> RegistraVentaXml(SqlConnection conn, BE_VentaXml item, int RegIdUsuario)
+        public async Task<ResultadoTransaccion<BE_VentasGenerado>> RegistraVentaXml(SqlConnection conn, SqlTransaction transaction, BE_VentaXml item, int RegIdUsuario)
         {
             ResultadoTransaccion<BE_VentasGenerado> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasGenerado>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
@@ -1130,7 +1181,7 @@ namespace Net.Data
 
             try
             {
-                using (SqlCommand cmdDatos = new SqlCommand(SP_INSERT_XML, conn))
+                using (SqlCommand cmdDatos = new SqlCommand(SP_INSERT_XML, conn, transaction))
                 {
                     cmdDatos.Parameters.Clear();
                     cmdDatos.CommandType = System.Data.CommandType.StoredProcedure;

@@ -239,5 +239,9 @@ namespace Net.Business.Entities
         [DataMember]
         [XmlElement(ElementName = "ListVentasDetalleUbicacion", Type = typeof(List<BE_VentasDetalleUbicacion>))]
         public List<BE_VentasDetalleUbicacion> listVentasDetalleUbicacion { get; set; }
+        [DataMember, XmlIgnore]
+        public string cardcode { get; set; }
+        [DataMember, XmlIgnore]
+        public string strTienedevolucion { get; set; }
     }
 }

@@ -35,21 +35,21 @@ namespace Net.Business.Services.Controllers
             return Ok(objectGetAll.dataList);
         }
 
-        //[HttpGet]
-        //[ProducesResponseType(StatusCodes.Status200OK)]
-        //[ProducesResponseType(StatusCodes.Status404NotFound)]
-        //public async Task<IActionResult> GetTablasClinicaPorFiltros([FromQuery] string codtabla, string buscar, int key, int numerolineas, int orden)
-        //{
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetTablasClinicaPorFiltros([FromQuery] string codtabla, string buscar, int key, int numerolineas, int orden)
+        {
 
-        //    var objectGetAll = await _repository.Tabla.GetTablasClinicaPorFiltros(codtabla, buscar, key, numerolineas, orden);
+            var objectGetAll = await _repository.Tabla.GetTablasClinicaPorFiltros(codtabla, buscar, key, numerolineas, orden);
 
-        //    if (objectGetAll.ResultadoCodigo == -1)
-        //    {
-        //        return BadRequest(objectGetAll);
-        //    }
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
 
-        //    return Ok(objectGetAll.data);
-        //}
+            return Ok(objectGetAll.data);
+        }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -80,7 +80,7 @@ namespace Net.Business.Services.Controllers
                 return BadRequest(objectGetAll);
             }
 
-            return Ok(objectGetAll.dataList);
+            return Ok(objectGetAll.data);
         }
     }
 }

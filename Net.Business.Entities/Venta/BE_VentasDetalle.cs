@@ -120,6 +120,12 @@ namespace Net.Business.Entities
         [DataMember]
         [XmlElement(ElementName = "ListVentasDetalleLote", Type = typeof(List<BE_VentasDetalleLote>))]
         public List<BE_VentasDetalleLote> listVentasDetalleLotes { get; set; }
+        [DataMember, XmlIgnore]
+        public int cantidad_fraccion { get; set; }
+        [DataMember, XmlIgnore]
+        public int cnt_unitario { get; set; }
+        [DataMember, XmlIgnore]
+        public decimal prc_unitario { get; set; }
 
     }
 }

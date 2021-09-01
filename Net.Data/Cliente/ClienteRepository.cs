@@ -6,21 +6,29 @@ using System.Net.Http;
 using Net.Connection.ServiceLayer;
 using System.Text.RegularExpressions;
 using System;
+using Microsoft.Data.SqlClient;
+using Net.Connection;
 
 namespace Net.Data
 {
-    public class ClienteRepository: IClienteRepository
+    public class ClienteRepository : RepositoryBase<BE_Cliente>, IClienteRepository
     {
+        private readonly string _cnx;
         private string _aplicacionName;
         private string _metodoName;
         private readonly Regex regex = new Regex(@"<(\w+)>.*");
+
+        const string DB_ESQUEMA = "";
+        const string SP_GET_LISTA_CLIENTE_POR_FILTRO = DB_ESQUEMA + "VEN_ListaClientePorFiltro";
 
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _clientFactory;
         private readonly ConnectionServiceLayer _connectServiceLayer;
 
-        public ClienteRepository(IHttpClientFactory clientFactory, IConfiguration configuration)
+        public ClienteRepository(IConnectionSQL context, IHttpClientFactory clientFactory, IConfiguration configuration)
+            : base(context)
         {
+            _cnx = configuration.GetConnectionString("cnnSqlLogistica");
             _configuration = configuration;
             _clientFactory = clientFactory;
             _aplicacionName = this.GetType().Name;
@@ -70,6 +78,55 @@ namespace Net.Data
             }
 
             return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<BE_Cliente>> GetListClienteLogisticaPorFiltro(string ruc, string nombre)
+        {
+            ResultadoTransaccion<BE_Cliente> vResultadoTransaccion = new ResultadoTransaccion<BE_Cliente>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_LISTA_CLIENTE_POR_FILTRO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@ruc", ruc));
+                        cmd.Parameters.Add(new SqlParameter("@nombre", nombre));
+
+                        conn.Open();
+
+                        var response = new List<BE_Cliente>();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_Cliente>)context.ConvertTo<BE_Cliente>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
         }
     }
 }

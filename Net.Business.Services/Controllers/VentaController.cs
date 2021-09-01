@@ -77,6 +77,22 @@ namespace Net.Business.Services.Controllers
             return Ok(objectGetAll.data);
         }
 
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetDetalleLoteVentaPorCodDetalle([FromQuery] string coddetalle)
+        {
+
+            var objectGetAll = await _repository.Venta.GetDetalleLoteVentaPorCodDetalle(coddetalle);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
+
         /// <summary>
         /// 
         /// </summary>

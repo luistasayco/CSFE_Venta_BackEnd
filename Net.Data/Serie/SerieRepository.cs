@@ -21,6 +21,7 @@ namespace Net.Data
         const string DB_ESQUEMA = "";
         const string SP_GET = DB_ESQUEMA + "VEN_SerieByTipoSerie";
         const string SP_GET_CONFIG_SERIE = DB_ESQUEMA + "VEN_ListaConfigDocumento";
+        const string SP_GET_CORRELATIVO = DB_ESQUEMA + "VEN_GetCorrelativo";
         const string SP_INSERT = DB_ESQUEMA + "VEN_SerieIns";
 
         public SerieRepository(IConnectionSQL context, IConfiguration configuration)
@@ -172,5 +173,49 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
+
+        public async Task<ResultadoTransaccion<BE_SerieConfig>> GetCorrelativo()
+        {
+            ResultadoTransaccion<BE_SerieConfig> vResultadoTransaccion = new ResultadoTransaccion<BE_SerieConfig>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_CORRELATIVO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        var response = new BE_SerieConfig();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = context.Convert<BE_SerieConfig>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 0);
+                        vResultadoTransaccion.data = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
     }
 }

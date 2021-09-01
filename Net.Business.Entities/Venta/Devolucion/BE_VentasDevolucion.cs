@@ -6,6 +6,11 @@ namespace Net.Business.Entities
 {
     public class BE_VentasDevolucion
     {
+        /// <summary>
+        /// Filtro
+        /// </summary>
+        [DBParameter(SqlDbType.Char, 1, ActionType.Everything)]
+        public string  opcion { get; set; }
         [DBParameter(SqlDbType.Char, 8, ActionType.Everything)]
         public string codatencion { get; set; }
         [DBParameter(SqlDbType.Char, 8, ActionType.Everything)]
@@ -28,5 +33,11 @@ namespace Net.Business.Entities
         public string nombrelaboratorio { get; set; }
         [DBParameter(SqlDbType.Char, 2, ActionType.Everything)]
         public string tipomovimiento { get; set; }
+        [DBParameter(SqlDbType.Char, 10, ActionType.Everything)]
+        public string coddetalle { get; set; }
+        [DBParameter(SqlDbType.Bit, 0, ActionType.Everything)]
+        public bool manbtchnum { get; set; }
+        [DBParameter(SqlDbType.Bit, 0, ActionType.Everything)]
+        public bool binactivat { get; set; }
     }
 }
