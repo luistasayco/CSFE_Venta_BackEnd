@@ -473,5 +473,17 @@ namespace Net.Business.Services.Controllers
             }
 
         }
+        [HttpGet("{codatencion}", Name = "GenerarHojaDatosPrint")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> GenerarHojaDatosPrint(string codatencion)
+        {
+            var objectGetById = await _repository.Venta.GenerarHojaDatosPrint(codatencion);
+
+            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", codatencion + ".pdf");
+
+            return pdf;
+        }
     }
 }

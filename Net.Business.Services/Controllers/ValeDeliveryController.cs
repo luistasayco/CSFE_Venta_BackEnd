@@ -95,5 +95,62 @@ namespace Net.Business.Services.Controllers
                 return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
             }
         }
+
+        [HttpGet(Name = "GetGenerarValeValeDeliveryReporte1Print")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> GetGenerarValeValeDeliveryReporte1Print([FromQuery] DateTime fechaInicio, DateTime fechaFinal)
+        {
+            var objectGetById = await _repository.ValeDelivery.GetGenerarValeValeDeliveryReporte1Print(fechaInicio, fechaFinal);
+
+            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf" + fechaInicio.ToString("yyyymmdd") + ".pdf");
+
+            return pdf;
+        }
+
+        [HttpGet(Name = "GetGenerarValeValeDeliveryReporte2Print")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> GetGenerarValeValeDeliveryReporte2Print([FromQuery] DateTime fechainicio, DateTime fechafin)
+        {
+            var objectGetById = await _repository.ValeDelivery.GetGenerarValeValeDeliveryReporte2Print(fechainicio, fechafin);
+
+            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf" + fechainicio.ToString("yyyymmdd") + ".pdf");
+
+            return pdf;
+        }
+
+        [HttpGet(Name = "GetListValeDeliveryPorRangoFecha")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<IActionResult> GetListValeDeliveryPorRangoFecha([FromQuery] DateTime fechaInicio, DateTime fechafin)
+        {
+            var response = await _repository.ValeDelivery.GetListValeDeliveryPorRangoFecha(fechaInicio, fechafin);
+
+            if (response.ResultadoCodigo == -1)
+            {
+                return BadRequest(response);
+            }
+            else
+            {
+                return Ok(response.dataList);
+            }
+        }
+
+        [HttpGet("{idvaledelivery}", Name = "GenerarValeDeliveryPrint")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> GenerarValeDeliveryPrint(int idvaledelivery)
+        {
+            var objectGetById = await _repository.ValeDelivery.GetGenerarValeValeDeliveryReporte3Print(idvaledelivery);
+
+            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf" + idvaledelivery.ToString("yyyymmdd") + ".pdf");
+
+            return pdf;
+        }
     }
 }

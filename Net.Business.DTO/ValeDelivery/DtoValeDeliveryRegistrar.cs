@@ -16,6 +16,8 @@ namespace Net.Business.DTO
         [DataMember, XmlAttribute]
         public int idvaledelivery { get; set; }
         [DataMember, XmlAttribute]
+        public int ide_receta { get; set; }
+        [DataMember, XmlAttribute]
         public string codatencion { get; set; }
         [DataMember, XmlAttribute]
         public string nombrepaciente { get; set; }
@@ -39,6 +41,10 @@ namespace Net.Business.DTO
         public string prioridad_2 { get; set; }
         [DataMember, XmlAttribute]
         public bool estado { get; set; }
+        [DataMember, XmlAttribute]
+        public string estadovd { get; set; }
+        [DataMember, XmlAttribute]
+        public string codventa { get; set; }
         public BE_ValeDeliveryXml RetornaModelo()
         {
             var entiDom = new BE_ValeDeliveryXml();

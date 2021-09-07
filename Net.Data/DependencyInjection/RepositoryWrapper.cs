@@ -50,6 +50,7 @@ namespace Net.Data
         private ITipoComprobanteRepository _TipoComprobante;
         private ITerminalRepository _Terminal;
         private ISalaOperacionRepository _SalaOperacion;
+        private ISeparacionCuentaRepository _SeparacionCuenta;
 
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
@@ -497,6 +498,18 @@ namespace Net.Data
                     _SalaOperacion = new SalaOperacionRepository(_repoContext, _configuration);
                 }
                 return _SalaOperacion;
+            }
+        }
+
+        public ISeparacionCuentaRepository SeparacionCuenta
+        {
+            get
+            {
+                if (_SeparacionCuenta == null)
+                {
+                    _SeparacionCuenta = new SeparacionCuentaRepository(_repoContext, _configuration);
+                }
+                return _SeparacionCuenta;
             }
         }
     }

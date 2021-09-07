@@ -42,5 +42,6 @@
         ITipoComprobanteRepository TipoComprobante { get; }
         ITerminalRepository Terminal { get; }
         ISalaOperacionRepository SalaOperacion { get; }
+        ISeparacionCuentaRepository SeparacionCuenta { get; }
     }
 }

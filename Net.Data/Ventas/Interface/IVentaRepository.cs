@@ -27,5 +27,6 @@ namespace Net.Data
         Task<ResultadoTransaccion<MemoryStream>> GenerarValeVentaLotePrint(string codventa);
         Task<ResultadoTransaccion<bool>> UpdateSAPVenta(BE_VentasCabecera value);
         Task<ResultadoTransaccion<bool>> UpdateSinStockVenta(BE_VentasCabecera value);
+        Task<ResultadoTransaccion<MemoryStream>> GenerarHojaDatosPrint(string codatencion);
     }
 }

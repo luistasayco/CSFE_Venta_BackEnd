@@ -15,7 +15,7 @@ namespace Net.Business.Entities
         public string codproducto { get; set; }
         [DataMember, XmlIgnore]
         public string dsc_producto { get; set; }
-        [DataMember, XmlIgnore]
+        [DataMember, XmlAttribute]
         public string coddetalle { get; set; }
         [DataMember, XmlAttribute]
         public string lote { get; set; }
@@ -23,9 +23,9 @@ namespace Net.Business.Entities
         public DateTime fechavencimiento { get; set; }
         [DataMember, XmlAttribute]
         public decimal cantidad { get; set; }
-        [DataMember, XmlIgnore]
-        public int? ubicacion { get; set; }
-        [DataMember, XmlIgnore]
+        [DataMember, XmlAttribute]
+        public int ubicacion { get; set; }
+        [DataMember, XmlAttribute]
         public string ubicaciondescripcion { get; set; }
         [DataMember, XmlIgnore]
         public decimal cantidaddev { get; set; }

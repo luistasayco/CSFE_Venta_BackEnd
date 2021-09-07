@@ -15,6 +15,8 @@ using Net.CrossCotting;
 using System.IO;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
+using Net.Connection.ServiceLayer;
+
 namespace Net.Data
 {
     public class VentaCajaRepository : RepositoryBase<BE_VentasCabecera>, IVentaCajaRepository
@@ -26,6 +28,7 @@ namespace Net.Data
         private string _aplicacionName;
         private string _metodoName;
         private readonly Regex regex = new Regex(@"<(\w+)>.*");
+        private readonly ConnectionServiceLayer _connectServiceLayer;
 
         const string DB_ESQUEMA = "";
         const string SP_GET_VENTA_CABECERA_BY_CODVENTA = DB_ESQUEMA + "VEN_VentasCabecera_Consulta";
@@ -41,7 +44,10 @@ namespace Net.Data
         //const string SP_GET_COMPROBANTE_UPDATE_PERSO = DB_ESQUEMA + "Sp_Comprobantes_Update";
         const string SP_POST_COMPROBANTE_VAL_UPDATE = DB_ESQUEMA + "VEN_ComprobantesValUpd";
 
-        
+        const string SP_GET_CABECERA_VENTA_POR_CODVENTA = DB_ESQUEMA + "VEN_ObtieneVentasCabeceraPorCodVentaGet";
+        const string SP_GET_DETALLEVENTA_POR_CODVENTA = DB_ESQUEMA + "VEN_ListaVentaDetallePorCodVentaGet";
+        const string SP_GET_DETALLEVENTA_LOTE_POR_CODVENTA = DB_ESQUEMA + "VEN_ListaVentaDetalleLotePorCodVentaDetalleGet";
+
         public VentaCajaRepository(IHttpClientFactory clientFactory, IConnectionSQL context, IConfiguration configuration)
             : base(context)
         {
@@ -50,6 +56,7 @@ namespace Net.Data
             _configuration = configuration;
             _clientFactory = clientFactory;
             _aplicacionName = this.GetType().Name;
+            _connectServiceLayer = new ConnectionServiceLayer(_configuration, _clientFactory);
         }
 
         public async Task<ResultadoTransaccion<BE_VentasCabecera>> GetVentaCabeceraPorCodVenta(string codVenta)
@@ -704,13 +711,256 @@ namespace Net.Data
                                 }
                         }
 
-                        if (wFlg_electronico) { 
-                        
 
 
+                        //I-TCI
+                        #region <<< TCI >>>
+                        /*
+                        if (wFlg_electronico = false && codcomprobante != null)
+                        {
+                            
+                        }
+                        */
+                        #endregion <<< TCI >>>
+                        //F-TCI
+
+                        //F-SAP
+                        #region <<< SAP >>>
+
+                        if (codcomprobante != null)
+                        {
+                            string cadena = string.Empty;
+                            SapBaseResponse<SapDocument> data = new SapBaseResponse<SapDocument>();
+
+                            #region <<< Factura >>>
+
+                            List<SapBatchNumbers> sapBatchNumbers = new List<SapBatchNumbers>();
+                            List<SapBinAllocations> sapBinAllocations = new List<SapBinAllocations>();
+
+                            var response = new BE_VentasCabecera();
+
+                            using (SqlCommand cmd = new SqlCommand(SP_GET_CABECERA_VENTA_POR_CODVENTA, conn, transaction))
+                            {
+                                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                cmd.Parameters.Add(new SqlParameter("@codventa", value.codventa));
+
+                                using (var reader = await cmd.ExecuteReaderAsync())
+                                {
+                                    response = context.Convert<BE_VentasCabecera>(reader);
+                                }
+                            }
+
+                            var document = new SapDocument
+                            {
+                                DocType = "dDocument_Items",
+                                DocDate = response.fechaemision,
+                                DocDueDate = response.fechaemision,
+                                CardCode = "PAC501946",
+                                DocCurrency = "S/",
+                                TaxDate = response.fechaemision,
+                                Comments = "FLORES.P",
+                                DocObjectCode = "oInvoices",
+                                DocumentLines = new List<SapDocumentLines>()
+                            };
+
+                            var responseDetalle = new List<BE_VentasDetalle>();
+
+                            using (SqlCommand cmd = new SqlCommand(SP_GET_DETALLEVENTA_POR_CODVENTA, conn, transaction))
+                            {
+                                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                cmd.Parameters.Add(new SqlParameter("@codventa", value.codventa));
+
+                                using (var reader = await cmd.ExecuteReaderAsync())
+                                {
+                                    responseDetalle = (List<BE_VentasDetalle>)context.ConvertTo<BE_VentasDetalle>(reader);
+                                }
+                            }
+
+                            var responseDetalleLote = new List<BE_VentasDetalleLote>();
+
+                            using (SqlCommand cmd = new SqlCommand(SP_GET_DETALLEVENTA_LOTE_POR_CODVENTA, conn, transaction))
+                            {
+                                foreach (BE_VentasDetalle item in responseDetalle)
+                                {
+                                    if (item.manBtchNum || item.binactivat)
+                                    {
+                                        cmd.Parameters.Clear();
+                                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                        cmd.Parameters.Add(new SqlParameter("@coddetalle", item.coddetalle));
+
+                                        using (var reader = await cmd.ExecuteReaderAsync())
+                                        {
+                                            responseDetalleLote = (List<BE_VentasDetalleLote>)context.ConvertTo<BE_VentasDetalleLote>(reader);
+                                        }
+
+                                        responseDetalle.Find(xFila => xFila.coddetalle == item.coddetalle).listVentasDetalleLotes = responseDetalleLote;
+                                    }
+                                }
+                            }
+
+                            foreach (BE_VentasDetalle item in responseDetalle)
+                            {
+                                var linea = new SapDocumentLines
+                                {
+                                    ItemCode = item.codproducto,
+                                    ItemDescription = item.nombreproducto,
+                                    Quantity = item.cantidad,
+                                    UnitPrice = item.preciounidad,
+                                    TaxCode = "IGV",
+                                    AccountCode = "20111001",
+                                    WarehouseCode = response.codalmacen,
+                                    CostingCode = "CAMA",
+                                    CostingCode2 = "AMBU",
+                                    CostingCode3 = "FARM",
+                                    CostingCode4 = "GESO",
+                                    BatchNumbers = new List<SapBatchNumbers>(),
+                                    DocumentLinesBinAllocations = new List<SapBinAllocations>()
+                                };
+
+                                if (item.listVentasDetalleLotes != null)
+                                {
+                                    if (item.listVentasDetalleLotes.Count > 0)
+                                    {
+                                        foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
+                                        {
+                                            var lineaLote = new SapBatchNumbers
+                                            {
+                                                Quantity = itemLote.cantidad,
+                                                BatchNumber = itemLote.lote
+                                            };
+
+                                            sapBatchNumbers.Add(lineaLote);
+
+                                            if (itemLote.ubicacion != null || itemLote.ubicacion != 0)
+                                            {
+                                                var lineaUbicacion = new SapBinAllocations
+                                                {
+                                                    BinAbsEntry = int.Parse(itemLote.ubicacion.ToString()),
+                                                    Quantity = itemLote.cantidad,
+                                                    SerialAndBatchNumbersBaseLine = 0
+                                                };
+                                                sapBinAllocations.Add(lineaUbicacion);
+                                            }
+                                        }
+
+                                        linea.BatchNumbers = sapBatchNumbers;
+                                        linea.DocumentLinesBinAllocations = sapBinAllocations;
+                                    }
+                                }
+
+                                document.DocumentLines.Add(linea);
+                            }
+
+                            try
+                            {
+                                cadena = "Invoices";
+                                data = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<SapDocument>>(cadena, document);
+
+                                if (data.DocEntry != 0)
+                                {
+                                    vResultadoTransaccion.IdRegistro = 0;
+                                    vResultadoTransaccion.ResultadoCodigo = 0;
+                                    vResultadoTransaccion.ResultadoDescripcion = "COMPROBANTE ENVIADO A SAP CORRECTAMENTE.";
+                                }
+                                else
+                                {
+                                    transaction.Rollback();
+                                    vResultadoTransaccion.IdRegistro = -1;
+                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                    vResultadoTransaccion.ResultadoDescripcion = "ERROR AL ENVIAR EL COMPROBANTE A SAP.";
+                                    return vResultadoTransaccion;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                            }
+
+                            #endregion
+
+                            #region <<< Pago de factura >>>
+
+                            if (vResultadoTransaccion.IdRegistro == 0)
+                            {
+                                foreach (var item in value.cuadreCaja)
+                                {
+                                    DateTime? transferDate = null;
+
+                                    if (item.tipopago == "A") transferDate = item.fechaemision;
+
+                                    var IncomingPayments = new SapIncomingPayments()
+                                    {
+                                        DocType = "rCustomer",
+                                        DocDate = response.fechaemision,
+                                        CardCode = "PAC501946",
+                                        DocCurrency = "S/",
+                                        CashSum = (item.tipopago == "E") ? response.montoneto : 0,
+                                        CheckAccount = (item.tipopago == "C") ? "10411004" : "",
+                                        TransferAccount = (item.tipopago == "A") ? "10411002" : "",
+                                        TransferSum = (item.tipopago == "A") ? response.montoneto : 0,
+                                        TransferDate = transferDate,
+                                        TransferReference = (item.tipopago == "A") ? "777999" : "",
+                                        CounterReference = "SAB 31082021-02",
+                                        TaxDate = response.fechaemision,
+                                        DocObjectCode = "bopot_IncomingPayments",
+                                        DueDate = response.fechaemision,
+                                        PaymentInvoices = new SapPaymentInvoices()
+                                    };
+
+                                    if (item.tipopago == "C")
+                                    {
+                                        IncomingPayments.PaymentChecks = new SapPaymentChecks()
+                                        {
+                                            DueDate = response.fechaemision,
+                                            BankCode = "09",
+                                            CheckSum = response.montoneto,
+                                            Currency = "S/",
+                                            CountryCode = "PE"
+                                        };
+                                    }
+
+                                    IncomingPayments.PaymentInvoices = new SapPaymentInvoices()
+                                    {
+                                        DocEntry = data.DocEntry,
+                                        SumApplied = response.montoneto,
+                                        InvoiceType = "it_Invoice"
+                                    };
+
+                                    try
+                                    {
+                                        cadena = "IncomingPayments";
+                                        data = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<SapDocument>>(cadena, IncomingPayments);
+
+                                        if (data.DocEntry != 0)
+                                        {
+                                            vResultadoTransaccion.IdRegistro = 0;
+                                            vResultadoTransaccion.ResultadoCodigo = 0;
+                                            vResultadoTransaccion.ResultadoDescripcion = "PAGO ENVIADO A SAP CORRECTAMENTE.";
+                                        }
+                                        else
+                                        {
+                                            transaction.Rollback();
+                                            vResultadoTransaccion.IdRegistro = -1;
+                                            vResultadoTransaccion.ResultadoCodigo = -1;
+                                            vResultadoTransaccion.ResultadoDescripcion = "ERROR AL ENVIAR EL PAGO A SAP.";
+                                            return vResultadoTransaccion;
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        vResultadoTransaccion.IdRegistro = -1;
+                                        vResultadoTransaccion.ResultadoCodigo = -1;
+                                        vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                                    }
+                                }
+                            }
+                            #endregion
                         }
 
-                        //bool wFlg_electronico
+                        #endregion <<< SAP >>>
+                        //F-SAP
 
                         transaction.Commit();
                         transaction.Dispose();

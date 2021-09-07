@@ -13,5 +13,6 @@ namespace Net.Data
         Task<ResultadoTransaccion<BE_RecetaObservacion>> GetListRecetasObservacionPorReceta(int ide_receta);
         Task<ResultadoTransaccion<BE_RecetaObservacion>> RegistrarRecetasObservacion(BE_RecetaObservacionXml value);
         Task<ResultadoTransaccion<BE_RecetaObservacion>> ModificarRecetasObservacion(BE_RecetaObservacion value);
+        Task<ResultadoTransaccion<BE_HojaDato>> GetRpHojadeDatos(string codatencion);
     }
 }

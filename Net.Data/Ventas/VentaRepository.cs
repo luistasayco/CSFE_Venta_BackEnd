@@ -4465,5 +4465,424 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
+        public async Task<ResultadoTransaccion<MemoryStream>> GenerarHojaDatosPrint(string codatencion)
+        {
+
+            ResultadoTransaccion<MemoryStream> vResultadoTransaccion = new ResultadoTransaccion<MemoryStream>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                Document doc = new Document();
+                doc.SetPageSize(PageSize.Letter);
+                // points to cm
+                doc.SetMargins(20f, 20f, 15f, 15f);
+                MemoryStream ms = new MemoryStream();
+                PdfWriter write = PdfWriter.GetInstance(doc, ms);
+                doc.AddAuthor("Grupo SBA");
+                doc.AddTitle("Cliníca San Felipe");
+                var pe = new PageEventHelper();
+                write.PageEvent = pe;
+                // Colocamos la fuente que deseamos que tenga el documento
+                BaseFont helvetica = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1250, true);
+                // Titulo
+                iTextSharp.text.Font titulo = new iTextSharp.text.Font(helvetica, 12f, iTextSharp.text.Font.BOLD, BaseColor.Black);
+                iTextSharp.text.Font subTitulo = new iTextSharp.text.Font(helvetica, 12f, iTextSharp.text.Font.BOLD, BaseColor.Black);
+                iTextSharp.text.Font parrafoNegroNegrita = new iTextSharp.text.Font(helvetica, 10f, iTextSharp.text.Font.BOLD, BaseColor.Black);
+                iTextSharp.text.Font parrafoNegro = new iTextSharp.text.Font(helvetica, 9.5f, iTextSharp.text.Font.NORMAL, BaseColor.Black);
+                pe.HeaderLeft = " ";
+                pe.HeaderFont = parrafoNegroNegrita;
+                pe.HeaderRight = " ";
+                doc.Open();
+
+                RecetaRepository recetaRepository = new RecetaRepository(context, _configuration);
+                ResultadoTransaccion<BE_HojaDato> resultadoTransaccion = await recetaRepository.GetRpHojadeDatos(codatencion);
+
+                List<BE_HojaDato> response = (List<BE_HojaDato>)resultadoTransaccion.dataList;
+
+                if (resultadoTransaccion.ResultadoCodigo == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccion.ResultadoDescripcion;
+                    return vResultadoTransaccion;
+                }
+
+                var tbl = new PdfPTable(new float[] { 30f, 40f, 30f }) { WidthPercentage = 100 };
+
+                var c1 = new PdfPCell(new Phrase("Cliníca San Felipe S.A.", parrafoNegro)) { Border = 0 };
+                c1.HorizontalAlignment = Element.ALIGN_LEFT;
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                tbl.AddCell(c1);
+
+                c1 = new PdfPCell(new Phrase("", titulo)) { Border = 0 };
+                c1.HorizontalAlignment = Element.ALIGN_CENTER;
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                tbl.AddCell(c1);
+
+                c1 = new PdfPCell(new Phrase(DateTime.Now.ToString(), parrafoNegro)) { Border = 0 };
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                c1.HorizontalAlignment = Element.ALIGN_RIGHT;
+                tbl.AddCell(c1);
+                doc.Add(tbl);
+
+                doc.Add(new Phrase(" "));
+
+                tbl = new PdfPTable(new float[] { 30f, 40f, 30f }) { WidthPercentage = 100 };
+
+                var title = string.Format("HOJA DE DATOS DE PACIENTE", titulo);
+
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                c1.HorizontalAlignment = Element.ALIGN_LEFT;
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                tbl.AddCell(c1);
+
+                c1 = new PdfPCell(new Phrase(title, titulo)) { Border = 0 };
+                c1.HorizontalAlignment = Element.ALIGN_CENTER;
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                tbl.AddCell(c1);
+
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                c1.HorizontalAlignment = Element.ALIGN_RIGHT;
+                tbl.AddCell(c1);
+                doc.Add(tbl);
+
+                doc.Add(new Phrase(" "));
+
+                // Generamos la Cabecera del vale de venta
+
+                //Cabecera 01
+
+                tbl = new PdfPTable(new float[] { 19f, 30f, 2f, 11f, 38f }) { WidthPercentage = 100 };
+                //Linea 1
+                c1 = new PdfPCell(new Phrase("Nro Atención", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].codatencion), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                doc.Add(tbl);
+
+                doc.Add(new Phrase(" "));
+
+                //Cabecera 02
+                tbl = new PdfPTable(new float[] { 19f, 30f, 2f, 11f, 38f }) { WidthPercentage = 100 };
+                //Linea 1
+                c1 = new PdfPCell(new Phrase("Historia Clínica", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].codpaciente), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 2
+                c1 = new PdfPCell(new Phrase("Fecha Inicio", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].fechainicio), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Usuario", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].login), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 3
+                c1 = new PdfPCell(new Phrase("Fecha Fin", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].fechafin), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Cama", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].cama), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 4
+                c1 = new PdfPCell(new Phrase("Apellidos y Nombres", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].nombres), parrafoNegro)) { Border = 0 };
+                c1.Colspan = 4;
+                tbl.AddCell(c1);
+
+                //Linea 5
+                c1 = new PdfPCell(new Phrase("Doc. Identidad", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].docidentidad), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Provincia", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].nombreprovincia), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 6
+                c1 = new PdfPCell(new Phrase("Sexo", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].nombresexo), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Distrito", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].nombredistrito), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 7
+                c1 = new PdfPCell(new Phrase("Edad", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].edad.ToString()), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Dirección", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].direccion), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 8
+                c1 = new PdfPCell(new Phrase("Estado Civil", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].nombrecivil), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Parentesco", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].nombreparentesco), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 9
+                c1 = new PdfPCell(new Phrase("Telefóno", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].telefono), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Titular", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].titular), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 10
+                c1 = new PdfPCell(new Phrase("Médico", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].medicotratante), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 11
+                c1 = new PdfPCell(new Phrase("Especialidad", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].Especialidad), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 12
+                c1 = new PdfPCell(new Phrase("Tipo de consulta médica", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].est_consulta_medica), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                doc.Add(tbl);
+
+                //doc.Add(new Phrase(""));
+
+                //Cabecera 03
+                tbl = new PdfPTable(new float[] { 50f, 50f }) { WidthPercentage = 100 };
+
+                //Linea 1: Linea en blanco
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 2
+                c1 = new PdfPCell(new Phrase("Observaciones como Asegurado", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Observaciones como Paciente", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 3
+                c1 = new PdfPCell(new Phrase(response[0].observacionesasegurado, parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(response[0].observacionespaciente, parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                doc.Add(tbl);
+
+                doc.Add(new Phrase(" "));
+
+                //Cabecera 04
+                tbl = new PdfPTable(new float[] { 19f, 30f, 2f, 20f, 29f }) { WidthPercentage = 100 };
+                //Linea 1
+                c1 = new PdfPCell(new Phrase("Aseguradora", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].nombreaseguradora), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Fecha Inicio Vigencia", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].fechafinvigencia), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 2
+                c1 = new PdfPCell(new Phrase("Contratante", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].nombrecontratante), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Fecha Fin Vigencia", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].fechafinvigencia), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 3
+                c1 = new PdfPCell(new Phrase("Poliza", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].npoliza), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Duración Solicitud", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].numerodiasatencion), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 4
+                c1 = new PdfPCell(new Phrase("Tarifa", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].nombretarifa), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+
+                //Linea 5: Linea blanco
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                doc.Add(tbl);
+
+                //doc.Add(new Phrase(" "));
+
+                // Generamos el detalle del vale de venta
+
+                tbl = new PdfPTable(new float[] { 25f, 20f, 10f, 10f, 5f, 30f }) { WidthPercentage = 100 };
+                c1 = new PdfPCell(new Phrase("COBERTURA", parrafoNegroNegrita));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("CONCEPTO", parrafoNegroNegrita));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("TIPO", parrafoNegroNegrita));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("MONTO", parrafoNegroNegrita));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("IGV", parrafoNegroNegrita));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("OBSERVACIONES", parrafoNegroNegrita));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+
+                foreach (BE_HojaDato item in response)
+                {
+                    c1 = new PdfPCell(new Phrase(item.nombre, parrafoNegro)) { Border = 0 };
+                    tbl.AddCell(c1);
+                    c1 = new PdfPCell(new Phrase(item.nombreconcepto, parrafoNegro)) { Border = 0 };
+                    tbl.AddCell(c1);
+                    c1 = new PdfPCell(new Phrase(((item.tipomonto == "P") ? "%" : item.nombremoneda), parrafoNegro)) { Border = 0 };
+                    tbl.AddCell(c1);
+                    c1 = new PdfPCell(new Phrase(item.monto.ToString("N2"), parrafoNegro)) { Border = 0 };
+                    tbl.AddCell(c1);
+                    c1 = new PdfPCell(new Phrase(item.igv.ToString(), parrafoNegro)) { Border = 0 };
+                    tbl.AddCell(c1);
+                    c1 = new PdfPCell(new Phrase(item.observaciones.ToString(), parrafoNegro)) { Border = 0 };
+                    tbl.AddCell(c1);
+                }
+                doc.Add(tbl);
+
+                doc.Add(new Phrase(" "));
+
+
+                write.Close();
+                doc.Close();
+                ms.Seek(0, SeekOrigin.Begin);
+                var file = ms;
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = "Se genero correctamente Vale de Venta";
+                vResultadoTransaccion.data = file;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+            return vResultadoTransaccion;
+        }
     }
 }
