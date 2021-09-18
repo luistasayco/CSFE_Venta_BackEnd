@@ -9,6 +9,9 @@ using System.Text.RegularExpressions;
 using System.Transactions;
 using System.Data;
 using Net.CrossCotting;
+using System.IO;
+using iTextSharp.text.pdf;
+using iTextSharp.text;
 
 namespace Net.Data
 {
@@ -30,7 +33,7 @@ namespace Net.Data
         const string SP_UPDATE_CONSOLIDADO_PICKING = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingUpd";
         const string SP_UPDATE_CONSOLIDADO_PICKING_ESTADO = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingEstadoUpd";
         const string SP_DELETE_CONSOLIDADO_PICKING = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingDel";
-
+        const string SP_GET_CONSOLIDADO_SOLICITUD = DB_ESQUEMA + "REQ_ConsolidadoSolicitudGet";
         public ConsolidadoRepository(IConnectionSQL context, IConfiguration configuration)
             : base(context)
         {
@@ -524,6 +527,247 @@ namespace Net.Data
 
             return vResultadoTransaccion;
 
+        }
+        public async Task<ResultadoTransaccion<BE_ConsolidadoSolicitud>> GetListConsolidadoSolicitudGet(DateTime fechaInicio, DateTime fechaFin)
+        {
+            ResultadoTransaccion<BE_ConsolidadoSolicitud> vResultadoTransaccion = new ResultadoTransaccion<BE_ConsolidadoSolicitud>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_ConsolidadoSolicitud>();
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_CONSOLIDADO_SOLICITUD, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@FechaInicio", fechaInicio));
+                        cmd.Parameters.Add(new SqlParameter("@FechaFin", fechaFin));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_ConsolidadoSolicitud>)context.ConvertTo<BE_ConsolidadoSolicitud>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+        public async Task<ResultadoTransaccion<MemoryStream>> GenerarConsolidadoSolicitudPrint(DateTime fechaInicio, DateTime fechaFin)
+        {
+
+            ResultadoTransaccion<MemoryStream> vResultadoTransaccion = new ResultadoTransaccion<MemoryStream>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            fechaInicio = Utilidades.GetFechaHoraInicioActual(fechaInicio);
+            fechaFin = Utilidades.GetFechaHoraFinActual(fechaFin);
+
+            try
+            {
+                Document doc = new Document();
+                doc.SetPageSize(PageSize.Letter);
+                // points to cm
+                doc.SetMargins(20f, 20f, 15f, 15f);
+                MemoryStream ms = new MemoryStream();
+                PdfWriter write = PdfWriter.GetInstance(doc, ms);
+                doc.AddAuthor("Grupo SBA");
+                doc.AddTitle("Cliníca San Felipe");
+                var pe = new PageEventHelper();
+                write.PageEvent = pe;
+                // Colocamos la fuente que deseamos que tenga el documento
+                BaseFont helvetica = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1250, true);
+                // Titulo
+                iTextSharp.text.Font titulo = new iTextSharp.text.Font(helvetica, 12f, iTextSharp.text.Font.BOLD, BaseColor.Black);
+                iTextSharp.text.Font subTitulo = new iTextSharp.text.Font(helvetica, 12f, iTextSharp.text.Font.BOLD, BaseColor.Black);
+                iTextSharp.text.Font parrafoNegroNegrita = new iTextSharp.text.Font(helvetica, 10f, iTextSharp.text.Font.BOLD, BaseColor.Black);
+                iTextSharp.text.Font parrafoNegro = new iTextSharp.text.Font(helvetica, 8f, iTextSharp.text.Font.NORMAL, BaseColor.Black);
+                pe.HeaderLeft = " ";
+                pe.HeaderFont = parrafoNegroNegrita;
+                pe.HeaderRight = " ";
+                doc.Open();
+
+                ResultadoTransaccion<BE_ConsolidadoSolicitud> resultadoTransaccion = await GetListConsolidadoSolicitudGet(fechaInicio, fechaFin);
+
+                if (resultadoTransaccion.ResultadoCodigo == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccion.ResultadoDescripcion;
+                    return vResultadoTransaccion;
+                }
+
+                List<BE_ConsolidadoSolicitud> response = (List<BE_ConsolidadoSolicitud>)resultadoTransaccion.dataList;
+
+                var tbl = new PdfPTable(new float[] { 30f, 40f, 30f }) { WidthPercentage = 100 };
+
+                var c1 = new PdfPCell(new Phrase("Cliníca San Felipe S.A.", parrafoNegro)) { Border = 0 };
+                c1.HorizontalAlignment = Element.ALIGN_LEFT;
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                tbl.AddCell(c1);
+
+                c1 = new PdfPCell(new Phrase("", titulo)) { Border = 0 };
+                c1.HorizontalAlignment = Element.ALIGN_CENTER;
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                tbl.AddCell(c1);
+
+                c1 = new PdfPCell(new Phrase(DateTime.Now.ToString(), parrafoNegro)) { Border = 0 };
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                c1.HorizontalAlignment = Element.ALIGN_RIGHT;
+                tbl.AddCell(c1);
+                doc.Add(tbl);
+
+                doc.Add(new Phrase(" "));
+
+                tbl = new PdfPTable(new float[] { 30f, 40f, 30f }) { WidthPercentage = 100 };
+
+                var title = string.Format("REPORTE DE SOLICITUD", titulo);
+
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                c1.HorizontalAlignment = Element.ALIGN_LEFT;
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                tbl.AddCell(c1);
+
+                c1 = new PdfPCell(new Phrase(title, titulo)) { Border = 0 };
+                c1.HorizontalAlignment = Element.ALIGN_CENTER;
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                tbl.AddCell(c1);
+
+                c1 = new PdfPCell(new Phrase("", parrafoNegro)) { Border = 0 };
+                c1.VerticalAlignment = Element.ALIGN_MIDDLE;
+                c1.HorizontalAlignment = Element.ALIGN_RIGHT;
+                tbl.AddCell(c1);
+                doc.Add(tbl);
+
+                doc.Add(new Phrase(" "));
+
+                // Generamos la Cabecera
+
+                //Cabecera
+
+                tbl = new PdfPTable(new float[] { 20f, 80f }) { WidthPercentage = 100 };
+                //Linea 1
+                c1 = new PdfPCell(new Phrase("Almacén", parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase(string.Format(": {0}", response[0].DesAlmacenDestino), parrafoNegro)) { Border = 0 };
+                tbl.AddCell(c1);
+                doc.Add(tbl);
+
+                doc.Add(new Phrase(" "));
+
+                // Generamos el detalle
+
+                tbl = new PdfPTable(new float[] { 5f, 10f, 30f, 15f, 10f, 10, 10f, 10f }) { WidthPercentage = 100 };
+                c1 = new PdfPCell(new Phrase("ID", parrafoNegro));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Código", parrafoNegro));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Descripción", parrafoNegro));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Laboratorio", parrafoNegro));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Grupo", parrafoNegro));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Cantidad", parrafoNegro));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Lote", parrafoNegro));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                c1 = new PdfPCell(new Phrase("Cant.Lote", parrafoNegro));
+                c1.BorderWidth = 1;
+                c1.DisableBorderSide(Rectangle.LEFT_BORDER);
+                c1.DisableBorderSide(Rectangle.RIGHT_BORDER);
+                c1.DisableBorderSide(Rectangle.TOP_BORDER);
+                tbl.AddCell(c1);
+                int ID = 0;
+
+                foreach (BE_ConsolidadoSolicitud item in response)
+                {
+                    ID++;
+
+                    c1 = new PdfPCell(new Phrase(ID.ToString("N0"), parrafoNegro)) { Border = 0, VerticalAlignment = Element.ALIGN_CENTER };
+                    tbl.AddCell(c1);
+                    c1 = new PdfPCell(new Phrase(item.CodArticulo, parrafoNegro)) { Border = 0 };
+                    tbl.AddCell(c1);
+                    c1 = new PdfPCell(new Phrase(item.DesArticulo, parrafoNegro)) { Border = 0 };
+                    tbl.AddCell(c1);
+                    c1 = new PdfPCell(new Phrase(item.CodLaboratorio, parrafoNegro)) { Border = 0 };
+                    tbl.AddCell(c1);
+                    c1 = new PdfPCell(new Phrase(item.GroupName, parrafoNegro)) { Border = 0 };
+                    tbl.AddCell(c1);
+                    c1 = new PdfPCell(new Phrase(item.CantidadProducto.ToString("N2"), parrafoNegro)) { Border = 0, VerticalAlignment = Element.ALIGN_RIGHT };
+                    tbl.AddCell(c1);
+                    c1 = new PdfPCell(new Phrase(item.NumLote, parrafoNegro)) { Border = 0 };
+                    tbl.AddCell(c1);
+                    c1 = new PdfPCell(new Phrase(item.CantidadLote.ToString("N"), parrafoNegro)) { Border = 0, VerticalAlignment = Element.ALIGN_RIGHT };
+                    tbl.AddCell(c1);
+                }
+                doc.Add(tbl);
+
+                write.Close();
+                doc.Close();
+                ms.Seek(0, SeekOrigin.Begin);
+                var file = ms;
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = "Se genero correctamente el consolidado de la solicitudad";
+                vResultadoTransaccion.data = file;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+            return vResultadoTransaccion;
         }
     }
 }

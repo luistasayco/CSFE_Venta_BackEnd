@@ -6,6 +6,29 @@ namespace Net.Business.Entities
 {
    public class B_MdsynPagos
     {
+        //2
+        public long number { get; set; }
+        public decimal amount { get; set; }
+        public string cust_name { get; set; }
+        public string cust_lastname { get; set; }
+        public string cust_phone { get; set; }
+        public string cust_email { get; set; }
+        public string cust_doc_type { get; set; }
+        public string cust_doc_number { get; set; }
+        public string cust_adress_country { get; set; }
+        public string cust_adress_levels { get; set; }
+        public string cust_adress_line1 { get; set; }
+        public string cust_adress_zip { get; set; }
+        public string currency_code { get; set; }
+        public string country_code { get; set; }
+        public string products_name { get; set; }
+        public int products_quantity { get; set; }
+        public decimal products_unitAmount { get; set; }
+        public decimal products_amount { get; set; }
+        public string ordTyp_code { get; set; }
+        public string targTyp_code { get; set; }
+        public DateTime setting_expiration_date { get; set; }
+
         public int ide_pagos_bot { get; set; }
         public string cod_tipo { get; set; }
         public int ide_mdsyn_reserva { get; set; }

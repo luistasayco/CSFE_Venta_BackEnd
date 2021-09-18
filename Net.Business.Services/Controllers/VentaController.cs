@@ -80,6 +80,22 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetVentaDetallePorCodVenta([FromQuery] string codventa)
+        {
+
+            var objectGetAll = await _repository.Venta.GetVentaDetallePorCodVenta(codventa);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetDetalleLoteVentaPorCodDetalle([FromQuery] string coddetalle)
         {
 
@@ -426,7 +442,7 @@ namespace Net.Business.Services.Controllers
                     return BadRequest(ModelState);
                 }
 
-                var response = await _repository.Venta.UpdateSinStockVenta(value.RetornaVentaUpdateSinStock());
+                var response = await _repository.Venta.UpdateSinStockVenta(value.RetornaModelo());
 
                 if (response.ResultadoCodigo == -1)
                 {

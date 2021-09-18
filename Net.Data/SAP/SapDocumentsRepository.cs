@@ -36,9 +36,9 @@ namespace Net.Data
             _connectServiceLayer = new ConnectionServiceLayer(_configuration, _clientFactory);
         }
 
-        public async Task<ResultadoTransaccion<SapDocument>> SetCreateDocument(BE_VentasCabecera venta)
+        public async Task<ResultadoTransaccion<SapBaseResponse<SapDocument>>> SetCreateDocument(BE_VentasCabecera valueVenta)
         {
-            ResultadoTransaccion<SapDocument> vResultadoTransaccion = new ResultadoTransaccion<SapDocument>();
+            ResultadoTransaccion<SapBaseResponse<SapDocument>> vResultadoTransaccion = new ResultadoTransaccion<SapBaseResponse<SapDocument>>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
             vResultadoTransaccion.NombreMetodo = _metodoName;
@@ -51,27 +51,16 @@ namespace Net.Data
             try
             {
 
-                VentaRepository ventaRepository = new VentaRepository(_clientFactory, context, _configuration);
+                BE_VentasCabecera value = valueVenta;
 
-                ResultadoTransaccion<BE_VentasCabecera> resultadoTransaccionVenta = await ventaRepository.GetVentaPorCodVenta(venta.codventa);
-
-                if (resultadoTransaccionVenta.ResultadoCodigo == -1)
-                {
-                    vResultadoTransaccion.IdRegistro = -1;
-                    vResultadoTransaccion.ResultadoCodigo = -1;
-                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionVenta.ResultadoDescripcion;
-
-                    return vResultadoTransaccion;
-                }
-
-                BE_VentasCabecera value = resultadoTransaccionVenta.data;
+                int lineaDetalleLote = 0;
 
                 var document = new SapDocument
                 {
                     DocType = "dDocument_Items",
                     DocDate = value.fechaemision,
                     DocDueDate = value.fechaemision,
-                    CardCode = "10087354186",
+                    CardCode = value.cardcode,
                     DocCurrency = "S/",
                     TaxDate = value.fechaemision,
                     Comments = value.observacion,
@@ -86,9 +75,9 @@ namespace Net.Data
                         ItemCode = item.codproducto,
                         ItemDescription = item.nombreproducto,
                         Quantity = item.cantidad,
-                        UnitPrice =   item.preciounidad,
-                        TaxCode = "IGV",
-                        AccountCode  = "20111001",
+                        UnitPrice = item.d_ventaunitario_sinigv,
+                        TaxCode = value.porcentajeimpuesto > 0 ? "IGV" : "EXO_IGV",
+                        AccountCode = "20111001",
                         WarehouseCode = value.codalmacen,
                         CostingCode = "CAMA",
                         CostingCode2 = "AMBU",
@@ -98,43 +87,333 @@ namespace Net.Data
                         DocumentLinesBinAllocations = new List<SapBinAllocations>()
                     };
 
-                    if (item.listVentasDetalleLotes != null)
+                    sapBatchNumbers = new List<SapBatchNumbers>();
+                    sapBinAllocations = new List<SapBinAllocations>();
+                    lineaDetalleLote = 0;
+
+                    if (item.manBtchNum && item.binactivat)
                     {
-                        if (item.listVentasDetalleLotes.Count > 0)
+                        if (item.listVentasDetalleLotes.Any())
                         {
-                            foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
+                            if (item.listVentasDetalleLotes.Count > 0)
                             {
-                                var lineaLote = new SapBatchNumbers
+                                foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
                                 {
-                                    Quantity = itemLote.cantidad,
-                                    BatchNumber = itemLote.lote
-                                };
+                                    var lineaLote = new SapBatchNumbers
+                                    {
+                                        Quantity = itemLote.cantidad,
+                                        BatchNumber = itemLote.lote
+                                    };
 
-                                sapBatchNumbers.Add(lineaLote);
+                                    sapBatchNumbers.Add(lineaLote);
+
+                                    if (item.binactivat)
+                                    {
+                                        if (itemLote.ubicacion != 0)
+                                        {
+
+                                            int existe = sapBinAllocations.FindAll(xFila => xFila.BinAbsEntry == itemLote.ubicacion && xFila.SerialAndBatchNumbersBaseLine == lineaDetalleLote).Count();
+
+                                            if (existe == 0)
+                                            {
+                                                var lineaUbicacion = new SapBinAllocations
+                                                {
+                                                    BinAbsEntry = int.Parse(itemLote.ubicacion.ToString()),
+                                                    Quantity = itemLote.cantidad,
+                                                    SerialAndBatchNumbersBaseLine = lineaDetalleLote
+                                                };
+                                                sapBinAllocations.Add(lineaUbicacion);
+                                            }
+                                            else
+                                            {
+                                                sapBinAllocations.Find(xFila => xFila.BinAbsEntry == itemLote.ubicacion && xFila.SerialAndBatchNumbersBaseLine == lineaDetalleLote).Quantity += itemLote.cantidad;
+                                            }
+                                        }
+                                    }
+
+                                    lineaDetalleLote++;
+
+                                }
+
+                                linea.BatchNumbers = sapBatchNumbers;
+                                linea.DocumentLinesBinAllocations = sapBinAllocations;
                             }
+                        }
+                    }
 
-                            linea.BatchNumbers = sapBatchNumbers;
+                    if (item.manBtchNum && !item.binactivat)
+                    {
+                        if (item.listVentasDetalleLotes.Any())
+                        {
+                            if (item.listVentasDetalleLotes.Count > 0)
+                            {
+                                foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
+                                {
+                                    var lineaLote = new SapBatchNumbers
+                                    {
+                                        Quantity = itemLote.cantidad,
+                                        BatchNumber = itemLote.lote
+                                    };
+
+                                    sapBatchNumbers.Add(lineaLote);
+                                }
+
+                                linea.BatchNumbers = sapBatchNumbers;
+                            }
+                        }
+                    }
+
+                    if (!item.manBtchNum && item.binactivat)
+                    {
+                        if (item.listVentasDetalleLotes.Any())
+                        {
+                            if (item.listVentasDetalleLotes.Count > 0)
+                            {
+                                foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
+                                {
+                                    if (item.binactivat)
+                                    {
+                                        if (itemLote.ubicacion != 0)
+                                        {
+
+                                            int existe = sapBinAllocations.FindAll(xFila => xFila.BinAbsEntry == itemLote.ubicacion).Count();
+
+                                            if (existe == 0)
+                                            {
+                                                var lineaUbicacion = new SapBinAllocations
+                                                {
+                                                    BinAbsEntry = int.Parse(itemLote.ubicacion.ToString()),
+                                                    Quantity = itemLote.cantidad,
+                                                    SerialAndBatchNumbersBaseLine = lineaDetalleLote
+                                                };
+                                                sapBinAllocations.Add(lineaUbicacion);
+                                            }
+                                            else
+                                            {
+                                                sapBinAllocations.Find(xFila => xFila.BinAbsEntry == itemLote.ubicacion).Quantity += itemLote.cantidad;
+                                            }
+                                        }
+                                    }
+                                }
+                                linea.DocumentLinesBinAllocations = sapBinAllocations;
+                            }
                         }
                     }
 
                     document.DocumentLines.Add(linea);
+
                 }
+
                 var cadena = "DeliveryNotes";
-                SapDocument data = await _connectServiceLayer.PostAsync<SapDocument>(cadena, document);
-                //if (data.DocEntry > 0)
-                //{
+                SapBaseResponse<SapDocument> data = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<SapDocument>>(cadena, document);
 
-                //    foreach (var resulLinea in item.DocumentLines)
-                //    {
-                //        ResultadoTransaccion resultadoTransaccionSendSAP = await consolidadoRepository.UpdateDocEntrySAP(dataConsolidado.IdConsolidado, resulLinea.ItemCode, data.DocEntry, IdUsuario);
+                if (data.DocEntry == 0)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = data.Mensaje;
+                    return vResultadoTransaccion;
+                }
 
-                //        if (resultadoTransaccionSendSAP.ResultadoCodigo == -1)
-                //        {
-                //            data.Exito = false;
-                //            data.Mensaje = resultadoTransaccionSendSAP.ResultadoDescripcion;
-                //        }
-                //    }
-                //}
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = "DATOS DE SAP ACTUALIZADO CORRECTAMENTE";
+                vResultadoTransaccion.data = data;
+
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<SapBaseResponse<SapDocument>>> SetReturnsDocument(BE_VentasCabecera valueVenta)
+        {
+            ResultadoTransaccion<SapBaseResponse<SapDocument>> vResultadoTransaccion = new ResultadoTransaccion<SapBaseResponse<SapDocument>>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            List<SapDocumentLines> sapDocumentLines = new List<SapDocumentLines>();
+            List<SapBatchNumbers> sapBatchNumbers = new List<SapBatchNumbers>();
+            List<SapBinAllocations> sapBinAllocations = new List<SapBinAllocations>();
+
+            try
+            {
+
+                BE_VentasCabecera value = valueVenta;
+
+                int lineaDetalleLote = 0;
+
+                var document = new SapDocument
+                {
+                    DocType = "dDocument_Items",
+                    DocDate = value.fechaemision,
+                    DocDueDate = value.fechaemision,
+                    CardCode = value.cardcode,
+                    DocCurrency = "S/",
+                    TaxDate = value.fechaemision,
+                    Comments = value.observacion,
+                    DocObjectCode = "oReturns",
+                    DocumentLines = new List<SapDocumentLines>()
+                };
+
+                foreach (BE_VentasDetalle item in value.listaVentaDetalle)
+                {
+                    var linea = new SapDocumentLines
+                    {
+                        ItemCode = item.codproducto,
+                        ItemDescription = item.nombreproducto,
+                        Quantity = item.cantidad,
+                        UnitPrice = item.d_ventaunitario_sinigv,
+                        TaxCode = value.porcentajeimpuesto > 0 ? "IGV" : "EXO_IGV",
+                        AccountCode = "20111001",
+                        WarehouseCode = value.codalmacen,
+                        CostingCode = "CAMA",
+                        CostingCode2 = "AMBU",
+                        CostingCode3 = "FARM",
+                        CostingCode4 = "GESO",
+                        BatchNumbers = new List<SapBatchNumbers>(),
+                        DocumentLinesBinAllocations = new List<SapBinAllocations>()
+                    };
+
+                    sapBatchNumbers = new List<SapBatchNumbers>();
+                    sapBinAllocations = new List<SapBinAllocations>();
+                    lineaDetalleLote = 0;
+
+                    if (item.manBtchNum && item.binactivat)
+                    {
+                        if (item.listVentasDetalleLotes.Any())
+                        {
+                            if (item.listVentasDetalleLotes.Count > 0)
+                            {
+                                foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
+                                {
+                                    var lineaLote = new SapBatchNumbers
+                                    {
+                                        Quantity = itemLote.cantidad,
+                                        BatchNumber = itemLote.lote
+                                    };
+
+                                    sapBatchNumbers.Add(lineaLote);
+
+                                    if (item.binactivat)
+                                    {
+                                        if (itemLote.ubicacion != 0)
+                                        {
+
+                                            int existe = sapBinAllocations.FindAll(xFila => xFila.BinAbsEntry == itemLote.ubicacion && xFila.SerialAndBatchNumbersBaseLine == lineaDetalleLote).Count();
+
+                                            if (existe == 0)
+                                            {
+                                                var lineaUbicacion = new SapBinAllocations
+                                                {
+                                                    BinAbsEntry = int.Parse(itemLote.ubicacion.ToString()),
+                                                    Quantity = itemLote.cantidad,
+                                                    SerialAndBatchNumbersBaseLine = lineaDetalleLote
+                                                };
+                                                sapBinAllocations.Add(lineaUbicacion);
+                                            }
+                                            else
+                                            {
+                                                sapBinAllocations.Find(xFila => xFila.BinAbsEntry == itemLote.ubicacion && xFila.SerialAndBatchNumbersBaseLine == lineaDetalleLote).Quantity += itemLote.cantidad;
+                                            }
+                                        }
+                                    }
+
+                                    lineaDetalleLote++;
+
+                                }
+
+                                linea.BatchNumbers = sapBatchNumbers;
+                                linea.DocumentLinesBinAllocations = sapBinAllocations;
+                            }
+                        }
+                    }
+
+                    if (item.manBtchNum && !item.binactivat)
+                    {
+                        if (item.listVentasDetalleLotes.Any())
+                        {
+                            if (item.listVentasDetalleLotes.Count > 0)
+                            {
+                                foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
+                                {
+                                    var lineaLote = new SapBatchNumbers
+                                    {
+                                        Quantity = itemLote.cantidad,
+                                        BatchNumber = itemLote.lote
+                                    };
+
+                                    sapBatchNumbers.Add(lineaLote);
+                                }
+
+                                linea.BatchNumbers = sapBatchNumbers;
+                            }
+                        }
+                    }
+
+                    if (!item.manBtchNum && item.binactivat)
+                    {
+                        if (item.listVentasDetalleLotes.Any())
+                        {
+                            if (item.listVentasDetalleLotes.Count > 0)
+                            {
+                                foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
+                                {
+                                    if (item.binactivat)
+                                    {
+                                        if (itemLote.ubicacion != 0)
+                                        {
+
+                                            int existe = sapBinAllocations.FindAll(xFila => xFila.BinAbsEntry == itemLote.ubicacion).Count();
+
+                                            if (existe == 0)
+                                            {
+                                                var lineaUbicacion = new SapBinAllocations
+                                                {
+                                                    BinAbsEntry = int.Parse(itemLote.ubicacion.ToString()),
+                                                    Quantity = itemLote.cantidad,
+                                                    SerialAndBatchNumbersBaseLine = lineaDetalleLote
+                                                };
+                                                sapBinAllocations.Add(lineaUbicacion);
+                                            }
+                                            else
+                                            {
+                                                sapBinAllocations.Find(xFila => xFila.BinAbsEntry == itemLote.ubicacion).Quantity += itemLote.cantidad;
+                                            }
+                                        }
+                                    }
+                                }
+                                linea.DocumentLinesBinAllocations = sapBinAllocations;
+                            }
+                        }
+                    }
+
+                    document.DocumentLines.Add(linea);
+
+                }
+
+                var cadena = "Returns";
+                SapBaseResponse<SapDocument> data = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<SapDocument>>(cadena, document);
+
+                if (data.DocEntry == 0)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = data.Mensaje;
+                    return vResultadoTransaccion;
+                }
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = "DATOS DE SAP ACTUALIZADO CORRECTAMENTE";
+                vResultadoTransaccion.data = data;
 
             }
             catch (Exception ex)

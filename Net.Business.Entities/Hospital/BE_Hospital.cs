@@ -22,6 +22,7 @@ namespace Net.Business.Entities
         public DateTime fechainicio { get; set; }
         [DBParameter(SqlDbType.Char, 8, ActionType.Everything)]
         public string codpaciente { get; set; }
+        public string nombrespaciente { get; set; }
         //[DBParameter(SqlDbType.Char, 8, ActionType.Everything)]
         //public string codmedico { get; set; }
         [DBParameter(SqlDbType.Char, 20, ActionType.Everything)]
@@ -61,5 +62,72 @@ namespace Net.Business.Entities
         //public string paquete { get; set; }
         //[DBParameter(SqlDbType.VarChar, 100, ActionType.Everything)]
         //public string diagnostico { get; set; }
+
+        //I - Hospital detalla
+        public string tipoingreso { get; set; }
+        public string tipoegreso { get; set; }
+        public string activo { get; set; }
+        public string coddiagnostico { get; set; }
+        public DateTime fechafin { get; set; }
+        public string codmedico { get; set; }
+        public string tipomedico { get; set; }
+        public string titular { get; set; }
+        public int quirofano { get; set; }
+        public string codcia { get; set; }
+        public string quiencreoregistro { get; set; }
+        public string quienmodificoregistro { get; set; }
+        public string estado { get; set; }
+        public string familiar { get; set; }
+        public string gestante { get; set; }
+        public string fur { get; set; }
+        public DateTime fechaaltamedica { get; set; }
+        public decimal vaseguradora { get; set; }
+        public decimal vpaciente { get; set; }
+        public decimal vcontratante { get; set; }
+        public string quieneliminoregistro { get; set; }
+        public int usr_altamedica { get; set; }
+        public int usr_altaadministrativa { get; set; }
+        public DateTime fec_altaadministrativa { get; set; }
+        public string descripcioncama { get; set; }
+        public string nombresmedico { get; set; }
+        public string nombresmedicoemergencia { get; set; }
+        public string nombretipomedico { get; set; }
+        public string nombretipoingreso { get; set; }
+        public string nombretipoegreso { get; set; }
+        public string nombrecontratante { get; set; }
+        public string nombrediagnostico { get; set; }
+        public string restringido { get; set; }
+        public int planmamis { get; set; }
+        public int partonormal { get; set; }
+        public int reingresohospitalario { get; set; }
+        public int infeccionintrahospitalaria { get; set; }
+        public string observaciones { get; set; }
+        public int deduciblexservicio { get; set; }
+        public int pagodeducible { get; set; }
+        public DateTime fechagenerada { get; set; }
+        public DateTime? fechamodifica { get; set; }
+        public string tipodocumentoatencion { get; set; }
+        public string numerodocumentoatencion { get; set; }
+        public string numeroadicionalatencion { get; set; }
+        public string codespecialidad { get; set; }
+        public string nivelatencion { get; set; }
+        public string tipohospitalizacion { get; set; }
+        public string segtipodocumentoatencion { get; set; }
+        public string segnumerodocumentoatencion { get; set; }
+        public string tipomedicoatiende { get; set; }
+        public string codplanesp { get; set; }
+        public string desplanesp { get; set; }
+        public string codespecialidadatencion { get; set; }
+        public string tipodestino { get; set; }
+        public string nombreespecialidadatencion { get; set; }
+        public string nombredestino { get; set; }
+        public string codespecialidadtriage { get; set; }
+        public string ruc_ipress { get; set; }
+        public string nombre_ipress { get; set; }
+        public string flg_quemadura { get; set; }
+        public string codmedicoanamnesis { get; set; }
+        public string fecini_112 { get; set; }
+        public string paquete { get; set; }
+        //F| - Hospital detalla
     }
 }

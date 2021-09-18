@@ -11,6 +11,7 @@ namespace Net.Data
         Task<ResultadoTransaccion<BE_VentasCabecera>> GetAll(string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin);
         Task<ResultadoTransaccion<BE_VentasCabecera>> GetAllSinStock(string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin);
         Task<ResultadoTransaccion<BE_VentasCabecera>> GetVentaPorCodVenta(string codventa);
+        Task<ResultadoTransaccion<BE_VentasDetalle>> GetVentaDetallePorCodVenta(string codventa);
         Task<ResultadoTransaccion<BE_VentasDetalleLote>> GetDetalleLoteVentaPorCodDetalle(string coddetalle);
         Task<ResultadoTransaccion<BE_VentasCabecera>> GetVentaCabeceraPendientePorFiltro(DateTime fecha);
         Task<ResultadoTransaccion<BE_VentasDetalle>> GetVentaChequea1MesPorFiltro(string codpaciente, int cuantosmesesantes);
@@ -25,8 +26,8 @@ namespace Net.Data
         Task<ResultadoTransaccion<bool>> GeneraVentaAutomatica(string codpedido);
         Task<ResultadoTransaccion<MemoryStream>> GenerarValeVentaPrint(string codventa);
         Task<ResultadoTransaccion<MemoryStream>> GenerarValeVentaLotePrint(string codventa);
-        Task<ResultadoTransaccion<bool>> UpdateSAPVenta(BE_VentasCabecera value);
-        Task<ResultadoTransaccion<bool>> UpdateSinStockVenta(BE_VentasCabecera value);
+        //Task<ResultadoTransaccion<bool>> UpdateSAPVenta(BE_VentasCabecera value);
+        Task<ResultadoTransaccion<bool>> UpdateSinStockVenta(BE_VentaXml value);
         Task<ResultadoTransaccion<MemoryStream>> GenerarHojaDatosPrint(string codatencion);
     }
 }

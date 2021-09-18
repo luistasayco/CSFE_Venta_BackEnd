@@ -49,7 +49,7 @@ namespace Net.Business.DTO
         public string nombremaquina { get; set; }
         public string usuario { get; set; }
         public bool flgsinstock { get; set; }
-        //public string docidentidad { get; set; }
+        public int idborrador { get; set; }
         //public string correocliente { get; set; }
         public List<BE_VentasDetalle> listaVentaDetalle { get; set; }
         public List<BE_VentasDetalleUbicacion> listVentasDetalleUbicacion { get; set; }
@@ -96,7 +96,7 @@ namespace Net.Business.DTO
                 //dircliente = this.dircliente,
                 //tipdocidentidad = this.tipdocidentidad,
                 //docidentidad = this.docidentidad,
-                //correocliente = this.correocliente,
+                idborrador = this.idborrador,
                 listaVentaDetalle = this.listaVentaDetalle,
                 listVentasDetalleUbicacion = this.listVentasDetalleUbicacion,
                 RegIdUsuario = this.RegIdUsuario

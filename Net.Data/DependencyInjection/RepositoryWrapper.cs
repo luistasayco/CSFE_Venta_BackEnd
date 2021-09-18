@@ -51,6 +51,8 @@ namespace Net.Data
         private ITerminalRepository _Terminal;
         private ISalaOperacionRepository _SalaOperacion;
         private ISeparacionCuentaRepository _SeparacionCuenta;
+        private IConsolidadoPedidoRepository _ConsolidadoPedido;
+        private ICheckListRegistroMovimientoRepository _CheckListRegistroMovimiento;
 
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
@@ -507,9 +509,32 @@ namespace Net.Data
             {
                 if (_SeparacionCuenta == null)
                 {
-                    _SeparacionCuenta = new SeparacionCuentaRepository(_repoContext, _configuration);
+                    _SeparacionCuenta = new SeparacionCuentaRepository(_clientFactory, _repoContext, _configuration);
                 }
                 return _SeparacionCuenta;
+            }
+        }
+
+        public IConsolidadoPedidoRepository ConsolidadoPedido
+        {
+            get
+            {
+                if (_ConsolidadoPedido == null)
+                {
+                    _ConsolidadoPedido = new ConsolidadoPedidoRepository(_repoContext, _configuration);
+                }
+                return _ConsolidadoPedido;
+            }
+        }
+        public ICheckListRegistroMovimientoRepository CheckListRegistroMovimiento
+        {
+            get
+            {
+                if (_CheckListRegistroMovimiento == null)
+                {
+                    _CheckListRegistroMovimiento = new CheckListRegistroMovimientoRepository(_repoContext, _configuration);
+                }
+                return _CheckListRegistroMovimiento;
             }
         }
     }

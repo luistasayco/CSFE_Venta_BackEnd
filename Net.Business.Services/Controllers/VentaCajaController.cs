@@ -1,10 +1,14 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Net.Business.DTO;
 using Net.Data;
+using wsComprobanteTCI;
+using static wsComprobanteTCI.WSComprobanteSoapClient;
 
 namespace Net.Business.Services.Controllers
 {
@@ -16,9 +20,11 @@ namespace Net.Business.Services.Controllers
     public class VentaCajaController : ControllerBase
     {
         private readonly IRepositoryWrapper _repository;
+
         public VentaCajaController(IRepositoryWrapper repository)
         {
             this._repository = repository;
+
         }
 
         /// <summary>
@@ -232,17 +238,17 @@ namespace Net.Business.Services.Controllers
                 string vender = "S";
                 if (value.codTipoCliente.Equals("03")) { 
                 
-                    dynamic objLConsumo = await _repository.VentaCaja.GetLimiteConsumoPersonalPorCodPersonal(strCodCliente);
+                    var objLConsumo = await _repository.VentaCaja.GetCsLimiteConsumoPersonalPorCodPersonal(strCodCliente);
                     if (objLConsumo.ResultadoCodigo == -1)
                     {
                         return BadRequest(objLConsumo);
                     }
 
-                     vender = objLConsumo.vender;
-                     var montoconsumo = objLConsumo.montoconsumo;
-                     var montolimite = objLConsumo.montolimite;
-                     var fecha1 = objLConsumo.fecha1;
-                     var fecha2 = objLConsumo.fecha2;
+                     vender = objLConsumo.data.vender;
+                     var montoconsumo = objLConsumo.data.montoconsumo;
+                     var montolimite = objLConsumo.data.montolimite;
+                     var fecha1 = objLConsumo.data.fecha1;
+                     var fecha2 = objLConsumo.data.fecha2;
 
                     if (vender == "N")
                     {
@@ -251,7 +257,7 @@ namespace Net.Business.Services.Controllers
                     }
                     else {
 
-                       var wMontoConsumo = objLConsumo.montoconsumo + value.montoTotal;
+                       var wMontoConsumo = objLConsumo.data.montoconsumo + value.montoTotal;
 
                         if (wMontoConsumo <= montolimite)
                         {
@@ -310,7 +316,7 @@ namespace Net.Business.Services.Controllers
                     return Ok(new { exito = true,comprobante= objComprobante.data, mensaje = $"SE REGISTRO CORRECTAMENTE EL PAGO: {objComprobante.data}" });
                 }
                 else {
-                    return Ok(new { exito = false, mensaje = "SE GENERO UN ERROR AL MOMENTO DE GUARDAR EL PAGO" });
+                    return Ok(new { exito = false, mensaje = "SE GENERO UN ERROR AL MOMENTO DE GUARDAR EL PAGO: "+ objComprobante.ResultadoDescripcion });
                 }
 
                 
@@ -322,6 +328,26 @@ namespace Net.Business.Services.Controllers
             }
 
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetObtener()
+        {
+            var objectGetAll = await _repository.VentaCaja.GetCorrelativoConsulta();
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.data);
+
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -336,10 +362,236 @@ namespace Net.Business.Services.Controllers
             {
                 return BadRequest(objectGetAll);
             }
-
             return Ok(objectGetAll.data);
+        }
+
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> GenerarPreVistaPrint(string codventa,string maquina,int idusuario,int orden)
+        {
+            string archivoImg = string.Empty;
+            var objConf = await _repository.Tabla.GetListTablaClinicaPorFiltros("EFACT_PARAMETROSWSTCI", "", 0, 0, 7);
+            foreach (var item in objConf.dataList)
+            {
+                if (item.codigo.Trim().Equals("TEMP")) archivoImg = item.nombre;
+            }
+
+            var objectGetById = await _repository.VentaCaja.GenerarPreVistaPrint(codventa, maquina, archivoImg, idusuario, orden);
+            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", codventa + ".pdf");
+            return pdf;
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesDefaultResponseType]
+        public async Task<IActionResult> ComprobanteElectrValida(string codComprobante)
+        {
+
+            try
+            {
+                var objConf = await _repository.Tabla.GetTablasClinicaPorFiltros("EFACT_PARAMETROSWSTCI", "", 0, 0, 7);
+                if (objConf.data == null) throw new ArgumentException("NO EXISTE EN A CONFIGURACION -> EFACT_PARAMETROSWSTCI");
+
+                var objValida = await _repository.VentaCaja.GetComprobanteElectroncioVB("001", codComprobante, "", "L", "", 4);
+                if (objValida.data == null) throw new ArgumentException("EL COMPROBANTE NO ES ELECTRONICO / NO EXISTE.");
+                if (!objValida.data.flg_electronico.Equals("1")) throw new ArgumentException("EL COMPROBANTE NO ES ELECTRONICO.");
+                if (!objValida.data.obtener_pdf.Equals("S")) throw new ArgumentException("AUN NO PUEDE IMPRIMIR COMPROBANTE ELECTRONICO. " +
+                    " ESTADO CDR: " + objValida.data.nombreestado_cdr +
+                    " Se Otorgó?: " + objValida.data.nombreestado_otorgamiento);
+
+                var objExiste = _repository.VentaCaja.GetComprobanteElectroncioCodVenta(codComprobante, 0, 0, "", "", "", "", "", "", 1);
+                if (objExiste.Result.data == null) throw new ArgumentException("No se puede obtener el Código del Comprobante Electrónico.\n Tabla comprobantes_electronicos  Cod. Comprobante PK: " + codComprobante);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+            return Ok();
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesDefaultResponseType]
+        public async Task<IActionResult> PreVistaValida(string codComprobante)
+        {
+
+            try
+            {
+                var objCPE = await _repository.VentaCaja.GetComprobanteElectroncioCodVenta(codComprobante, 0, 0, "", "", "", "", "", "", 1);
+                if (objCPE.data.codcomprobante == null) throw new ArgumentException("El comprobante que esta intentado obtener no es electrónico.");
+                if (objCPE.data.codigobarra.Length == 0) {
+
+                    ENPeticionInformacionComprobante modelo = new ENPeticionInformacionComprobante()
+                    {
+                        RucEmisor = objCPE.data.ruc_emisor,
+                        TipoComprobante = objCPE.data.tipo_comprobante,
+                        serie = objCPE.data.codcomprobantee.Substring(0,4),
+                        numero = Convert.ToInt32(objCPE.data.codcomprobantee.Substring(4)).ToString() ,
+                        CodigoHash = false,
+                        CodigoBarra=true
+                    };
+
+                    Byte[] xJpgArchivo = new Byte[0];
+
+                    string xRuta = string.Empty;
+                    string pRutaArchivoJPG = string.Empty;
+                    string xUrlWebService = string.Empty;
+
+                    var objConf = await _repository.Tabla.GetListTablaClinicaPorFiltros("EFACT_PARAMETROSWSTCI", "", 0, 0, 7);
+                    foreach (var item in objConf.dataList)
+                    {
+                        if (item.codigo.Trim().Equals("TEMP")) pRutaArchivoJPG = item.nombre;
+                        if (item.codigo.Trim().Equals("WS")) xUrlWebService = item.nombre;
+                    }
+
+                    var xUrlWS = new System.ServiceModel.EndpointAddress(xUrlWebService);
+                    var binding = new System.ServiceModel.BasicHttpBinding();
+                    WSComprobanteSoapClient client = new WSComprobanteSoapClient(binding, xUrlWS);
+                    string xRptaCadena = string.Empty;
+                    var result = client.ConsultarInformacionComprobante(modelo);
+                    if (result != null)
+                    {
+                        if (result.codigorespuesta.Equals("0"))
+                        {
+
+                            foreach (var item in result.respuesta)
+                            {
+                                xJpgArchivo = item.Codigobarra;
+                                xRuta = pRutaArchivoJPG + codComprobante + ".jpg";
+                                System.IO.File.WriteAllBytes(xRuta, xJpgArchivo);
+                            }
+
+                           var respUpd= await _repository.VentaCaja.ComprobanteElectronicoUpd("codigobarra","","", xJpgArchivo, codComprobante);
+                            if (respUpd.ResultadoCodigo == -1)
+                            {
+                                return BadRequest(respUpd);
+                            }
+                            else {
+                                return Ok(respUpd);
+                            }
+
+                        }
+                    }
+                    else {
+
+                        return BadRequest("TCI: Error al consultar el Web Service");
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+            return Ok();
+        }
+
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> ComprobanteElectronicoPrint(string codComprobante)
+        {
+
+           
+            string xRucEmisor = string.Empty, xUrlWebService = string.Empty;
+         
+            var objConf = await _repository.Tabla.GetListTablaClinicaPorFiltros("EFACT_PARAMETROSWSTCI", "", 0, 0, 7);
+            foreach (var item in objConf.dataList)
+            {
+                if (item.codigo.Trim().Equals("RUC")) xRucEmisor = item.nombre;
+                if (item.codigo.Trim().Equals("WS")) xUrlWebService = item.nombre;
+            }
+
+            var objExiste = await _repository.VentaCaja.GetComprobanteElectroncioCodVenta(codComprobante, 0, 0, "", "", "", "", "", "", 1);
+
+            var xUrlWS = new System.ServiceModel.EndpointAddress(xUrlWebService);
+            var binding = new System.ServiceModel.BasicHttpBinding();
+            WSComprobanteSoapClient client = new WSComprobanteSoapClient(binding, xUrlWS);
+
+            ENPeticion modelo = new ENPeticion() {
+                IndicadorComprobante = 1,
+                Ruc = xRucEmisor,
+                Serie = codComprobante.Substring(0,4),
+                Numero = Convert.ToInt32(codComprobante.ToString().Substring(4)).ToString(),
+                TipoComprobante = objExiste.data.tipo_comprobante
+            };
+
+            string xRptaCadena = string.Empty;
+            var result = client.Obtener_PDF(modelo, ref xRptaCadena);
+            var pdf = File(result.ArchivoPDF, "applicacion/pdf", codComprobante + ".pdf");
+            return pdf;
 
         }
-       
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        /// 
+        [HttpPut]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Anular([FromBody] DtoComprobanteDelete value)
+        {
+            
+            var fechaHoy = new DateTime();
+
+            try
+            {
+                if (value.codComprobante == null || value.codComprobante == string.Empty)
+                {
+                    return BadRequest("comprobante no puede ser nulo");
+                }
+
+                var codComprobante = value.codComprobante.Trim();
+                if (codComprobante == string.Empty || codComprobante.Length != 11) return BadRequest("Comprobante Incorrecto, Verifique porfavor!");
+
+                var objList = await _repository.Comprobante.GetComprobanteConsulta(codComprobante,0,0,0);
+                if (objList.dataList.Count() == 0) return BadRequest("No existe comprobante");
+                var obj = objList.dataList.FirstOrDefault();
+
+                if (obj.estado.Equals("X"))  return BadRequest("El Comprobante YA Fue Anulado Anteriormente");
+                if (!obj.numeroplanilla.Equals(""))  return BadRequest("El comprobante esta incluido en la planilla");
+                if (obj.fechacancelacion.Value.Month != fechaHoy.Month) return BadRequest("No se puede anular porque es del mes pasado");
+
+                //EFACT- NO debe anular comprobantes que tienen notas activas.
+                var objListVb = await _repository.VentaCaja.GetComprobanteElectroncioVB("001",codComprobante, "", "L","",5);
+                if (objListVb.dataList.Count() == 0) return BadRequest("Error...");
+
+                var objvb = objListVb.dataList.FirstOrDefault();
+                if (!objvb.flg_electronico.Equals("1")) return BadRequest("Ud. Eliminará un Comprobante físico");
+                if (!objvb.anular.Equals("S")) return BadRequest($"No puede anular este comprobante. {objvb.mensaje} Regla: Tener CDR-Rechazado, Tener envío a baja aceptado.");
+
+                var objCPDelete = await _repository.Comprobante.ComprobanteDelete(codComprobante);
+                if(!objCPDelete.ResultadoCodigo.Equals(0)) return BadRequest(objCPDelete.ResultadoDescripcion);
+
+                var objCPUpdateUser = await _repository.Comprobante.ComprobantesUpdate("coduser", codComprobante, "coduser01");
+                if (!objCPUpdateUser.ResultadoCodigo.Equals(0)) return BadRequest(objCPUpdateUser.ResultadoDescripcion);
+
+                var objCPUpdateCentro = await _repository.Comprobante.ComprobantesUpdate("codcentro", codComprobante, "wCodCentro01");
+                if (!objCPUpdateUser.ResultadoCodigo.Equals(0)) return BadRequest(objCPUpdateUser.ResultadoDescripcion);
+
+                var objcp = await _repository.Comprobante.GetComprobanteConsulta(codComprobante, 0, 0, 0);
+                if (objcp.dataList.Count() == 0) return BadRequest("se genero un error al traer el comprobante");
+                var objcpfirs = objList.dataList.FirstOrDefault();
+                    
+                return Ok(new { estado= objcpfirs.estado, mensaje=$"SE ANULO CORRECTAMENTE {codComprobante}" });
+
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+            }
+
+        }
+
     }
 }

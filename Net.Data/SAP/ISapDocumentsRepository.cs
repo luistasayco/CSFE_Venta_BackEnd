@@ -5,6 +5,6 @@ namespace Net.Data
 {
     public interface ISapDocumentsRepository
     {
-        Task<ResultadoTransaccion<SapDocument>> SetCreateDocument(BE_VentasCabecera value);
+        Task<ResultadoTransaccion<SapBaseResponse<SapDocument>>> SetCreateDocument(BE_VentasCabecera valueVenta);
     }
 }

@@ -8,6 +8,7 @@ namespace Net.Data
     {
         Task<ResultadoTransaccion<BE_ComprobanteElectronico>> GetListComprobanteElectronicoPorFiltro(string codempresa, string codcomprobante, string codcomprobante_e, string codsistema, string tipocomp_sunat, int orden);
         Task<int> Registrar(string codcomprobante, string tipoCodigo_BarraHash, string tipoOtorgamiento, string Xml);
-        Task<ResultadoTransaccion<BE_ComprobanteElectronico>> ModificarComprobanteElectronico(string campo, string nuevoValor, string XML, string codigo);
+        //Task<ResultadoTransaccion<BE_ComprobanteElectronico>> ModificarComprobanteElectronico(string campo, string nuevoValor, string XML, string codigo);
+        Task<ResultadoTransaccion<string>> EnviarComprobanteElectronica(string tipocomprobante, string comprobante);
     }
 }

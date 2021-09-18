@@ -13,5 +13,6 @@ namespace Net.Data
 
         Task<ResultadoTransaccion<BE_Producto>> GetListDetalleProductoPorPedido(string codpedido, string codalmacen, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion);
         Task<ResultadoTransaccion<BE_Producto>> GetListDetalleProductoPorReceta(int idreceta, string codalmacen, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion);
+        Task<ResultadoTransaccion<BE_Producto>> GetListDetalleProductoPorIdBorrador(int idborrador, string codalmacen, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion);
     }
 }

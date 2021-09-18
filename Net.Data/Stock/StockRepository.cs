@@ -53,9 +53,16 @@ namespace Net.Data
                 {
                     filter += "and WhsCode eq '" + codalmacenFind + "' and SellItem eq 'Y' and InvntItem eq 'Y' ";
                 }
-                
-                var filterConStock = " and OnHandALM gt 0";
 
+                var filterConStock = string.Empty;
+
+                if (ceros.Equals("N"))
+                {
+                    filterConStock = " and OnHandALM gt 0";
+                } else
+                {
+                    filterConStock = " and OnHandALM eq 0";
+                }
 
                 if (!string.IsNullOrEmpty(codproducto))
                 {
@@ -73,7 +80,7 @@ namespace Net.Data
                 }
                 else
                 {
-                    modelo = modelo + campos + filter;
+                    modelo = modelo + campos + filter + filterConStock;
                 }
 
                 List<BE_Stock> data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);

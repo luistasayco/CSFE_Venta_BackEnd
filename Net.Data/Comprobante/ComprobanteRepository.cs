@@ -21,6 +21,9 @@ namespace Net.Data
         const string SP_GET_LISTA_COMPROBANTES_POR_FILTRO = DB_ESQUEMA + "VEN_ListaComprobantesPorFiltrosGet";
         const string SP_GET_COMPROBANTE_ELECTRONICO = DB_ESQUEMA + "VEN_ComprobantesElectronicosGet";
         const string SP_GET_CUADRECAJA_PANTALLA = DB_ESQUEMA + "VEN_Cuadredecaja_Pantalla";
+        const string COMPROBANTE_DELETE = DB_ESQUEMA + "VEN_Comprobantes_Delete";
+        const string COMPROBANTE_UPDATE = DB_ESQUEMA + "VEN_Comprobantes_Update";
+        const string SP_GET_COMPROBANTE = DB_ESQUEMA + "VEN_Comprobantes_Consulta";
 
         public ComprobanteRepository(IConnectionSQL context, IConfiguration configuration)
             : base(context)
@@ -84,7 +87,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<BE_Comprobante>> GetComprobantesElectronico(string codcomprobante_e, string codsistema)
         {
             ResultadoTransaccion<BE_Comprobante> vResultadoTransaccion = new ResultadoTransaccion<BE_Comprobante>();
@@ -259,6 +261,165 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
+        public async Task<ResultadoTransaccion<string>> ComprobanteDelete(string codcomprobante)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(COMPROBANTE_DELETE, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codcomprobante", codcomprobante));
+
+                        await conn.OpenAsync();
+                        var reader = await cmd.ExecuteNonQueryAsync();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                        vResultadoTransaccion.data = codcomprobante;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        public async Task<ResultadoTransaccion<BE_Comprobante>> GetComprobanteConsulta(string buscar, int key, int numerolineas, int orden)
+        {
+            ResultadoTransaccion<BE_Comprobante> vResultadoTransaccion = new ResultadoTransaccion<BE_Comprobante>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_COMPROBANTE, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@buscar", buscar));
+                        cmd.Parameters.Add(new SqlParameter("@key", key));
+                        cmd.Parameters.Add(new SqlParameter("@numerolineas", numerolineas));
+                        cmd.Parameters.Add(new SqlParameter("@orden", orden));
+
+                        List<BE_Comprobante> ListaResponse = new List<BE_Comprobante>();
+                        var response = new BE_Comprobante();
+
+                        await conn.OpenAsync();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                response = new BE_Comprobante();
+                                response.numeroplanilla = ((reader["NumeroPlanilla"]) is DBNull) ? string.Empty : reader["NumeroPlanilla"].ToString().Trim();
+                                response.fechacancelacion = ((reader["fechacancelacion"]) is DBNull) ? (DateTime?)null : (DateTime)reader["fechacancelacion"];
+                                response.estado = ((reader["Estado"]) is DBNull) ? string.Empty : reader["Estado"].ToString().Trim();
+                                ListaResponse.Add(response);
+                            }
+
+                        }
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 2);
+                        vResultadoTransaccion.dataList = ListaResponse;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        public async Task<ResultadoTransaccion<string>> ComprobantesUpdate(string campo, string codigo, string nuevovalor)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    conn.Open();
+                    SqlTransaction transaction = conn.BeginTransaction();
+
+                    try
+                    {
+                        using (SqlCommand cmd = new SqlCommand(COMPROBANTE_UPDATE, conn, transaction))
+                        {
+
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.Add(new SqlParameter("@campo", campo));
+                            cmd.Parameters.Add(new SqlParameter("@codigo", codigo));
+                            cmd.Parameters.Add(new SqlParameter("@nuevovalor", nuevovalor));
+
+                            await cmd.ExecuteNonQueryAsync();
+
+                            vResultadoTransaccion.IdRegistro = 0;
+                            vResultadoTransaccion.ResultadoCodigo = 0;
+                            vResultadoTransaccion.ResultadoDescripcion = "SE ACTUALIZO CORRECTAMENTE";
+                            vResultadoTransaccion.data = codigo;
+
+                        }
+
+                        transaction.Commit();
+                        transaction.Dispose();
+
+                    }
+                    catch (Exception ex)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                        try
+                        {
+                            transaction.Rollback();
+                        }
+                        catch (Exception ex3)
+                        {
+                            vResultadoTransaccion.ResultadoDescripcion = ex3.Message.ToString();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+
+            }
+            return vResultadoTransaccion;
+
+        }
     }
 }

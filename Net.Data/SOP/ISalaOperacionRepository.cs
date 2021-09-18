@@ -13,5 +13,6 @@ namespace Net.Data
         Task<ResultadoTransaccion<BE_SalaOperacion>> ModificarRol(BE_SalaOperacionXml value);
         Task<ResultadoTransaccion<BE_SalaOperacion>> Eliminar(FE_SalaOperacionId value);
         Task<ResultadoTransaccion<BE_SalaOperacion>> Estado(FE_SalaOperacionId value);
+        Task<ResultadoTransaccion<BE_SalaOperacionDetalle>> GetListSalaOperacionDetallePorId(int idborrador);
     }
 }

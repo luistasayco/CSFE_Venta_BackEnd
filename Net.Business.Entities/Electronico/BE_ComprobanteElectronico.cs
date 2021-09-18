@@ -6,8 +6,6 @@ namespace Net.Business.Entities
     {
         public string generarnota { get; set; }
         public string mensaje { get; set; }
-
-
         public string codcomprobante { get; set; }
         public string codcomprobantee { get; set; }
         public string tipoplantilla { get; set; }
@@ -115,6 +113,10 @@ namespace Net.Business.Entities
         public string cod_UN { get; set; }
         public string CodProductoSUNAT { get; set; }
         public string cuadre { get; set; }
+        public string cardcode { get; set; }
+        public string codalmacen { get; set; }
+        public int baseentry { get; set; }
+        public int baseline { get; set; }
         //extra
         public string strXml { get; set; }
     }

@@ -126,6 +126,15 @@ namespace Net.Business.Entities
         public int cnt_unitario { get; set; }
         [DataMember, XmlIgnore]
         public decimal prc_unitario { get; set; }
-
+        [DataMember, XmlIgnore]
+        public decimal cantsunat { get; set; }
+        [DataMember, XmlIgnore]
+        public string destributo { get; set; }
+        [DataMember, XmlIgnore]
+        public decimal d_ventaunitario_sinigv { get; set; }
+        [DataMember, XmlIgnore]
+        public int baseentry { get; set; }
+        [DataMember, XmlIgnore]
+        public int baseline { get; set; }
     }
 }

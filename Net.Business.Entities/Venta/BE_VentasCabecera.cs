@@ -243,5 +243,7 @@ namespace Net.Business.Entities
         public string cardcode { get; set; }
         [DataMember, XmlIgnore]
         public string strTienedevolucion { get; set; }
+        [DataMember, XmlAttribute]
+        public int idborrador { get; set; }
     }
 }

@@ -145,5 +145,21 @@ namespace Net.Business.Services.Controllers
 
             return Ok(objectGetAll.dataList);
         }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetListDetalleProductoPorIdBorrador([FromQuery] int idborrador, string codalmacen, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
+        {
+
+            var objectGetAll = await _repository.Producto.GetListDetalleProductoPorIdBorrador(idborrador, codalmacen, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
     }
 }

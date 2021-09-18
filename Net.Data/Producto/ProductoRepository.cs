@@ -616,5 +616,98 @@ namespace Net.Data
 
         }
 
+        public async Task<ResultadoTransaccion<BE_Producto>> GetListDetalleProductoPorIdBorrador(int idborrador, string codalmacen, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
+        {
+            ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+
+                List<BE_Producto> listProductos = new List<BE_Producto>();
+
+                SalaOperacionRepository salaOperacionRepository = new SalaOperacionRepository(context, _configuration);
+                ResultadoTransaccion<BE_SalaOperacionDetalle> resultadoTransaccionDetalle = await salaOperacionRepository.GetListSalaOperacionDetallePorId(idborrador);
+
+                if (resultadoTransaccionDetalle.ResultadoCodigo == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionDetalle.ResultadoDescripcion;
+                    return vResultadoTransaccion;
+                }
+
+                if (resultadoTransaccionDetalle.dataList.Any())
+                {
+
+                    List<BE_SalaOperacionDetalle> lisDetalle = (List<BE_SalaOperacionDetalle>)resultadoTransaccionDetalle.dataList;
+
+
+                    foreach (BE_SalaOperacionDetalle item in lisDetalle)
+                    {
+                        ResultadoTransaccion<BE_Producto> resultadoTransaccionProducto = await GetProductoPorCodigo(codalmacen, item.codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
+
+                        if (resultadoTransaccionProducto.ResultadoCodigo == -1 && resultadoTransaccionProducto.IdRegistro == -1)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionProducto.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+
+                        ResultadoTransaccion<BE_StockLote> resultadoTransaccionStockLote = await salaOperacionRepository.GetListSalaOperacionDetalleLoteUbiPorId(item.idborradordetalle);
+
+                        if (resultadoTransaccionStockLote.ResultadoCodigo == -1)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionStockLote.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+
+                        resultadoTransaccionProducto.data.ListStockLote = (List<BE_StockLote>)resultadoTransaccionStockLote.dataList;
+
+                        if (resultadoTransaccionProducto.IdRegistro == 0 && resultadoTransaccionProducto.ResultadoCodigo == -1)
+                        {
+
+                        }
+                        else
+                        {
+                            resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
+                            //resultadoTransaccionProducto.data.CodPedido = item.codpedido;
+
+                            listProductos.Add(resultadoTransaccionProducto.data);
+                        }
+
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", listProductos.Count);
+                    vResultadoTransaccion.dataList = listProductos;
+
+                }
+                else
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = "No existe detalle para el borrador nro. " + idborrador.ToString();
+                    return vResultadoTransaccion;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
     }
 }

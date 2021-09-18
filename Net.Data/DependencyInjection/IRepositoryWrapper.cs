@@ -43,5 +43,7 @@
         ITerminalRepository Terminal { get; }
         ISalaOperacionRepository SalaOperacion { get; }
         ISeparacionCuentaRepository SeparacionCuenta { get; }
+        IConsolidadoPedidoRepository ConsolidadoPedido { get; }
+        ICheckListRegistroMovimientoRepository CheckListRegistroMovimiento { get; }
     }
 }

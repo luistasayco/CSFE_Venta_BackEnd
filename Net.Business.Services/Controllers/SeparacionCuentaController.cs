@@ -41,7 +41,7 @@ namespace Net.Business.Services.Controllers
                 }
                 else
                 {
-                    return Ok(response);
+                    return Ok(response.dataList);
                 }
             }
             catch (Exception ex)

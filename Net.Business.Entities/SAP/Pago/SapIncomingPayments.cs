@@ -27,7 +27,8 @@ namespace Net.Business.Entities
         public DateTime TaxDate { get; set; }
         public string DocObjectCode { get; set; }
         public DateTime DueDate { get; set; }
-        public SapPaymentInvoices PaymentInvoices { get; set; }
-        public SapPaymentChecks PaymentChecks { get; set; }
+        public List<SapPaymentChecks> PaymentChecks { get; set; }
+        public List<SapPaymentInvoices> PaymentInvoices { get; set; }
+        public List<SapPaymentCreditCards> PaymentCreditCards { get; set; }
     }
 }

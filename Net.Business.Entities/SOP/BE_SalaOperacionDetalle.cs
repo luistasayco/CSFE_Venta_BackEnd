@@ -13,9 +13,9 @@ namespace Net.Business.Entities
 
     public class BE_SalaOperacionDetalle
     {
-        //[DataMember, XmlAttribute]
-        //[DBParameter(SqlDbType.Int, 0, ActionType.Everything)]
-        //public int idborradordetalle { get; set; }
+        [DataMember, XmlIgnore]
+        [DBParameter(SqlDbType.Int, 0, ActionType.Everything)]
+        public int idborradordetalle { get; set; }
         //[DataMember, XmlAttribute]
         //[DBParameter(SqlDbType.Int, 0, ActionType.Everything)]
         //public int idborrador { get; set; }
