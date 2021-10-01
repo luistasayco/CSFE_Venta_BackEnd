@@ -4,8 +4,7 @@
     {
         public string WarehouseCode { get; set; }
         public string WarehouseName { get; set; }
-        //[DBParameter(SqlDbType.Char, ActionType.Everything, true)]
-        //public string codalmacen { get; set; }
+        public string EnableBinLocations { get; set; }
         //[DBParameter(SqlDbType.Char, 80, ActionType.Everything)]
         //public string nombre { get; set; }
         //[DBParameter(SqlDbType.Char, 16, ActionType.Everything)]

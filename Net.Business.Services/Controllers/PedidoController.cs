@@ -36,6 +36,21 @@ namespace Net.Business.Services.Controllers
 
             return Ok(objectGetAll.dataList);
         }
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetListPedidoDevolucionPorPedido([FromQuery] string codpedido)
+        {
+
+            var objectGetAll = await _repository.Pedido.GetListPedidoDevolucionPorPedido(codpedido);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]

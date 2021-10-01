@@ -196,7 +196,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<BE_Producto>> GetProductoPorCodigo(string codalmacen, string codproducto, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
         {
             ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
@@ -393,7 +392,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<BE_Producto>> GetProductoyStockAlmacenesPorCodigo(string codproducto)
         {
             ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
@@ -455,7 +453,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<BE_Producto>> GetListDetalleProductoPorPedido(string codpedido, string codalmacen, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
         {
             ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
@@ -485,6 +482,8 @@ namespace Net.Data
                     List<BE_PedidoDetalle> listPedidoDetalle = (List<BE_PedidoDetalle>)resultadoTransaccionDetallePedido.dataList;
 
 
+                    string mensajeProductosSinStock = string.Empty;
+
                     foreach (BE_PedidoDetalle item in listPedidoDetalle)
                     {
                         ResultadoTransaccion<BE_Producto> resultadoTransaccionProducto = await GetProductoPorCodigo(codalmacen, item.codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
@@ -502,8 +501,17 @@ namespace Net.Data
 
                         } else
                         {
+                            //if (resultadoTransaccionProducto.data.ProductoStock < (decimal)item.cantidad)
+                            //{
+                            //    mensajeProductosSinStock += string.Format("Producto {0} - {1} no tiene stock en el almacen: {2} <br>", item.codproducto, resultadoTransaccionProducto.data.ItemName, codalmacen);
+                            //    resultadoTransaccionProducto.data.CantidadPedido = resultadoTransaccionProducto.data.ProductoStock;
+                            //} else
+                            //{
+                            //    resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
+                            //}
                             resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
                             resultadoTransaccionProducto.data.CodPedido = item.codpedido;
+                            resultadoTransaccionProducto.data.binActivat = item.binactivat;
 
                             listProductos.Add(resultadoTransaccionProducto.data);
                         }
@@ -512,7 +520,7 @@ namespace Net.Data
 
                     vResultadoTransaccion.IdRegistro = 0;
                     vResultadoTransaccion.ResultadoCodigo = 0;
-                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", listProductos.Count);
+                    vResultadoTransaccion.ResultadoDescripcion = mensajeProductosSinStock;
                     vResultadoTransaccion.dataList = listProductos;
 
                 } 
@@ -558,6 +566,11 @@ namespace Net.Data
                     return vResultadoTransaccion;
                 }
 
+                WarehousesRepository warehousesRepository = new WarehousesRepository(_clientFactory, _configuration);
+                BE_Warehouses resultadoTransaccionWarehouse = await warehousesRepository.GetWarehousesPorCodigo(codalmacen);
+
+                var binactivat = resultadoTransaccionWarehouse.EnableBinLocations == "tYES" ? true : false;
+
                 if (resultadoTransaccionDetalleReceta.dataList.Any())
                 {
 
@@ -582,8 +595,8 @@ namespace Net.Data
                         }
                         else
                         {
-                            //resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
-                            //resultadoTransaccionProducto.data.CodPedido = item.codpedido;
+                            resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
+                            resultadoTransaccionProducto.data.binActivat = binactivat;
 
                             listProductos.Add(resultadoTransaccionProducto.data);
                         }
@@ -628,7 +641,7 @@ namespace Net.Data
 
                 List<BE_Producto> listProductos = new List<BE_Producto>();
 
-                SalaOperacionRepository salaOperacionRepository = new SalaOperacionRepository(context, _configuration);
+                SalaOperacionRepository salaOperacionRepository = new SalaOperacionRepository(_clientFactory,context, _configuration);
                 ResultadoTransaccion<BE_SalaOperacionDetalle> resultadoTransaccionDetalle = await salaOperacionRepository.GetListSalaOperacionDetallePorId(idborrador);
 
                 if (resultadoTransaccionDetalle.ResultadoCodigo == -1)

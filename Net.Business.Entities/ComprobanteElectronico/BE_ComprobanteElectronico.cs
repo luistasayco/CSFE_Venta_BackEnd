@@ -26,7 +26,11 @@ namespace Net.Business.Entities
         public string ruc_emisor { get; set; }
         public string url_webservices { get; set; }
         public string anular { get; set; }
-
+        public string estadoFB { get; set; }
+        public string flg_otorgamiento { get; set; }
+        public string flg_enbaja { get; set; }
+        public string dar_baja { get; set; }
+        public string conteo_notas { get; set; }
     }
 
 }

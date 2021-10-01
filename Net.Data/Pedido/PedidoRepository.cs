@@ -26,6 +26,9 @@ namespace Net.Data
         const string SP_GET_DATOS_PEDIDO_POR_PEDIDO = DB_ESQUEMA + "VEN_DatosPedidoPorPedidoGet";
         const string SP_GET_LIST_PEDIDOS_VENTA_AUTOMATICA = DB_ESQUEMA + "VEN_ListaPedidoVentaAutomaticaGet";
 
+        // Devoluciones
+        const string SP_GET_LIST_PEDIDOS_VENTA_DEVOLUCION = DB_ESQUEMA + "VEN_DevolucionSRV_Productos";
+
         public PedidoRepository(IConnectionSQL context, IConfiguration configuration)
             : base(context)
         {
@@ -151,6 +154,49 @@ namespace Net.Data
                         using (var reader = await cmd.ExecuteReaderAsync())
                         {
                             response = (List<BE_PedidoDetalle>)context.ConvertTo<BE_PedidoDetalle>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+        public async Task<ResultadoTransaccion<BE_PedidoDevolucion>> GetListPedidoDevolucionPorPedido(string codpedido)
+        {
+            ResultadoTransaccion<BE_PedidoDevolucion> vResultadoTransaccion = new ResultadoTransaccion<BE_PedidoDevolucion>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_PedidoDevolucion>();
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_LIST_PEDIDOS_VENTA_DEVOLUCION, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@as_codpedido", codpedido));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_PedidoDevolucion>)context.ConvertTo<BE_PedidoDevolucion>(reader);
                         }
 
                         conn.Close();

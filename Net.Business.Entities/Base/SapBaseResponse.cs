@@ -10,6 +10,7 @@ namespace Net.Business.Entities
         /// ID de un nuevo registro o Id de registro actualizar
         /// </summary>
         public int DocEntry { get; set; }
+        public int code { get; set; }
         public string Mensaje { get; set; }
         public T data { get; set; }
     }

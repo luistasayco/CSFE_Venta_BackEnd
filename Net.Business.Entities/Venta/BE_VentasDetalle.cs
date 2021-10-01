@@ -136,5 +136,21 @@ namespace Net.Business.Entities
         public int baseentry { get; set; }
         [DataMember, XmlIgnore]
         public int baseline { get; set; }
+
+        // Datos para SAP
+        [DataMember, XmlIgnore]
+        public string AccountCode { get; set; }
+        [DataMember, XmlIgnore]
+        public string CostingCode { get; set; }
+        [DataMember, XmlIgnore]
+        public string CostingCode2 { get; set; }
+        [DataMember, XmlIgnore]
+        public string CostingCode3 { get; set; }
+        [DataMember, XmlIgnore]
+        public string CostingCode4 { get; set; }
+        [DataMember, XmlIgnore]
+        public int baseentrydevolucion { get; set; }
+        [DataMember, XmlIgnore]
+        public int baselinedevolucion { get; set; }
     }
 }

@@ -9,5 +9,6 @@
         public string codpedido { get; set; }
         public decimal igv { get; set; }
         public decimal cantidadpicking { get; set; }
+        public bool binactivat { get; set; }
     }
 }

@@ -28,4 +28,10 @@
     <ProjectReference Include="..\Net.TCI\Net.TCI.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="RestSharp">
+      <HintPath>Dll_CSFE\RestSharp.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

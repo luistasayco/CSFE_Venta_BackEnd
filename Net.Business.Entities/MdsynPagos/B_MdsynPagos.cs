@@ -29,7 +29,7 @@ namespace Net.Business.Entities
         public string targTyp_code { get; set; }
         public DateTime setting_expiration_date { get; set; }
 
-        public int ide_pagos_bot { get; set; }
+        public long ide_pagos_bot { get; set; }
         public string cod_tipo { get; set; }
         public int ide_mdsyn_reserva { get; set; }
         public int ide_correl_reserva { get; set; }
@@ -53,7 +53,7 @@ namespace Net.Business.Entities
         public DateTime fec_pago_usado { get; set; }
         //Extra
         public string terminal { get; set; }
-        
 
+        public string link { get; set; }
     }
 }

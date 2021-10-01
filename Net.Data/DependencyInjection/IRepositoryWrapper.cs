@@ -45,5 +45,6 @@
         ISeparacionCuentaRepository SeparacionCuenta { get; }
         IConsolidadoPedidoRepository ConsolidadoPedido { get; }
         ICheckListRegistroMovimientoRepository CheckListRegistroMovimiento { get; }
+        ISynapsisWSRepository SynapsisWSRepository { get; }
     }
 }

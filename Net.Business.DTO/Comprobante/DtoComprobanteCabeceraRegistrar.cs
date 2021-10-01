@@ -21,14 +21,7 @@ namespace Net.Business.DTO
         public string tipdocidentidad { get; set; }
         public string numdocumentoIdentidad { get; set; }
 
-        //public string nombreEntidad { get; set; }
-        //public string numeroEntidad { get; set; }
-
-        //public string tipoPago { get; set; }
-
-        //public string codTerminal { get; set; }
-        //public string operacion { get; set; }
-        //public string variosTipoPago { get; set; }
+        
         public string codComprobante { get; set; }
         public int idUsuario { get; set; }
         public string codCentroCosto { get; set; }
@@ -37,7 +30,8 @@ namespace Net.Business.DTO
         public string codTipoAfectacionIgv { get; set; }
         public string codTipoCliente { get; set; }
         public virtual List<DtoComprobanteTipoPagoRegistrar> tipoPagos { get; set; }
-
+        public long idePagosBot { get; set; }
+        public bool flgPagoUsado { get; set; }
 
         //public string serie { get; set; }
         //public int gratuito { get; set; }
@@ -45,6 +39,10 @@ namespace Net.Business.DTO
         //extra
         public bool wFlg_electronico { get; set; } //para sacar la ruta del webservices
         public decimal tipoCambioVenta { get; set; }
+        public int flg_otorgar { get; set; }
+        //public string tipoCodigo { get; set; }
+        public int tipoCodigoBarrahash { get; set; }
+        public bool flg_gratuito { get; set; }
 
         public BE_Comprobante RetornaComprobanteCabecera() {
 
@@ -62,6 +60,8 @@ namespace Net.Business.DTO
             obj.correo = correo;
             obj.tipdocidentidad = tipdocidentidad;
             obj.docidentidad = numdocumentoIdentidad;
+            obj.flg_gratuito = flg_gratuito;
+            obj.flg_electronico = wFlg_electronico;
 
             decimal li_importe = 0;
             decimal li_valor_mn = 0;

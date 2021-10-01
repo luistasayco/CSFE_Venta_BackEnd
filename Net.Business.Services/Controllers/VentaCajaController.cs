@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Net.Business.DTO;
+using Net.Business.Entities;
 using Net.Data;
 using wsComprobanteTCI;
 using static wsComprobanteTCI.WSComprobanteSoapClient;
@@ -44,7 +45,7 @@ namespace Net.Business.Services.Controllers
                 return BadRequest(objectGetAll);
             }
 
-            if(objectGetAll.data.codventa==null) return BadRequest($"El codigo de la venta no existe: {codventa}");
+            if (objectGetAll.data.codventa == null) return BadRequest($"El codigo de la venta no existe: {codventa}");
 
             decimal montoNeto = 0;
             if (objectGetAll.data.codtipocliente.Equals("01"))
@@ -59,11 +60,12 @@ namespace Net.Business.Services.Controllers
             objectGetAll.data.montoigv = decimal.Round((montoNeto * (objectGetAll.data.porcentajeimpuesto / 100)), 2);
             objectGetAll.data.montoneto = decimal.Round(montoNeto, 2);
             objectGetAll.data.montototal = decimal.Round((montoNeto + objectGetAll.data.montoigv), 2);
-            if (objectGetAll.data.flg_gratuito) {
+            if (objectGetAll.data.flg_gratuito)
+            {
                 objectGetAll.data.montototal = 0;
             }
 
-                
+
             return Ok(objectGetAll.data);
         }
         /// <summary>
@@ -75,7 +77,7 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetDatoCardCodeConsulta([FromQuery] string tipoCliente,string codCliente)
+        public async Task<IActionResult> GetDatoCardCodeConsulta([FromQuery] string tipoCliente, string codCliente)
         {
             var objectGetAll = await _repository.VentaCaja.GetDatoCardCodeConsulta(tipoCliente, codCliente);
             if (objectGetAll.ResultadoCodigo == -1)
@@ -139,18 +141,25 @@ namespace Net.Business.Services.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetMdsynPagosConsulta([FromQuery] long ide_pagos_bot, int ide_mdsyn_reserva, int ide_correl_reserva, string cod_liquidacion, string cod_venta, int orden)
         {
-
             cod_liquidacion = cod_liquidacion is null ? string.Empty : cod_liquidacion;
-
             var objectGetAll = await _repository.VentaCaja.GetMdsynPagosConsulta(ide_pagos_bot, ide_mdsyn_reserva, ide_correl_reserva, cod_liquidacion, cod_venta, orden);
             if (objectGetAll.ResultadoCodigo == -1)
             {
                 return BadRequest(objectGetAll);
             }
 
+            if (orden == 6)
+            {
+
+                var res = new { exito = (objectGetAll.data.link == null) ? 0 : 1, mensaje = (objectGetAll.data.link == null) ? "Esta venta no tiene ninguna orden de pago" : objectGetAll.data.link };
+                return Ok(res);
+
+            }
+
             return Ok(objectGetAll.data);
 
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -178,7 +187,7 @@ namespace Net.Business.Services.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GenerarPagar([FromBody]  DtoComprobanteCabeceraRegistrar value)
+        public async Task<IActionResult> GenerarPagar([FromBody] DtoComprobanteCabeceraRegistrar value)
         {
             try
             {
@@ -196,7 +205,8 @@ namespace Net.Business.Services.Controllers
                     {
                         wStrURL = objWebServices.data;
                     }
-                    else {
+                    else
+                    {
                         return Ok("No se tiene configurado en url del servicio");
                     }
                 }
@@ -215,7 +225,8 @@ namespace Net.Business.Services.Controllers
                     {
                         //Beep graba
                     }
-                    else {
+                    else
+                    {
                         var resul = new { exito = false, mensaje = $"Verifique el TipoMovimiento de la Venta" };
                         return Ok(resul);
                     }
@@ -228,7 +239,8 @@ namespace Net.Business.Services.Controllers
 
                     strCodCliente = objVentasCabecera.data.codcliente;
                 }
-                else {
+                else
+                {
                     var resul = new { exito = false, mensaje = "NO existe Nro de Venta" };
                     return Ok(resul);
                 }
@@ -236,40 +248,43 @@ namespace Net.Business.Services.Controllers
                 //code 21
                 // limite de consumo de personal
                 string vender = "S";
-                if (value.codTipoCliente.Equals("03")) { 
-                
+                if (value.codTipoCliente.Equals("03"))
+                {
+
                     var objLConsumo = await _repository.VentaCaja.GetCsLimiteConsumoPersonalPorCodPersonal(strCodCliente);
                     if (objLConsumo.ResultadoCodigo == -1)
                     {
                         return BadRequest(objLConsumo);
                     }
 
-                     vender = objLConsumo.data.vender;
-                     var montoconsumo = objLConsumo.data.montoconsumo;
-                     var montolimite = objLConsumo.data.montolimite;
-                     var fecha1 = objLConsumo.data.fecha1;
-                     var fecha2 = objLConsumo.data.fecha2;
+                    vender = objLConsumo.data.vender;
+                    var montoconsumo = objLConsumo.data.montoconsumo;
+                    var montolimite = objLConsumo.data.montolimite;
+                    var fecha1 = objLConsumo.data.fecha1;
+                    var fecha2 = objLConsumo.data.fecha2;
 
                     if (vender == "N")
                     {
                         var resul = new { exito = false, mensaje = $"El Consumo al CREDITO es mayor al límite_de_consumo <br><br>en el período del ${fecha1} al ${fecha2} <br>Monto Consumo (no incluye esta venta {montoconsumo} <br> Monto Limite de Consumo : ${montolimite}):" };
                         return Ok(resul);
                     }
-                    else {
+                    else
+                    {
 
-                       var wMontoConsumo = objLConsumo.data.montoconsumo + value.montoTotal;
+                        var wMontoConsumo = objLConsumo.data.montoconsumo + value.montoTotal;
 
                         if (wMontoConsumo <= montolimite)
                         {
                             //beep graba
                         }
-                        else {
+                        else
+                        {
                             var resul = new { exito = false, mensaje = $"El Consumo al CREDITO es mayor al límite_de_consumo <br> en el período del {fecha1} al ${fecha2} <br> Monto Consumo (incluye esta venta): ${montoconsumo} <br> Monto Limite de Consumo : ${montolimite}" };
                             return Ok(resul);
                         }
 
                     }
-                    
+
                     foreach (var item in value.tipoPagos)
                     {
 
@@ -291,13 +306,12 @@ namespace Net.Business.Services.Controllers
                 // code 28
 
                 var objectGetAllTC = await _repository.TipoCambio.GetObtieneTipoCambio();
-
                 if (objectGetAllTC.ResultadoCodigo == -1)
                 {
                     return BadRequest(objectGetAllTC);
                 }
 
-                decimal tipoDeCambio =0;
+                decimal tipoDeCambio = 0;
 
                 foreach (var item in objectGetAllTC.dataList)
                 {
@@ -305,21 +319,23 @@ namespace Net.Business.Services.Controllers
                     tipoDeCambio = item.Rate;
                 }
 
-                if(tipoDeCambio<=0) return Ok(new { exito = false, mensaje = "NO TIENE CONFIGURADO EL TIPO DE CAMBIO" });
+                if (tipoDeCambio <= 0) return Ok(new { exito = false, mensaje = "NO TIENE CONFIGURADO EL TIPO DE CAMBIO" });
 
                 var setDatos = value.RetornaComprobanteCabecera();
 
-                var objComprobante = await _repository.VentaCaja.ComprobantesRegistrar(setDatos, value.tipoComprobante.Substring(0,1),value.correo,value.codTipoAfectacionIgv,value.wFlg_electronico,value.maquina);
+                var objComprobante = await _repository.VentaCaja.ComprobantesRegistrar(setDatos, value.tipoComprobante.Substring(0, 1), value.correo, value.codTipoAfectacionIgv, value.wFlg_electronico, value.maquina, value.idePagosBot, value.flgPagoUsado, value.flg_otorgar, value.tipoCodigoBarrahash.ToString(), wStrURL);
+
 
                 if (objComprobante.IdRegistro == 0)
                 {
-                    return Ok(new { exito = true,comprobante= objComprobante.data, mensaje = $"SE REGISTRO CORRECTAMENTE EL PAGO: {objComprobante.data}" });
+                    return Ok(new { exito = true, comprobante = objComprobante.data, mensaje = $"SE REGISTRO CORRECTAMENTE: {objComprobante.data}" });
                 }
-                else {
-                    return Ok(new { exito = false, mensaje = "SE GENERO UN ERROR AL MOMENTO DE GUARDAR EL PAGO: "+ objComprobante.ResultadoDescripcion });
+                else
+                {
+                    return Ok(new { exito = false, mensaje = "SE GENERO UN ERROR AL MOMENTO DE GUARDAR: " + objComprobante.ResultadoDescripcion });
                 }
 
-                
+
 
             }
             catch (Exception ex)
@@ -368,7 +384,7 @@ namespace Net.Business.Services.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(404)]
         [ProducesDefaultResponseType]
-        public async Task<FileContentResult> GenerarPreVistaPrint(string codventa,string maquina,int idusuario,int orden)
+        public async Task<FileContentResult> GenerarPreVistaPrint(string codventa, string maquina, int idusuario, int orden)
         {
             string archivoImg = string.Empty;
             var objConf = await _repository.Tabla.GetListTablaClinicaPorFiltros("EFACT_PARAMETROSWSTCI", "", 0, 0, 7);
@@ -424,16 +440,17 @@ namespace Net.Business.Services.Controllers
             {
                 var objCPE = await _repository.VentaCaja.GetComprobanteElectroncioCodVenta(codComprobante, 0, 0, "", "", "", "", "", "", 1);
                 if (objCPE.data.codcomprobante == null) throw new ArgumentException("El comprobante que esta intentado obtener no es electrónico.");
-                if (objCPE.data.codigobarra.Length == 0) {
+                if (objCPE.data.codigobarra.Length == 0)
+                {
 
                     ENPeticionInformacionComprobante modelo = new ENPeticionInformacionComprobante()
                     {
                         RucEmisor = objCPE.data.ruc_emisor,
                         TipoComprobante = objCPE.data.tipo_comprobante,
-                        serie = objCPE.data.codcomprobantee.Substring(0,4),
-                        numero = Convert.ToInt32(objCPE.data.codcomprobantee.Substring(4)).ToString() ,
+                        serie = objCPE.data.codcomprobantee.Substring(0, 4),
+                        numero = Convert.ToInt32(objCPE.data.codcomprobantee.Substring(4)).ToString(),
                         CodigoHash = false,
-                        CodigoBarra=true
+                        CodigoBarra = true
                     };
 
                     Byte[] xJpgArchivo = new Byte[0];
@@ -466,18 +483,20 @@ namespace Net.Business.Services.Controllers
                                 System.IO.File.WriteAllBytes(xRuta, xJpgArchivo);
                             }
 
-                           var respUpd= await _repository.VentaCaja.ComprobanteElectronicoUpd("codigobarra","","", xJpgArchivo, codComprobante);
+                            var respUpd = await _repository.VentaCaja.ComprobanteElectronicoUpd("codigobarra", "", "", xJpgArchivo, codComprobante);
                             if (respUpd.ResultadoCodigo == -1)
                             {
                                 return BadRequest(respUpd);
                             }
-                            else {
+                            else
+                            {
                                 return Ok(respUpd);
                             }
 
                         }
                     }
-                    else {
+                    else
+                    {
 
                         return BadRequest("TCI: Error al consultar el Web Service");
                     }
@@ -498,9 +517,9 @@ namespace Net.Business.Services.Controllers
         public async Task<FileContentResult> ComprobanteElectronicoPrint(string codComprobante)
         {
 
-           
+
             string xRucEmisor = string.Empty, xUrlWebService = string.Empty;
-         
+
             var objConf = await _repository.Tabla.GetListTablaClinicaPorFiltros("EFACT_PARAMETROSWSTCI", "", 0, 0, 7);
             foreach (var item in objConf.dataList)
             {
@@ -514,10 +533,11 @@ namespace Net.Business.Services.Controllers
             var binding = new System.ServiceModel.BasicHttpBinding();
             WSComprobanteSoapClient client = new WSComprobanteSoapClient(binding, xUrlWS);
 
-            ENPeticion modelo = new ENPeticion() {
+            ENPeticion modelo = new ENPeticion()
+            {
                 IndicadorComprobante = 1,
                 Ruc = xRucEmisor,
-                Serie = codComprobante.Substring(0,4),
+                Serie = codComprobante.Substring(0, 4),
                 Numero = Convert.ToInt32(codComprobante.ToString().Substring(4)).ToString(),
                 TipoComprobante = objExiste.data.tipo_comprobante
             };
@@ -540,8 +560,9 @@ namespace Net.Business.Services.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Anular([FromBody] DtoComprobanteDelete value)
         {
-            
-            var fechaHoy = new DateTime();
+
+            //var fechaHoy = new DateTime();
+            DateTime fechaHoy = DateTime.Today;
 
             try
             {
@@ -553,37 +574,37 @@ namespace Net.Business.Services.Controllers
                 var codComprobante = value.codComprobante.Trim();
                 if (codComprobante == string.Empty || codComprobante.Length != 11) return BadRequest("Comprobante Incorrecto, Verifique porfavor!");
 
-                var objList = await _repository.Comprobante.GetComprobanteConsulta(codComprobante,0,0,0);
+                var objList = await _repository.Comprobante.GetComprobanteConsulta(codComprobante, 0, 0, 0);
                 if (objList.dataList.Count() == 0) return BadRequest("No existe comprobante");
                 var obj = objList.dataList.FirstOrDefault();
 
-                if (obj.estado.Equals("X"))  return BadRequest("El Comprobante YA Fue Anulado Anteriormente");
-                if (!obj.numeroplanilla.Equals(""))  return BadRequest("El comprobante esta incluido en la planilla");
+                if (obj.estado.Equals("X")) return BadRequest("El Comprobante YA Fue Anulado Anteriormente");
+                if (!obj.numeroplanilla.Equals("")) return BadRequest("El comprobante esta incluido en la planilla");
                 if (obj.fechacancelacion.Value.Month != fechaHoy.Month) return BadRequest("No se puede anular porque es del mes pasado");
 
                 //EFACT- NO debe anular comprobantes que tienen notas activas.
-                var objListVb = await _repository.VentaCaja.GetComprobanteElectroncioVB("001",codComprobante, "", "L","",5);
-                if (objListVb.dataList.Count() == 0) return BadRequest("Error...");
-
-                var objvb = objListVb.dataList.FirstOrDefault();
-                if (!objvb.flg_electronico.Equals("1")) return BadRequest("Ud. Eliminará un Comprobante físico");
+                //'<I-AGARCIA>25/06/2015 - Solo se anulan los que tienen CDR=1=Rechazado
+                var objListVb = await _repository.VentaCaja.GetComprobanteElectroncioVB("001", codComprobante, "", "L", "", 5);
+                if (objListVb.data.codcomprobante == null) return BadRequest("Error...");
+                var objvb = objListVb.data;
+                //if (!objvb.flg_electronico.Equals("1")) return BadRequest("Ud. Eliminará un Comprobante físico");
                 if (!objvb.anular.Equals("S")) return BadRequest($"No puede anular este comprobante. {objvb.mensaje} Regla: Tener CDR-Rechazado, Tener envío a baja aceptado.");
 
                 var objCPDelete = await _repository.Comprobante.ComprobanteDelete(codComprobante);
-                if(!objCPDelete.ResultadoCodigo.Equals(0)) return BadRequest(objCPDelete.ResultadoDescripcion);
+                if (!objCPDelete.ResultadoCodigo.Equals(0)) return BadRequest(objCPDelete.ResultadoDescripcion);
 
-                var objCPUpdateUser = await _repository.Comprobante.ComprobantesUpdate("coduser", codComprobante, "coduser01");
+                //coduser
+                var objCPUpdateUser = await _repository.Comprobante.ComprobantesUpdate("idusuario", codComprobante, value.idUsuario.ToString());
                 if (!objCPUpdateUser.ResultadoCodigo.Equals(0)) return BadRequest(objCPUpdateUser.ResultadoDescripcion);
 
-                var objCPUpdateCentro = await _repository.Comprobante.ComprobantesUpdate("codcentro", codComprobante, "wCodCentro01");
+                var objCPUpdateCentro = await _repository.Comprobante.ComprobantesUpdate("codcentro", codComprobante, value.codcentro);
                 if (!objCPUpdateUser.ResultadoCodigo.Equals(0)) return BadRequest(objCPUpdateUser.ResultadoDescripcion);
 
                 var objcp = await _repository.Comprobante.GetComprobanteConsulta(codComprobante, 0, 0, 0);
                 if (objcp.dataList.Count() == 0) return BadRequest("se genero un error al traer el comprobante");
                 var objcpfirs = objList.dataList.FirstOrDefault();
-                    
-                return Ok(new { estado= objcpfirs.estado, mensaje=$"SE ANULO CORRECTAMENTE {codComprobante}" });
 
+                return Ok(new { estado = objcpfirs.estado, mensaje = $"SE ANULO CORRECTAMENTE {codComprobante}" });
 
             }
             catch (Exception ex)
@@ -592,6 +613,248 @@ namespace Net.Business.Services.Controllers
             }
 
         }
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public IActionResult GenerarPagoBot([FromBody] DtoOrdenPagoBotRequest value)
+        {
+            try
+            {
+                if (value == null)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var datos = value.RetornaMdsynPagos();
+
+                #region Configuracion de SYNAPSIS
+
+                /*(I) Configuracion de SYNAPSIS*/
+                //Synapsis_ApiKey
+                var objResultApiKey = _repository.Tabla.GetListTablaClinicaPorFiltros("MEDISYN_SYNAPSIS_APIKEY", "01", 50, 1, -1);
+                var objApiKey = objResultApiKey.Result.dataList.FirstOrDefault();
+                string Synapsis_ApiKey = objApiKey.nombre.Trim();
+
+                //Synapsis_SignatureKey
+                var objResultApiSecre = _repository.Tabla.GetListTablaClinicaPorFiltros("MEDISYN_SYNAPSIS_SECRETKEY", "01", 50, 1, -1);
+                var objApiSecre = objResultApiSecre.Result.dataList.FirstOrDefault();
+                string Synapsis_SignatureKey = objApiSecre.nombre.Trim();
+
+                //Synapsis_Ws_Url
+                var objResultApiLink = _repository.Tabla.GetListTablaClinicaPorFiltros("MEDISYN_SYNAPSIS_URL", "01", 50, 1, -1);
+                var objApiLink = objResultApiLink.Result.dataList.FirstOrDefault();
+                string Synapsis_Ws_Url = objApiLink.nombre.Trim();
+                /*(F) Configuracion de SYNAPSIS*/
+
+                #endregion
+
+                //tipoPago = 2 (farmacia)
+                var result = _repository.SynapsisWSRepository.fnGenerarOrdenPagoBot(datos, 2, value.idUsuario, Synapsis_ApiKey, Synapsis_SignatureKey, Synapsis_Ws_Url);
+                //if (result.data.responseOrderApi.success) {
+                if (result.ResultadoCodigo == 0)
+                {
+                    //return Ok(result.data.responseOrderApi);
+                    return Ok(result);
+                }
+                else
+                {
+                    //result.ResultadoDescripcion = "Hubo un error al procesar la orden del pago.\n Intentelo más tarde.\n" + result.data.responseOrderApi.message.text;
+                    return BadRequest(result);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                var result = new ResultadoTransaccion<BE_SYNAPSIS_ResponseOrderApiResult>();
+                result.ResultadoDescripcion = ex.Message;
+                return BadRequest(result);
+            }
+
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="codventa"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetExisteVentaAnuladaPorCodVenta([FromQuery] string codventa)
+        {
+            var existeAnulacion = await _repository.VentaCaja.GetExisteVentaAnuladaPorCodVenta(codventa);
+            return Ok(existeAnulacion);
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ide_pagos_bot"></param>
+        /// <param name="ide_mdsyn_reserva"></param>
+        /// <param name="ide_correl_reserva"></param>
+        /// <param name="cod_liquidacion"></param>
+        /// <param name="cod_venta"></param>
+        /// <param name="orden"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ObtenerPagoBot([FromQuery] long ide_pagos_bot, int ide_mdsyn_reserva, int ide_correl_reserva, string cod_liquidacion, string cod_venta, int orden)
+        {
+            cod_liquidacion = cod_liquidacion is null ? string.Empty : cod_liquidacion;
+            var objectGetAll = await _repository.VentaCaja.GetMdsynPagosConsulta(ide_pagos_bot, ide_mdsyn_reserva, ide_correl_reserva, cod_liquidacion, cod_venta, orden);
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(new DtoObtenerPagoBotResponse().RetornarObtenerPagoBot(objectGetAll.data));
+
+        }
+
+        #region darDeBaja
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        /// 
+        [HttpPut]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> darDeBaja([FromBody] DtoComprobanteDarBaja value)
+        {
+
+            ResultadoTransaccion<string> response = new ResultadoTransaccion<string>();
+            response.IdRegistro = -1;
+            string codComprobante = value.codComprobante;
+
+            var obj = await _repository.Comprobante.GetComprobanteConsulta(codComprobante, 0, 0, 0);
+            if (obj.dataList.Count() == 0) return BadRequest("No Existe Comprobanet");
+
+            var objE = obj.dataList.FirstOrDefault();
+
+            //objE.numeroplanilla
+            //objE.fechaemision
+            //objE.estado
+
+            if (objE.estado.Equals("X"))
+            {
+                response.IdRegistro = -1;
+                response.ResultadoDescripcion = "El Comprobante YA Fue Anulado Anteriormente";
+                return Ok(response);
+            }
+            if (!objE.numeroplanilla.Equals(""))
+            {
+                response.IdRegistro = -1;
+                response.ResultadoDescripcion = "El comprobante esta incluido en la planilla";
+                return Ok(response);
+            }
+
+            var objCP = await _repository.VentaCaja.GetComprobanteElectroncioVB("001", codComprobante, "", "L", "", 6);
+            if (objCP.IdRegistro == -1) return BadRequest(objCP.ResultadoDescripcion);
+            if (objCP.data.flg_electronico == "1")
+            {
+                if (objCP.data.dar_baja != "S")
+                {
+                    response.IdRegistro = -1;
+                    response.ResultadoDescripcion = "No puede Dar de baja este comprobante <br>" + objCP.data.mensaje + "<br>Regla: Tener CDR-Aceptado, No estar Otorgado, No tener envío a baja, No tener Nota. Fecha de CDR(FT) y FechaEmisión(BV) no pasar los días permitidos";
+                    return Ok(response);
+                }
+            }
+            else
+            {
+                response.IdRegistro = -1;
+                response.ResultadoDescripcion = "Solo se dan de baja comprobantes electrónicos";
+                return Ok(response.ResultadoDescripcion);
+            }
+
+            var fechaHoy = new DateTime();
+
+            if (objE.fechaemision.Month != fechaHoy.Month)
+            {
+                response.IdRegistro = -1;
+                response.ResultadoDescripcion = "No se puede DAR DE BAJA porque es del mes pasado";
+                return Ok(response.ResultadoDescripcion);
+            }
+
+            //var objCS = await _repository.Comprobante.GetComprobanteConsulta(codComprobante, 0, 0, 5);
+            //var objResponse = objCS.dataList.FirstOrDefault();
+
+            var objResponse = await _repository.VentaCaja.GetComprobanteElectroncioCodVenta(codComprobante, 0, 0, "", "", "", "", "", "", 5);
+            var objResultCPE = objResponse.data;
+
+            //Comprobante_baja
+            var request = value.RetornaComprobanteDarBaja();
+            //request.cod_comprobante = objResultCPE.codcomprobante;
+            request.cod_comprobantee = objResultCPE.codcomprobantee;
+
+            string pSerieComprobanteE = objResultCPE.codcomprobantee.Substring(0, 4);
+            string pNumeroComprobanteE = objResultCPE.codcomprobantee.Substring(5, objResultCPE.codcomprobantee.Length);
+            string pCodComprobanteEFact = objResultCPE.codcomprobantee;
+
+            request.cod_tipocompsunat = objResultCPE.tipo_comprobante;
+            request.fec_emisioncomp = objResultCPE.fecha_registro_sis;
+            request.fec_baja = fechaHoy;
+            request.cod_sistema = "L";
+            request.cod_empresa = "001";
+
+            //string  pENEnumeradosNoEmitidos = pENEnumeradosNoEmitidos + ENNumeradosNoEmitidos("1", pTipoCompSunat, pSerieComprobanteE, pNumeroComprobanteE, pMotivoBaja)
+            //      pENErrorComunicacion = pENErrorComunicacion + ENErrorComunicacion
+
+            //request.nu = objResultCPE.codcomprobantee.Substring(0,4);
+            //codcomprobantee
+
+            string xRucEmisor = string.Empty, xUrlWebService = string.Empty;
+
+            var objConf = await _repository.Tabla.GetListTablaClinicaPorFiltros("EFACT_PARAMETROSWSTCI", "", 0, 0, 7);
+            foreach (var item in objConf.dataList)
+            {
+                if (item.codigo.Trim().Equals("RUC")) xRucEmisor = item.nombre;
+                if (item.codigo.Trim().Equals("WS")) xUrlWebService = item.nombre;
+            }
+
+
+            var objResultBaja = await _repository.VentaCaja.RegistrarComunicadoBajoComprobante(request);
+            if (objResultBaja.IdRegistro == 0)
+            {
+                response.IdRegistro = 0;
+                response.ResultadoDescripcion = "Su comprobante fue enviado De_Baja.<br>Favor consultar el estado de su solicitud (Aceptado o Rechazado).";
+            }
+            else
+            {
+                response.IdRegistro = -1;
+                response.ResultadoDescripcion = "Su comprobante no pudo ser enviado De_Baja. Favor verificar los estados<br>Regla: Tener CDR-Rechazado, No tener envío a baja, No tener Nota.";
+            }
+
+
+            //GetComprobanteElectroncioCodVenta
+
+            /*wErrorBaja = zEfact.RegistrarComunicadoBajoComprobante(Me.txtCodComprobante, wMotivoBaja, zFarmacia2)
+                    If wErrorBaja = True Then 'OK
+                        Me.MousePointer = vbDefault
+                        MsgBox "Su comprobante fue enviado De_Baja." & Chr(10) _
+                        & "Favor consultar el estado de su solicitud (Aceptado o Rechazado).", vbInformation, "Sunat - " & Me.txtCodComprobante
+                    Else
+                        Me.MousePointer = vbDefault
+                        MsgBox "Su comprobante no pudo ser enviado De_Baja. Favor verificar los estados" & Chr(10) _
+                        & wMensaje & Chr(10) _
+                        & "Regla: Tener CDR-Rechazado, No tener envío a baja, No tener Nota.", vbInformation, Me.txtCodComprobante
+                        Exit Sub
+                    End If*/
+
+            return Ok(response); ;
+
+        }
+
+
+
+
+        #endregion
+
+
 
     }
 }

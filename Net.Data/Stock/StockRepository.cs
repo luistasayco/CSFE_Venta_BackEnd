@@ -43,6 +43,7 @@ namespace Net.Data
 
                 var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='" + codalmacenFind + "',CEROS='" + ceros + "')/SBASTKG";
                 var campos = "?$select=* ";
+                var orderby = "&$orderby = ItemName";
 
                 var filter = "&$filter = validFor eq 'Y' ";
 
@@ -76,11 +77,11 @@ namespace Net.Data
 
                 if (constock)
                 {
-                    modelo = modelo + campos + filter + filterConStock;
+                    modelo = modelo + campos + filter + filterConStock + orderby;
                 }
                 else
                 {
-                    modelo = modelo + campos + filter + filterConStock;
+                    modelo = modelo + campos + filter + filterConStock + orderby;
                 }
 
                 List<BE_Stock> data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);

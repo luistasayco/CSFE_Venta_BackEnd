@@ -41,5 +41,26 @@ namespace Net.Business.Services.Controllers
 
             return Ok(objectGetAll);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="codatencion"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetListPaquetePorCodAtencion([FromQuery] string codatencion)
+        {
+
+            var objectGetAll = await _repository.Atencion.GetListPaquetePorCodAtencion(codatencion);
+
+            if (objectGetAll == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(objectGetAll);
+        }
     }
 }

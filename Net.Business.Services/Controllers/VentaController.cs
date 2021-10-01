@@ -272,6 +272,35 @@ namespace Net.Business.Services.Controllers
 
         }
 
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RegistrarPedidoDevolucion([FromBody] DtoPedidoDevolucionRegistrar value)
+        {
+            try
+            {
+                if (value == null)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var response = await _repository.Venta.RegistrarPedidoDevolucion(value.RetornaModelo());
+
+                if (response.ResultadoCodigo == -1)
+                {
+                    return BadRequest(response);
+                }
+                else
+                {
+                    return Ok(response.dataList);
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+            }
+        }
+
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

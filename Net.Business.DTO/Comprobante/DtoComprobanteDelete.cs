@@ -7,15 +7,17 @@ namespace Net.Business.DTO
     {
 
         public string codComprobante { get; set; }
+        public string codcentro { get; set; }
         public int idUsuario { get; set; }
-       
-        public BE_Comprobante RetornaComprobanteDelete() {
+
+        public BE_Comprobante RetornaComprobanteDelete()
+        {
 
             var obj = new BE_Comprobante();
             obj.codcomprobante = this.codComprobante;
             obj.idusuario = this.idUsuario;
             return obj;
-           
+
         }
 
     }

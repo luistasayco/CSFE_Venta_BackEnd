@@ -16,5 +16,6 @@ namespace Net.Business.Entities
         public int ubicacion { get; set; }
         public string codusuarioapu { get; set; }
         public int estado { get; set; }
+        public int idreserva { get; set; }
     }
 }

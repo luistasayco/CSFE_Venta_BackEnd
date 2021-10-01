@@ -5568,6 +5568,13 @@
             <param name="nombres"></param>
             <returns></returns>
         </member>
+        <member name="M:Net.Business.Services.Controllers.AtencionController.GetListPaquetePorCodAtencion(System.String)">
+            <summary>
+            
+            </summary>
+            <param name="codatencion"></param>
+            <returns></returns>
+        </member>
         <member name="M:Net.Business.Services.Controllers.CentroController.GetListCentroContains(System.String)">
             <summary>
             Lista los almacenes que tienen la palabra filtrada
@@ -5936,6 +5943,33 @@
             <returns></returns>
         </member>
         <member name="M:Net.Business.Services.Controllers.VentaCajaController.Anular(Net.Business.DTO.DtoComprobanteDelete)">
+            <summary>
+            
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+            
+        </member>
+        <member name="M:Net.Business.Services.Controllers.VentaCajaController.GetExisteVentaAnuladaPorCodVenta(System.String)">
+            <summary>
+            
+            </summary>
+            <param name="codventa"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.VentaCajaController.ObtenerPagoBot(System.Int64,System.Int32,System.Int32,System.String,System.String,System.Int32)">
+            <summary>
+            
+            </summary>
+            <param name="ide_pagos_bot"></param>
+            <param name="ide_mdsyn_reserva"></param>
+            <param name="ide_correl_reserva"></param>
+            <param name="cod_liquidacion"></param>
+            <param name="cod_venta"></param>
+            <param name="orden"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.VentaCajaController.darDeBaja(Net.Business.DTO.DtoComprobanteDarBaja)">
             <summary>
             
             </summary>

@@ -13,5 +13,6 @@ namespace Net.Data
         Task<ResultadoTransaccion<BE_Pedido>> GetListPedidosPorFiltro(DateTime fechainicio, DateTime fechafin, string codtipopedido, string codpedido);
         Task<ResultadoTransaccion<BE_Pedido>> GetListPedidosPorPedido(string codpedido);
         Task<ResultadoTransaccion<BE_Pedido>> GetDatosPedidoPorPedido(string codpedido);
+        Task<ResultadoTransaccion<BE_PedidoDevolucion>> GetListPedidoDevolucionPorPedido(string codpedido);
     }
 }

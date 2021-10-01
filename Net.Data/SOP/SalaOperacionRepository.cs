@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System;
 using System.Data;
 using Net.CrossCotting;
+using System.Net.Http;
 
 namespace Net.Data
 {
@@ -15,7 +16,8 @@ namespace Net.Data
     {
         private readonly string _cnx;
         private readonly string _cnx_clinica;
-
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _clientFactory;
         private string _aplicacionName;
         private string _metodoName;
         private readonly Regex regex = new Regex(@"<(\w+)>.*");
@@ -28,17 +30,19 @@ namespace Net.Data
         const string SP_DELETE = DB_ESQUEMA + "VEN_SalaOperacionDel";
         const string SP_ESTADO = DB_ESQUEMA + "VEN_SalaOperacionEstadoUpd";
         const string SP_GET_DETALLE = DB_ESQUEMA + "VEN_ListaSalaOperacionDetallePorId";
+        const string SP_GET_DETALLE_RESERVA = DB_ESQUEMA + "VEN_ListaDetalleReservaIdBorrador";
 
         const string SP_GET_DETALLE_LOTE_UBI = DB_ESQUEMA + "VEN_ListaSOPDetalleLotePorIdBorradorDetalleGet";
 
-        public SalaOperacionRepository(IConnectionSQL context, IConfiguration configuration)
+        public SalaOperacionRepository(IHttpClientFactory clientFactory, IConnectionSQL context, IConfiguration configuration)
             : base(context)
         {
             _aplicacionName = this.GetType().Name;
+            _configuration = configuration;
+            _clientFactory = clientFactory;
             _cnx = configuration.GetConnectionString("cnnSqlLogistica");
             _cnx_clinica = configuration.GetConnectionString("cnnSqlClinica");
         }
-
         public async Task<ResultadoTransaccion<BE_SalaOperacion>> GetListSalaOperacionPorFiltro(FE_SalaOperacion value)
         {
             ResultadoTransaccion<BE_SalaOperacion> vResultadoTransaccion = new ResultadoTransaccion<BE_SalaOperacion>();
@@ -178,7 +182,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<BE_StockLote>> GetListSalaOperacionDetalleLoteUbiPorId(int idborradordetalle)
         {
             ResultadoTransaccion<BE_StockLote> vResultadoTransaccion = new ResultadoTransaccion<BE_StockLote>();
@@ -224,6 +227,48 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
+        public async Task<ResultadoTransaccion<SapReserveStockNew>> GetListDetalleReservaPorIdBorrador(SqlConnection conn, SqlTransaction transaction, int idborrador)
+        {
+            ResultadoTransaccion<SapReserveStockNew> vResultadoTransaccion = new ResultadoTransaccion<SapReserveStockNew>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(SP_GET_DETALLE_RESERVA, conn, transaction))
+                {
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                    cmd.Parameters.Add(new SqlParameter("@idborrador", idborrador));
+
+                    var response = new List<SapReserveStockNew>();
+
+                    //conn.Open();
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        response = (List<SapReserveStockNew>)context.ConvertTo<SapReserveStockNew>(reader);
+                    }
+
+                    //conn.Close();
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                    vResultadoTransaccion.dataList = response;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
         public async Task<ResultadoTransaccion<BE_SalaOperacion>> Registrar(BE_SalaOperacionXml value)
         {
             ResultadoTransaccion<BE_SalaOperacion> vResultadoTransaccion = new ResultadoTransaccion<BE_SalaOperacion>();
@@ -232,12 +277,14 @@ namespace Net.Data
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
 
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(_cnx))
-                {
 
-                    using (SqlCommand cmd = new SqlCommand(SP_INSERT, conn))
+            using (SqlConnection conn = new SqlConnection(_cnx))
+            {
+                conn.Open();
+                SqlTransaction transaction = conn.BeginTransaction();
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_INSERT, conn, transaction))
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
 
@@ -261,7 +308,7 @@ namespace Net.Data
                         };
                         cmd.Parameters.Add(outputMsjTransaccionParam);
 
-                        await conn.OpenAsync();
+                        //await conn.OpenAsync();
                         await cmd.ExecuteNonQueryAsync();
 
                         value.idborrador = (int)cmd.Parameters["@idborrador"].Value;
@@ -269,14 +316,47 @@ namespace Net.Data
                         vResultadoTransaccion.IdRegistro = (int)cmd.Parameters["@idborrador"].Value;
                         vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
                         vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+
+                        ResultadoTransaccion<SapReserveStockNew> resultadoTransaccionLista = await GetListDetalleReservaPorIdBorrador(conn, transaction, vResultadoTransaccion.IdRegistro);
+
+                        if (resultadoTransaccionLista.ResultadoCodigo == -1)
+                        {
+                            transaction.Rollback();
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionLista.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+
+                        SapReserveStockRepository sapReserve = new SapReserveStockRepository(_clientFactory, _configuration, context);
+
+                        foreach (SapReserveStockNew item in resultadoTransaccionLista.dataList)
+                        {
+                            ResultadoTransaccion<SapBaseResponse<SapReserveStock>> resultadoSapDocument = await sapReserve.SetCreateReserve(item);
+
+                            if (resultadoSapDocument.ResultadoCodigo == -1)
+                            {
+                                transaction.Rollback();
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoSapDocument.ResultadoDescripcion;
+                                return vResultadoTransaccion;
+                            }
+                        }
                     }
+
+                    transaction.Commit();
+                    transaction.Dispose();
+
                 }
-            }
-            catch (Exception ex)
-            {
-                vResultadoTransaccion.IdRegistro = -1;
-                vResultadoTransaccion.ResultadoCodigo = -1;
-                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                }
+                conn.Close();
             }
 
             return vResultadoTransaccion;

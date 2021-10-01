@@ -117,6 +117,15 @@ namespace Net.Business.Entities
         public string codalmacen { get; set; }
         public int baseentry { get; set; }
         public int baseline { get; set; }
+        // Datos para SAP
+        public string AccountCode { get; set; }
+        public string CostingCode { get; set; }
+        public string CostingCode2 { get; set; }
+        public string CostingCode3 { get; set; }
+        public string CostingCode4 { get; set; }
+        public bool manbtchnum { get; set; }
+        public bool binactivat { get; set; }
+        public bool flgsinstock { get; set; }
         //extra
         public string strXml { get; set; }
     }

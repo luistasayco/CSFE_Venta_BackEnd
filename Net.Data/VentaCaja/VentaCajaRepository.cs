@@ -16,6 +16,7 @@ using System.IO;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Net.Connection.ServiceLayer;
+using Net.TCI;
 //using System.Collections.ObjectModel;
 //using Microsoft.Web.Services3.Messaging;
 //using CSFDLLEFACT.WsTci;
@@ -68,7 +69,8 @@ namespace Net.Data
         const string SP_POST_VENTA_CABECERA_INFO_SAP_UPDATE = DB_ESQUEMA + "VEN_VentaCabeceraInformacionSapUpd";
         const string SP_POST_COMPROBANTES_INFO_SAP_UPDATE = DB_ESQUEMA + "VEN_ComprobantesInformacionSapUpd";
         const string SP_POST_CUADRECAJA_INFO_SAP_UPDATE = DB_ESQUEMA + "VEN_CuadreCajaInformacionSapUpd";
-
+        const string SP_POST_COMPROBANTE_BAJA = DB_ESQUEMA + "VEN_ComprobantesBaja_Insert";
+        const string SP_GET_EXISTE_VENTA_ANULADA_BY_CODVENTA = DB_ESQUEMA + "VEN_ExisteVentaAnuladaPorCodVenta";
         public VentaCajaRepository(IHttpClientFactory clientFactory, IConnectionSQL context, IConfiguration configuration)
             : base(context)
         {
@@ -211,7 +213,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<string>> GetDatoCardCodeConsulta(string tipoCliente,string codCliente)
         {
             ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
@@ -323,7 +324,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<AsegContPaci>> GetRucConsultav2PorFiltro(string codPaciente,string codAseguradora,string codCia)
         {
             ResultadoTransaccion<AsegContPaci> vResultadoTransaccion = new ResultadoTransaccion<AsegContPaci>();
@@ -475,8 +475,7 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
-        public async Task<ResultadoTransaccion<B_MdsynPagos>> GetMdsynPagosConsulta(long ide_pagos_bot, int ide_mdsyn_reserva, int ide_correl_reserva,string cod_liquidacion,string cod_venta,int orden)
+        public async Task<ResultadoTransaccion<B_MdsynPagos>> GetMdsynPagosConsulta(long ide_pagos_bot, int ide_mdsyn_reserva, int ide_correl_reserva, string cod_liquidacion, string cod_venta, int orden)
         {
             ResultadoTransaccion<B_MdsynPagos> vResultadoTransaccion = new ResultadoTransaccion<B_MdsynPagos>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
@@ -509,7 +508,7 @@ namespace Net.Data
                             while (await reader.ReadAsync())
                             {
                                 if (orden.Equals(2))
-                                { 
+                                {
                                     response.number = ((reader["number"]) is DBNull) ? 0 : (long)reader["number"];
                                     response.amount = ((reader["amount"]) is DBNull) ? 0 : (decimal)reader["amount"];
                                     response.cust_name = ((reader["cust_name"]) is DBNull) ? string.Empty : (string)reader["cust_name"];
@@ -536,14 +535,19 @@ namespace Net.Data
 
                                 if (orden.Equals(4))
                                 {
-                                    response.ide_pagos_bot = ((reader["@ide_pagos_bot"]) is DBNull) ? 0 : (int)reader["@ide_pagos_bot"];
-                                    response.est_pagado = ((reader["@est_pagado"]) is DBNull) ? string.Empty : (string)reader["@est_pagado"];
-                                    response.nro_operacion = ((reader["@nro_operacion"]) is DBNull) ? string.Empty : (string)reader["@nro_operacion"];
-                                    response.tip_tarjeta = ((reader["@tip_tarjeta"]) is DBNull) ? string.Empty : (string)reader["@tip_tarjeta"];
-                                    response.num_tarjeta = ((reader["@num_tarjeta"]) is DBNull) ? string.Empty : (string)reader["@num_tarjeta"];
-                                    response.cnt_monto_pago = ((reader["@cnt_monto_pago"]) is DBNull) ? 0 : (decimal)reader["@cnt_monto_pago"];
-                                    response.terminal = ((reader["@terminal"]) is DBNull) ? string.Empty : (string)reader["@terminal"];
-                                    response.flg_pago_usado = ((reader["@flg_pago_usado"]) is DBNull) ? string.Empty : (string)reader["@flg_pago_usado"];
+                                    response.ide_pagos_bot = ((reader["ide_pagos_bot"]) is DBNull) ? 0 : (long)reader["ide_pagos_bot"];
+                                    response.est_pagado = ((reader["est_pagado"]) is DBNull) ? string.Empty : (string)reader["est_pagado"];
+                                    response.nro_operacion = ((reader["nro_operacion"]) is DBNull) ? string.Empty : (string)reader["nro_operacion"];
+                                    response.tip_tarjeta = ((reader["tip_tarjeta"]) is DBNull) ? string.Empty : (string)reader["tip_tarjeta"];
+                                    response.num_tarjeta = ((reader["num_tarjeta"]) is DBNull) ? string.Empty : (string)reader["num_tarjeta"];
+                                    response.cnt_monto_pago = ((reader["cnt_monto_pago"]) is DBNull) ? 0 : (decimal)reader["cnt_monto_pago"];
+                                    response.terminal = ((reader["terminal"]) is DBNull) ? string.Empty : (string)reader["terminal"];
+                                    response.flg_pago_usado = ((reader["flg_pago_usado"]) is DBNull) ? string.Empty : (string)reader["flg_pago_usado"];
+                                }
+
+                                if (orden.Equals(6))
+                                {
+                                    response.link = ((reader["link"]) is DBNull) ? string.Empty : (string)reader["link"];
                                 }
 
                             }
@@ -566,7 +570,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<object>> GetLimiteConsumoPersonalPorCodPersonal(string codPersonal)
         {
             ResultadoTransaccion<object> vResultadoTransaccion = new ResultadoTransaccion<object>();
@@ -623,7 +626,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<object>> GetCorrelativoConsulta()
         {
             // por el momento no se usa, se est usando SerieRepository GetListConfigDocumentoPorNombreMaquina
@@ -737,7 +739,7 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
+        /*
         public async Task<ResultadoTransaccion<string>> ComprobantesRegistrar(BE_Comprobante value,string tipocomprobante,string correo,string codTipoafectacionigv,bool wFlg_electronico,string maquina)
         {
             ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
@@ -862,436 +864,7 @@ namespace Net.Data
                         #endregion <<< TCI >>>
                         //F-TCI
 
-                        //F-SAP
-                        #region <<< SAP >>>
-
-                        if (codcomprobante != null)
-                        {
-                            int docentrycomprobante = 0;
-                            string cadena = string.Empty;
-                            SapBaseResponse<SapDocument> data = new SapBaseResponse<SapDocument>();
-
-                            ResultadoTransaccion<BE_ComprobanteElectronico> resultadoTransaccionComprobanteElectronico = new ResultadoTransaccion<BE_ComprobanteElectronico>();
-                            ComprobanteElectronicoRepository comprobante = new ComprobanteElectronicoRepository(context, _configuration);
-                            resultadoTransaccionComprobanteElectronico = await comprobante.GetComprobantesElectronicosXml(codcomprobante, 0);
-
-                            List<BE_ComprobanteElectronico> response = (List<BE_ComprobanteElectronico>)resultadoTransaccionComprobanteElectronico.dataList;
-
-                            #region <<< Factura >>>
-
-                            List<SapBatchNumbers> sapBatchNumbers = new List<SapBatchNumbers>();
-                            List<SapBinAllocations> sapBinAllocations = new List<SapBinAllocations>();
-
-                            var document = new SapDocumentBase
-                            {
-                                DocType = "dDocument_Items",
-                                DocDate = response[0].fechaemision,
-                                DocDueDate = response[0].fechaemision,
-                                CardCode = response[0].cardcode.Trim(),
-                                DocCurrency = response[0].c_simbolomoneda,
-                                TaxDate = response[0].fechaemision,
-                                DocObjectCode = "oInvoices",
-                                DocumentLines = new List<SapDocumentLinesBase>()
-                            };
-
-                            var detalle = new List<BE_VentasDetalle>();
-
-                            foreach (var item in response)
-                            {
-                                var linea = new BE_VentasDetalle()
-                                {
-                                    codproducto = item.d_codproducto.Trim(),
-                                    cantsunat = item.d_cant_sunat,
-                                    preciounidad = item.d_ventaunitario_sinigv,
-                                    destributo = item.des_tributo,
-                                    codalmacen = item.codalmacen,
-                                    baseentry = item.baseentry,
-                                    baseline = item.baseline
-                                };
-                                detalle.Add(linea);
-                            }
-
-                            var responseDetalleLote = new List<BE_VentasDetalleLote>();
-
-                            using (SqlCommand cmd = new SqlCommand(SP_GET_DETALLEVENTA_LOTE_POR_CODVENTA, conn, transaction))
-                            {
-                                foreach (BE_VentasDetalle item in detalle)
-                                {
-                                    if (item.manBtchNum || item.binactivat)
-                                    {
-                                        cmd.Parameters.Clear();
-                                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                                        cmd.Parameters.Add(new SqlParameter("@coddetalle", item.coddetalle));
-
-                                        using (var reader = await cmd.ExecuteReaderAsync())
-                                        {
-                                            responseDetalleLote = (List<BE_VentasDetalleLote>)context.ConvertTo<BE_VentasDetalleLote>(reader);
-                                        }
-
-                                        detalle.Find(xFila => xFila.coddetalle == item.coddetalle).listVentasDetalleLotes = responseDetalleLote;
-                                    }
-                                }
-                            }
-                            int lineaDetalleLote = 0;
-
-                            foreach (BE_VentasDetalle item in detalle)
-                            {
-                                var linea = new SapDocumentLinesBase
-                                {
-                                    ItemCode = item.codproducto.Trim(),
-                                    Quantity = item.cantsunat,
-                                    UnitPrice = item.preciounidad,
-                                    TaxCode = item.destributo,
-                                    AccountCode = "20111001",
-                                    WarehouseCode = item.codalmacen,
-                                    CostingCode = "CAMA",
-                                    CostingCode2 = "AMBU",
-                                    CostingCode3 = "FARM",
-                                    CostingCode4 = "GESO",
-                                    BaseType = 15,
-                                    BaseEntry = item.baseentry,
-                                    BaseLine = item.baseline,
-                                    BatchNumbers = new List<SapBatchNumbers>(),
-                                    DocumentLinesBinAllocations = new List<SapBinAllocations>()
-                                };
-
-                                sapBatchNumbers = new List<SapBatchNumbers>();
-                                sapBinAllocations = new List<SapBinAllocations>();
-                                lineaDetalleLote = 0;
-
-                                if (item.manBtchNum && item.binactivat)
-                                {
-                                    if (item.listVentasDetalleLotes.Any())
-                                    {
-                                        if (item.listVentasDetalleLotes.Count > 0)
-                                        {
-                                            foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
-                                            {
-                                                var lineaLote = new SapBatchNumbers
-                                                {
-                                                    Quantity = itemLote.cantidad,
-                                                    BatchNumber = itemLote.lote
-                                                };
-
-                                                sapBatchNumbers.Add(lineaLote);
-
-                                                if (item.binactivat)
-                                                {
-                                                    if (itemLote.ubicacion != 0)
-                                                    {
-
-                                                        int existe = sapBinAllocations.FindAll(xFila => xFila.BinAbsEntry == itemLote.ubicacion && xFila.SerialAndBatchNumbersBaseLine == lineaDetalleLote).Count();
-
-                                                        if (existe == 0)
-                                                        {
-                                                            var lineaUbicacion = new SapBinAllocations
-                                                            {
-                                                                BinAbsEntry = int.Parse(itemLote.ubicacion.ToString()),
-                                                                Quantity = itemLote.cantidad,
-                                                                SerialAndBatchNumbersBaseLine = lineaDetalleLote
-                                                            };
-                                                            sapBinAllocations.Add(lineaUbicacion);
-                                                        }
-                                                        else
-                                                        {
-                                                            sapBinAllocations.Find(xFila => xFila.BinAbsEntry == itemLote.ubicacion && xFila.SerialAndBatchNumbersBaseLine == lineaDetalleLote).Quantity += itemLote.cantidad;
-                                                        }
-                                                    }
-                                                }
-
-                                                lineaDetalleLote++;
-
-                                            }
-
-                                            linea.BatchNumbers = sapBatchNumbers;
-                                            linea.DocumentLinesBinAllocations = sapBinAllocations;
-                                        }
-                                    }
-                                }
-
-                                if (item.manBtchNum && !item.binactivat)
-                                {
-                                    if (item.listVentasDetalleLotes.Any())
-                                    {
-                                        if (item.listVentasDetalleLotes.Count > 0)
-                                        {
-                                            foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
-                                            {
-                                                var lineaLote = new SapBatchNumbers
-                                                {
-                                                    Quantity = itemLote.cantidad,
-                                                    BatchNumber = itemLote.lote
-                                                };
-
-                                                sapBatchNumbers.Add(lineaLote);
-                                            }
-
-                                            linea.BatchNumbers = sapBatchNumbers;
-                                        }
-                                    }
-                                }
-
-                                if (!item.manBtchNum && item.binactivat)
-                                {
-                                    if (item.listVentasDetalleLotes.Any())
-                                    {
-                                        if (item.listVentasDetalleLotes.Count > 0)
-                                        {
-                                            foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
-                                            {
-                                                if (item.binactivat)
-                                                {
-                                                    if (itemLote.ubicacion != 0)
-                                                    {
-
-                                                        int existe = sapBinAllocations.FindAll(xFila => xFila.BinAbsEntry == itemLote.ubicacion).Count();
-
-                                                        if (existe == 0)
-                                                        {
-                                                            var lineaUbicacion = new SapBinAllocations
-                                                            {
-                                                                BinAbsEntry = int.Parse(itemLote.ubicacion.ToString()),
-                                                                Quantity = itemLote.cantidad,
-                                                                SerialAndBatchNumbersBaseLine = lineaDetalleLote
-                                                            };
-                                                            sapBinAllocations.Add(lineaUbicacion);
-                                                        }
-                                                        else
-                                                        {
-                                                            sapBinAllocations.Find(xFila => xFila.BinAbsEntry == itemLote.ubicacion).Quantity += itemLote.cantidad;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            linea.DocumentLinesBinAllocations = sapBinAllocations;
-                                        }
-                                    }
-                                }
-
-                                document.DocumentLines.Add(linea);
-                            }
-
-                            try
-                            {
-                                cadena = "Invoices";
-                                data = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<SapDocument>>(cadena, document);
-
-                                if (data.DocEntry != 0)
-                                {
-                                    docentrycomprobante = data.DocEntry;
-                                    //using (SqlCommand cmd = new SqlCommand(SP_POST_VENTA_CABECERA_INFO_SAP_UPDATE, conn, transaction))
-                                    //{
-                                    //    cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                                    //    cmd.Parameters.Add(new SqlParameter("@codventa", value.codventa));
-                                    //    cmd.Parameters.Add(new SqlParameter("@ide_docentrysap", docentrycomprobante));
-                                    //    cmd.Parameters.Add(new SqlParameter("@fec_docentrysap", DateTime.Now));
-
-                                    //    await cmd.ExecuteNonQueryAsync();
-
-                                    //    vResultadoTransaccion.IdRegistro = 0;
-                                    //    vResultadoTransaccion.ResultadoCodigo = 0;
-                                    //    vResultadoTransaccion.ResultadoDescripcion = "PROCESADO CORRECTAMENTE";
-                                    //    vResultadoTransaccion.data = codcomprobante;
-                                    //}
-
-                                    using (SqlCommand cmd = new SqlCommand(SP_POST_COMPROBANTES_INFO_SAP_UPDATE, conn, transaction))
-                                    {
-                                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                                        cmd.Parameters.Add(new SqlParameter("@codcomprobante", codcomprobante));
-                                        cmd.Parameters.Add(new SqlParameter("@doc_entry", docentrycomprobante));
-                                        cmd.Parameters.Add(new SqlParameter("@fec_docentry", DateTime.Now));
-
-                                        await cmd.ExecuteNonQueryAsync();
-
-                                        vResultadoTransaccion.IdRegistro = 0;
-                                        vResultadoTransaccion.ResultadoCodigo = 0;
-                                        vResultadoTransaccion.ResultadoDescripcion = "PROCESADO CORRECTAMENTE";
-                                        vResultadoTransaccion.data = codcomprobante;
-                                    }
-
-                                    vResultadoTransaccion.IdRegistro = 0;
-                                    vResultadoTransaccion.ResultadoCodigo = 0;
-                                    vResultadoTransaccion.ResultadoDescripcion = "COMPROBANTE ENVIADO A SAP CORRECTAMENTE.";
-                                }
-                                else
-                                {
-                                    transaction.Rollback();
-                                    vResultadoTransaccion.IdRegistro = -1;
-                                    vResultadoTransaccion.ResultadoCodigo = -1;
-                                    vResultadoTransaccion.ResultadoDescripcion = "ERROR AL ENVIAR EL COMPROBANTE A SAP.";
-                                    return vResultadoTransaccion;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                vResultadoTransaccion.IdRegistro = -1;
-                                vResultadoTransaccion.ResultadoCodigo = -1;
-                                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
-                            }
-
-                            #endregion
-
-                            #region <<< Pago >>>
-                            if (vResultadoTransaccion.IdRegistro == 0)
-                            {
-                                foreach (var item in value.cuadreCaja)
-                                {
-                                    if (item.tipopago != "D")
-                                    {
-                                        DateTime? transferDate = null;
-
-                                        if (item.tipopago == "A") transferDate = response[0].fechaemision;
-
-                                        var IncomingPayments = new SapIncomingPayments()
-                                        {
-                                            DocType = "rCustomer",
-                                            DocDate = response[0].fechaemision,
-                                            CardCode = response[0].cardcode.Trim(),
-                                            DocCurrency = response[0].c_simbolomoneda.Trim(),
-                                            CashSum = (item.tipopago == "E") ? response[0].total_precioventa : 0,
-                                            CheckAccount = (item.tipopago == "C") ? "10411004" : "",
-                                            TransferAccount = (item.tipopago == "A") ? "10411002" : "",
-                                            TransferSum = (item.tipopago == "A") ? response[0].total_precioventa : 0,
-                                            TransferDate = transferDate,
-                                            TransferReference = (item.tipopago == "A") ? item.numeroentidad : "",
-                                            CounterReference = "",
-                                            TaxDate = response[0].fechaemision,
-                                            DocObjectCode = "bopot_IncomingPayments",
-                                            DueDate = response[0].fechaemision,
-                                            PaymentChecks = new List<SapPaymentChecks>(),
-                                            PaymentInvoices = new List<SapPaymentInvoices>(),
-                                            PaymentCreditCards = new List<SapPaymentCreditCards>()
-                                        };
-
-
-                                        //I-Cheque
-                                        if (item.tipopago == "C")
-                                        {
-                                            object bankCode;
-
-                                            using (SqlCommand cmd = new SqlCommand(SP_GET_TABLAS_CODIGO_BANCO, conn, transaction))
-                                            {
-                                                cmd.Parameters.Clear();
-                                                cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                                                cmd.Parameters.Add(new SqlParameter("@codigo", item.nombreentidad));
-
-                                                bankCode = await cmd.ExecuteScalarAsync();
-                                            }
-
-                                            var paymentChecks = new SapPaymentChecks()
-                                            {
-                                                DueDate = response[0].fechaemision,
-                                                CheckNumber = int.Parse(item.numeroentidad),
-                                                BankCode = bankCode.ToString(),
-                                                CheckSum = response[0].total_precioventa,
-                                                Currency = response[0].c_simbolomoneda.Trim(),
-                                                CountryCode = "PE"
-                                            };
-                                            IncomingPayments.PaymentChecks.Add(paymentChecks);
-                                        }
-                                        //F-Cheque
-
-                                        //I-Factura
-                                        var paymentInvoices = new SapPaymentInvoices()
-                                        {
-                                            DocEntry = data.DocEntry,
-                                            SumApplied = response[0].total_precioventa,
-                                            InvoiceType = "it_Invoice"
-                                        };
-                                        IncomingPayments.PaymentInvoices.Add(paymentInvoices);
-                                        //F-Factura
-
-                                        //I-Tarjeta crédito
-                                        if (item.tipopago == "T")
-                                        {
-                                            int creditCard = 0;
-                                            int paymentMethodCode = 0;
-
-                                            using (SqlCommand cmd = new SqlCommand(SP_GET_TABLAS_CODIGO_TIPO_TARJETA, conn, transaction))
-                                            {
-                                                cmd.Parameters.Clear();
-                                                cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                                                cmd.Parameters.Add(new SqlParameter("@codigo", item.nombreentidad));
-
-                                                using (var reader = await cmd.ExecuteReaderAsync())
-                                                {
-                                                    while (await reader.ReadAsync())
-                                                    {
-                                                        creditCard = int.Parse(reader["valor2"].ToString());
-                                                        paymentMethodCode = int.Parse(reader["valor"].ToString());
-                                                    }
-                                                }
-                                            }
-
-                                            var paymentCreditCards = new SapPaymentCreditCards()
-                                            {
-                                                CreditCard = creditCard,
-                                                CreditCardNumber = item.numeroentidad,
-                                                CardValidUntil = DateTime.Parse("2023/12/31"),
-                                                VoucherNum = "000",
-                                                PaymentMethodCode = paymentMethodCode,
-                                                NumOfPayments = 1,
-                                                FirstPaymentDue = response[0].fechaemision,
-                                                FirstPaymentSum = response[0].total_precioventa,
-                                                CreditSum = response[0].total_precioventa,
-                                                CreditCur = response[0].c_simbolomoneda.Trim(),
-                                                NumOfCreditPayments = 1
-                                            };
-                                            IncomingPayments.PaymentCreditCards.Add(paymentCreditCards);
-                                        }
-                                        //F-Tarjeta crédito
-
-                                        try
-                                        {
-                                            cadena = "IncomingPayments";
-                                            data = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<SapDocument>>(cadena, IncomingPayments);
-
-                                            if (data.DocEntry != 0)
-                                            {
-                                                using (SqlCommand cmd = new SqlCommand(SP_POST_CUADRECAJA_INFO_SAP_UPDATE, conn, transaction))
-                                                {
-                                                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                                                    cmd.Parameters.Add(new SqlParameter("@documento", value.codventa));
-                                                    cmd.Parameters.Add(new SqlParameter("@doc_entry", docentrycomprobante));
-                                                    cmd.Parameters.Add(new SqlParameter("@ide_trans", data.DocEntry));
-                                                    cmd.Parameters.Add(new SqlParameter("@fec_enviosap", DateTime.Now));
-
-                                                    await cmd.ExecuteNonQueryAsync();
-
-                                                    vResultadoTransaccion.IdRegistro = 0;
-                                                    vResultadoTransaccion.ResultadoCodigo = 0;
-                                                    vResultadoTransaccion.ResultadoDescripcion = "PROCESADO CORRECTAMENTE";
-                                                    vResultadoTransaccion.data = codcomprobante;
-                                                }
-
-                                                vResultadoTransaccion.IdRegistro = 0;
-                                                vResultadoTransaccion.ResultadoCodigo = 0;
-                                                vResultadoTransaccion.ResultadoDescripcion = "PAGO ENVIADO A SAP CORRECTAMENTE.";
-                                            }
-                                            else
-                                            {
-                                                transaction.Rollback();
-                                                vResultadoTransaccion.IdRegistro = -1;
-                                                vResultadoTransaccion.ResultadoCodigo = -1;
-                                                vResultadoTransaccion.ResultadoDescripcion = "ERROR AL ENVIAR EL PAGO A SAP.";
-                                                return vResultadoTransaccion;
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            transaction.Rollback();
-                                            vResultadoTransaccion.IdRegistro = -1;
-                                            vResultadoTransaccion.ResultadoCodigo = -1;
-                                            vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
-                                        }
-                                    }
-                                }
-                            }
-                            #endregion
-                        }
-
-                        #endregion <<< SAP >>>
-                        //F-SAP
+                        
 
                         transaction.Commit();
                         transaction.Dispose();
@@ -1325,7 +898,987 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
+        */
+        public async Task<ResultadoTransaccion<string>> ComprobantesRegistrar(BE_Comprobante value, string tipocomprobante, string correo, string codTipoafectacionigv, bool wFlg_electronico, string maquina, long idePagosBot, bool flgPagoUsado, int flg_otorgar, string tipoCodigoBarrahash, string wStrURL)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            string codcomprobante = string.Empty;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    conn.Open();
+                    SqlTransaction transaction = conn.BeginTransaction();
+
+                    try
+                    {
+                        // Generamos el Comprobante en CSFE
+                        ResultadoTransaccion<string> InsertTransac = await Comprobante_Insert_transaccion(value, tipocomprobante, maquina, codcomprobante, conn, transaction);
+                        if (InsertTransac.ResultadoCodigo == -1)
+                        {
+                            vResultadoTransaccion = InsertTransac;
+                            transaction.Rollback();
+                            return InsertTransac;
+                        }
+
+                        vResultadoTransaccion = InsertTransac;
+                        codcomprobante = InsertTransac.data;
+                        value.codcomprobante = codcomprobante;
+
+                        if (codcomprobante != string.Empty)
+                        {
+                            var ActulizaValResultado = await Comprobante_Val_Update_transaccion(value, correo, codTipoafectacionigv, codcomprobante, conn, transaction);
+                            if (ActulizaValResultado.ResultadoCodigo == -1)
+                            {
+                                vResultadoTransaccion = ActulizaValResultado;
+                                transaction.Rollback();
+                                return ActulizaValResultado;
+                            }
+
+                            vResultadoTransaccion = ActulizaValResultado;
+                        }
+
+                        ComprobanteElectronicoRepository comprobante = new ComprobanteElectronicoRepository(context, _configuration);
+                        ResultadoTransaccion<BE_ComprobanteElectronico> resultadoTransaccionComprobanteElectronico = await comprobante.GetComprobantesElectronicosXml(value.codcomprobante, 0);
+
+                        if (resultadoTransaccionComprobanteElectronico.ResultadoCodigo == -1)
+                        {
+                            transaction.Rollback();
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionComprobanteElectronico.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+
+                        List<BE_ComprobanteElectronico> response = (List<BE_ComprobanteElectronico>)resultadoTransaccionComprobanteElectronico.dataList;
+
+                        ResultadoTransaccion<string> resultSap = new ResultadoTransaccion<string>();
+
+                        if (response[0].flgsinstock)
+                        {
+                            resultSap = await EnvioSapFacturaReserva(response, value, conn, transaction);
+                        } else
+                        {
+                            resultSap = await EnvioSapFactura(response, value, conn, transaction);
+                        }
+
+                        if (resultSap.ResultadoCodigo == 0)
+                        {
+                            transaction.Commit();
+                            transaction.Dispose();
+                        }
+                        else
+                        {
+                            vResultadoTransaccion = resultSap;
+                            transaction.Rollback();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                        try
+                        {
+                            transaction.Rollback();
+                        }
+                        catch (Exception ex3)
+                        {
+
+                            vResultadoTransaccion.ResultadoDescripcion = ex3.Message.ToString();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+
+            }
+            return vResultadoTransaccion;
+
+        }
+        private async Task<ResultadoTransaccion<string>> Comprobante_Insert_transaccion(BE_Comprobante value, string tipocomprobante, string maquina, string codcomprobante, SqlConnection conn, SqlTransaction transaction)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(SP_COMPROBANTE_INSERT, conn, transaction))
+                {
+
+                    int li_contador = 0;
+                    string variostipopago = "";
+                    foreach (var item in value.cuadreCaja)
+                    {
+                        li_contador = li_contador + 1;
+                        variostipopago = (li_contador == 1) ? "N" : "S";
+                        cmd.Parameters.Clear();
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@tipocomprobante", tipocomprobante));
+                        cmd.Parameters.Add(new SqlParameter("@codventa", value.codventa));
+                        cmd.Parameters.Add(new SqlParameter("@monto", item.monto));
+                        cmd.Parameters.Add(new SqlParameter("@moneda", value.moneda));
+                        cmd.Parameters.Add(new SqlParameter("@anombrede", value.anombrede));
+                        cmd.Parameters.Add(new SqlParameter("@ruc", value.ruc));
+                        cmd.Parameters.Add(new SqlParameter("@direccion", value.direccion));
+                        cmd.Parameters.Add(new SqlParameter("@tipopago", item.tipopago));
+                        cmd.Parameters.Add(new SqlParameter("@nombreentidad", item.nombreentidad.ToString()));
+                        cmd.Parameters.Add(new SqlParameter("@descripcionentidad", item.descripcionentidad.ToString()));
+                        cmd.Parameters.Add(new SqlParameter("@numeroentidad", item.numeroentidad.ToString()));
+                        cmd.Parameters.Add(new SqlParameter("@codterminal", item.codterminal));
+                        cmd.Parameters.Add(new SqlParameter("@operacion", "T"));
+                        cmd.Parameters.Add(new SqlParameter("@variostipopago", variostipopago));
+                        cmd.Parameters.Add(new SqlParameter("@strcodcomprobante", codcomprobante));
+                        cmd.Parameters.Add(new SqlParameter("@tipodecambio", value.tipodecambio));
+                        cmd.Parameters.Add(new SqlParameter("@maquina", maquina));
+
+                        SqlParameter oParam = new SqlParameter("@codcomprobante", SqlDbType.Char, 11)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(oParam);
+
+                        await cmd.ExecuteNonQueryAsync();
+
+                        codcomprobante = cmd.Parameters["@codcomprobante"].Value.ToString();
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = "SE REGISTRO CORRECTAMENTE";
+                        vResultadoTransaccion.data = codcomprobante;
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = "Error Comprobante_Insert: " + ex.Message;
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        private async Task<ResultadoTransaccion<string>> Comprobante_Val_Update_transaccion(BE_Comprobante value, string correo, string codTipoafectacionigv, string codcomprobante, SqlConnection conn, SqlTransaction transaction)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(SP_POST_COMPROBANTE_VAL_UPDATE, conn, transaction))
+                {
+
+                    cmd.Parameters.Clear();
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                    cmd.Parameters.Add(new SqlParameter("@idusuario", value.idusuario));
+                    cmd.Parameters.Add(new SqlParameter("@cardcode", value.cardcode));
+                    cmd.Parameters.Add(new SqlParameter("@tipdocidentidad", value.tipdocidentidad));
+                    cmd.Parameters.Add(new SqlParameter("@docidentidad", value.docidentidad));
+                    cmd.Parameters.Add(new SqlParameter("@flg_gratuito", value.flg_gratuito));
+                    cmd.Parameters.Add(new SqlParameter("@correo", correo));
+                    cmd.Parameters.Add(new SqlParameter("@tipoafectacionigv", codTipoafectacionigv));
+                    cmd.Parameters.Add(new SqlParameter("@codcomprobante", codcomprobante));
+                    await cmd.ExecuteNonQueryAsync();
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = "SE REGISTRO CORRECTAMENTE";
+                    vResultadoTransaccion.data = codcomprobante;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = "Error Comprobante al intentar actualizar sus valores" + ex.Message;
+            }
+            return vResultadoTransaccion;
+        }
+
+        //public async Task<ResultadoTransaccion<string>> EnvioSapFactura_Pagos(BE_Comprobante value, SqlConnection conn, SqlTransaction transaction)
+        //{
+
+        //    var vResultadoSapFactura = await EnvioSapFactura(value, conn, transaction);
+        //    if (vResultadoSapFactura.ResultadoCodigo == 0)
+        //    {
+        //        vResultadoSapFactura = await EnvioSapPagos(value, conn, transaction);
+        //    }
+
+        //    return vResultadoSapFactura;
+
+        //}
+        public async Task<ResultadoTransaccion<string>> EnvioSapFactura(List<BE_ComprobanteElectronico> response,BE_Comprobante value, SqlConnection conn, SqlTransaction transaction)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            //F-SAP
+            #region <<< SAP >>>
+
+            if (value.codcomprobante != null)
+            {
+                string cadena = string.Empty;
+                SapBaseResponse<SapDocument> dataDocument = new SapBaseResponse<SapDocument>();
+                SapBaseResponse<SapDocument> dataPago = new SapBaseResponse<SapDocument>();
+
+                #region <<< Factura >>>
+
+                List<SapBatchNumbers> sapBatchNumbers = new List<SapBatchNumbers>();
+                List<SapBinAllocations> sapBinAllocations = new List<SapBinAllocations>();
+
+                var document = new SapDocumentBase
+                {
+                    DocType = "dDocument_Items",
+                    DocDate = response[0].fechaemision,
+                    DocDueDate = response[0].fechaemision,
+                    CardCode = response[0].cardcode.Trim(),
+                    DocCurrency = response[0].c_simbolomoneda,
+                    TaxDate = response[0].fechaemision,
+                    DocObjectCode = "oInvoices",
+                    DocumentLines = new List<SapDocumentLinesBase>()
+                };
+
+                var detalle = new List<BE_VentasDetalle>();
+
+                foreach (var item in response)
+                {
+                    var linea = new BE_VentasDetalle()
+                    {
+                        coddetalle = item.d_orden,
+                        codproducto = item.d_codproducto.Trim(),
+                        cantsunat = item.d_cant_sunat,
+                        preciounidad = item.d_ventaunitario_sinigv,
+                        destributo = item.des_tributo,
+                        codalmacen = item.codalmacen,
+                        baseentry = item.baseentry,
+                        baseline = item.baseline,
+                        AccountCode = item.AccountCode,
+                        CostingCode = item.CostingCode,
+                        CostingCode2 = item.CostingCode2,
+                        CostingCode3 = item.CostingCode3,
+                        CostingCode4 = item.CostingCode4,
+                        manBtchNum = item.manbtchnum,
+                        binactivat = item.binactivat
+                    };
+                    detalle.Add(linea);
+                }
+
+                var responseDetalleLote = new List<BE_VentasDetalleLote>();
+
+                // Solo para ventas que mueven Stock
+                if (!response[0].flgsinstock)
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_DETALLEVENTA_LOTE_POR_CODVENTA, conn, transaction))
+                    {
+                        foreach (BE_VentasDetalle item in detalle)
+                        {
+                            if (item.manBtchNum || item.binactivat)
+                            {
+                                cmd.Parameters.Clear();
+                                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                cmd.Parameters.Add(new SqlParameter("@coddetalle", item.coddetalle));
+
+                                using (var reader = await cmd.ExecuteReaderAsync())
+                                {
+                                    responseDetalleLote = (List<BE_VentasDetalleLote>)context.ConvertTo<BE_VentasDetalleLote>(reader);
+                                }
+
+                                detalle.Find(xFila => xFila.coddetalle == item.coddetalle).listVentasDetalleLotes = responseDetalleLote;
+                            }
+                        }
+                    }
+                }
+                int lineaDetalleLote = 0;
+
+                foreach (BE_VentasDetalle item in detalle)
+                {
+                    var linea = new SapDocumentLinesBase
+                    {
+                        ItemCode = item.codproducto.Trim(),
+                        Quantity = item.cantsunat,
+                        UnitPrice = item.preciounidad,
+                        //TaxCode = item.destributo,
+                        WarehouseCode = item.codalmacen,
+                        AccountCode = item.AccountCode,
+                        CostingCode = item.CostingCode,
+                        CostingCode2 = item.CostingCode2,
+                        CostingCode3 = item.CostingCode3,
+                        CostingCode4 = item.CostingCode4,
+                        BaseType = 15,
+                        BaseEntry = item.baseentry,
+                        BaseLine = item.baseline,
+                        BatchNumbers = new List<SapBatchNumbers>(),
+                        DocumentLinesBinAllocations = new List<SapBinAllocations>()
+                    };
+
+                    sapBatchNumbers = new List<SapBatchNumbers>();
+                    sapBinAllocations = new List<SapBinAllocations>();
+                    lineaDetalleLote = 0;
+
+                    if (item.manBtchNum && item.binactivat)
+                    {
+                        if (item.listVentasDetalleLotes.Any())
+                        {
+                            if (item.listVentasDetalleLotes.Count > 0)
+                            {
+                                foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
+                                {
+                                    var lineaLote = new SapBatchNumbers
+                                    {
+                                        Quantity = itemLote.cantidad,
+                                        BatchNumber = itemLote.lote
+                                    };
+
+                                    sapBatchNumbers.Add(lineaLote);
+
+                                    if (item.binactivat)
+                                    {
+                                        if (itemLote.ubicacion != 0)
+                                        {
+
+                                            int existe = sapBinAllocations.FindAll(xFila => xFila.BinAbsEntry == itemLote.ubicacion && xFila.SerialAndBatchNumbersBaseLine == lineaDetalleLote).Count();
+
+                                            if (existe == 0)
+                                            {
+                                                var lineaUbicacion = new SapBinAllocations
+                                                {
+                                                    BinAbsEntry = int.Parse(itemLote.ubicacion.ToString()),
+                                                    Quantity = itemLote.cantidad,
+                                                    SerialAndBatchNumbersBaseLine = lineaDetalleLote
+                                                };
+                                                sapBinAllocations.Add(lineaUbicacion);
+                                            }
+                                            else
+                                            {
+                                                sapBinAllocations.Find(xFila => xFila.BinAbsEntry == itemLote.ubicacion && xFila.SerialAndBatchNumbersBaseLine == lineaDetalleLote).Quantity += itemLote.cantidad;
+                                            }
+                                        }
+                                    }
+
+                                    lineaDetalleLote++;
+
+                                }
+
+                                linea.BatchNumbers = sapBatchNumbers;
+                                linea.DocumentLinesBinAllocations = sapBinAllocations;
+                            }
+                        }
+                    }
+
+                    if (item.manBtchNum && !item.binactivat)
+                    {
+                        if (item.listVentasDetalleLotes.Any())
+                        {
+                            if (item.listVentasDetalleLotes.Count > 0)
+                            {
+                                foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
+                                {
+                                    var lineaLote = new SapBatchNumbers
+                                    {
+                                        Quantity = itemLote.cantidad,
+                                        BatchNumber = itemLote.lote
+                                    };
+
+                                    sapBatchNumbers.Add(lineaLote);
+                                }
+
+                                linea.BatchNumbers = sapBatchNumbers;
+                            }
+                        }
+                    }
+
+                    if (!item.manBtchNum && item.binactivat)
+                    {
+                        if (item.listVentasDetalleLotes.Any())
+                        {
+                            if (item.listVentasDetalleLotes.Count > 0)
+                            {
+                                foreach (BE_VentasDetalleLote itemLote in item.listVentasDetalleLotes)
+                                {
+                                    if (item.binactivat)
+                                    {
+                                        if (itemLote.ubicacion != 0)
+                                        {
+
+                                            int existe = sapBinAllocations.FindAll(xFila => xFila.BinAbsEntry == itemLote.ubicacion).Count();
+
+                                            if (existe == 0)
+                                            {
+                                                var lineaUbicacion = new SapBinAllocations
+                                                {
+                                                    BinAbsEntry = int.Parse(itemLote.ubicacion.ToString()),
+                                                    Quantity = itemLote.cantidad,
+                                                    SerialAndBatchNumbersBaseLine = lineaDetalleLote
+                                                };
+                                                sapBinAllocations.Add(lineaUbicacion);
+                                            }
+                                            else
+                                            {
+                                                sapBinAllocations.Find(xFila => xFila.BinAbsEntry == itemLote.ubicacion).Quantity += itemLote.cantidad;
+                                            }
+                                        }
+                                    }
+                                }
+                                linea.DocumentLinesBinAllocations = sapBinAllocations;
+                            }
+                        }
+                    }
+
+                    document.DocumentLines.Add(linea);
+                }
+
+                try
+                {
+                    cadena = "Invoices";
+                    dataDocument = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<SapDocument>>(cadena, document);
+
+                    if (dataDocument.DocEntry != 0)
+                    {
+                        using (SqlCommand cmd = new SqlCommand(SP_POST_COMPROBANTES_INFO_SAP_UPDATE, conn, transaction))
+                        {
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.Add(new SqlParameter("@codcomprobante", value.codcomprobante));
+                            cmd.Parameters.Add(new SqlParameter("@doc_entry", dataDocument.DocEntry));
+                            cmd.Parameters.Add(new SqlParameter("@fec_docentry", DateTime.Now));
+
+                            await cmd.ExecuteNonQueryAsync();
+                        }
+                    }
+                    else
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = dataDocument.Mensaje;
+                        return vResultadoTransaccion;
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = "PROCESADO CORRECTAMENTE";
+                    vResultadoTransaccion.data = value.codcomprobante;
+                }
+                catch (Exception ex)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                }
+
+                #endregion
+
+                #region <<< Pago >>>
+
+                if (response[0].flg_gratuito == "0")
+                {
+                    SapIncomingPayments IncomingPayments = new SapIncomingPayments();
+
+                    if (vResultadoTransaccion.ResultadoCodigo == 0)
+                    {
+                        foreach (var item in value.cuadreCaja)
+                        {
+                            if (item.tipopago != "D")
+                            {
+                                DateTime? transferDate = null;
+
+                                if (item.tipopago == "A") transferDate = response[0].fechaemision;
+
+                                IncomingPayments = new SapIncomingPayments()
+                                {
+                                    DocType = "rCustomer",
+                                    DocDate = response[0].fechaemision,
+                                    CardCode = response[0].cardcode.Trim(),
+                                    DocCurrency = response[0].c_simbolomoneda.Trim(),
+                                    CashSum = (item.tipopago == "E") ? item.monto : 0,
+                                    CheckAccount = (item.tipopago == "C") ? "10411004" : "",
+                                    TransferAccount = (item.tipopago == "A") ? "10411002" : "",
+                                    TransferSum = (item.tipopago == "A") ? item.monto : 0,
+                                    TransferDate = transferDate,
+                                    TransferReference = (item.tipopago == "A") ? item.numeroentidad : "",
+                                    CounterReference = "",
+                                    TaxDate = response[0].fechaemision,
+                                    DocObjectCode = "bopot_IncomingPayments",
+                                    DueDate = response[0].fechaemision,
+                                    PaymentChecks = new List<SapPaymentChecks>(),
+                                    PaymentInvoices = new List<SapPaymentInvoices>(),
+                                    PaymentCreditCards = new List<SapPaymentCreditCards>()
+                                };
+
+                                //I-Factura a la cual esta asociado el Pago, se tiene que colocar el Total
+                                var paymentInvoices = new SapPaymentInvoices()
+                                {
+                                    DocEntry = dataDocument.DocEntry,
+                                    SumApplied = item.monto,
+                                    InvoiceType = "it_Invoice"
+                                };
+                                IncomingPayments.PaymentInvoices.Add(paymentInvoices);
+                                //F-Factura a la cual esta asociado el Pago, se tiene que colocar el Total
+
+                                //I-Cheque
+                                if (item.tipopago == "C")
+                                {
+                                    object bankCode;
+
+                                    using (SqlCommand cmd = new SqlCommand(SP_GET_TABLAS_CODIGO_BANCO, conn, transaction))
+                                    {
+                                        cmd.Parameters.Clear();
+                                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                        cmd.Parameters.Add(new SqlParameter("@codigo", item.nombreentidad));
+
+                                        bankCode = await cmd.ExecuteScalarAsync();
+                                    }
+
+                                    var paymentChecks = new SapPaymentChecks()
+                                    {
+                                        DueDate = response[0].fechaemision,
+                                        CheckNumber = int.Parse(item.numeroentidad),
+                                        BankCode = bankCode.ToString(),
+                                        CheckSum = item.monto,
+                                        Currency = response[0].c_simbolomoneda.Trim(),
+                                        CountryCode = "PE"
+                                    };
+                                    IncomingPayments.PaymentChecks.Add(paymentChecks);
+                                }
+                                //F-Cheque
+
+                                //I-Tarjeta crédito
+                                if (item.tipopago == "T")
+                                {
+                                    int creditCard = 0;
+                                    int paymentMethodCode = 0;
+
+                                    using (SqlCommand cmd = new SqlCommand(SP_GET_TABLAS_CODIGO_TIPO_TARJETA, conn, transaction))
+                                    {
+                                        cmd.Parameters.Clear();
+                                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                        cmd.Parameters.Add(new SqlParameter("@codigo", item.nombreentidad));
+
+                                        using (var reader = await cmd.ExecuteReaderAsync())
+                                        {
+                                            while (await reader.ReadAsync())
+                                            {
+                                                creditCard = int.Parse(reader["valor2"].ToString());
+                                                paymentMethodCode = int.Parse(reader["valor"].ToString());
+                                            }
+                                        }
+                                    }
+
+                                    var paymentCreditCards = new SapPaymentCreditCards()
+                                    {
+                                        CreditCard = creditCard,
+                                        CreditCardNumber = item.numeroentidad,
+                                        CardValidUntil = DateTime.Parse("2023/12/31"), // Revisar como se envia los Pagos a SAP
+                                        VoucherNum = "000",
+                                        PaymentMethodCode = paymentMethodCode,
+                                        NumOfPayments = 1,
+                                        FirstPaymentDue = response[0].fechaemision,
+                                        FirstPaymentSum = item.monto,
+                                        CreditSum = item.monto,
+                                        CreditCur = response[0].c_simbolomoneda.Trim(),
+                                        NumOfCreditPayments = 1
+                                    };
+                                    IncomingPayments.PaymentCreditCards.Add(paymentCreditCards);
+                                }
+                                //F-Tarjeta crédito
+                            }
+
+                            try
+                            {
+                                cadena = "IncomingPayments";
+                                dataPago = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<SapDocument>>(cadena, IncomingPayments);
+
+                                if (dataPago.DocEntry != 0)
+                                {
+                                    using (SqlCommand cmd = new SqlCommand(SP_POST_CUADRECAJA_INFO_SAP_UPDATE, conn, transaction))
+                                    {
+                                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                        cmd.Parameters.Add(new SqlParameter("@documento", value.codcomprobante));
+                                        cmd.Parameters.Add(new SqlParameter("@doc_entry", dataDocument.DocEntry));
+                                        cmd.Parameters.Add(new SqlParameter("@ide_trans", dataPago.DocEntry));
+                                        cmd.Parameters.Add(new SqlParameter("@fec_enviosap", DateTime.Now));
+
+                                        await cmd.ExecuteNonQueryAsync();
+                                    }
+                                }
+                                else
+                                {
+                                    vResultadoTransaccion.IdRegistro = -1;
+                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                    vResultadoTransaccion.ResultadoDescripcion = "ERROR AL ENVIAR EL PAGO A SAP.";
+                                    return vResultadoTransaccion;
+                                }
+
+                                vResultadoTransaccion.IdRegistro = 0;
+                                vResultadoTransaccion.ResultadoCodigo = 0;
+                                vResultadoTransaccion.ResultadoDescripcion = "PROCESADO CORRECTAMENTE";
+                                vResultadoTransaccion.data = value.codcomprobante;
+                            }
+                            catch (Exception ex)
+                            {
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                            }
+                        }
+
+
+                    }
+                }
+                
+                #endregion
+            }
+
+            #endregion <<< SAP >>>
+            //F-SAP
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<string>> EnvioSapFacturaReserva(List<BE_ComprobanteElectronico> response, BE_Comprobante value, SqlConnection conn, SqlTransaction transaction)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            //F-SAP
+            #region <<< SAP >>>
+
+            if (value.codcomprobante != null)
+            {
+                string cadena = string.Empty;
+                SapBaseResponse<SapDocument> dataDocument = new SapBaseResponse<SapDocument>();
+                SapBaseResponse<SapDocument> dataPago = new SapBaseResponse<SapDocument>();
+
+                #region <<< Factura >>>
+
+                var document = new SapDocumentReserva
+                {
+                    DocType = "dDocument_Items",
+                    DocDate = response[0].fechaemision,
+                    DocDueDate = response[0].fechaemision,
+                    CardCode = response[0].cardcode.Trim(),
+                    DocCurrency = response[0].c_simbolomoneda,
+                    TaxDate = response[0].fechaemision,
+                    DocObjectCode = "oInvoices",
+                    WareHouseUpdateType = "dwh_CustomerOrders",
+                    ReserveInvoice = "tYES",
+                    DocumentLines = new List<SapDocumentLines>()
+                };
+
+                var detalle = new List<BE_VentasDetalle>();
+
+                foreach (var item in response)
+                {
+                    var linea = new BE_VentasDetalle()
+                    {
+                        coddetalle = item.d_orden,
+                        codproducto = item.d_codproducto.Trim(),
+                        cantsunat = item.d_cant_sunat,
+                        preciounidad = item.d_ventaunitario_sinigv,
+                        destributo = item.des_tributo,
+                        codalmacen = item.codalmacen,
+                        baseentry = item.baseentry,
+                        baseline = item.baseline,
+                        AccountCode = item.AccountCode,
+                        CostingCode = item.CostingCode,
+                        CostingCode2 = item.CostingCode2,
+                        CostingCode3 = item.CostingCode3,
+                        CostingCode4 = item.CostingCode4,
+                        manBtchNum = item.manbtchnum,
+                        binactivat = item.binactivat
+                    };
+                    detalle.Add(linea);
+                }
+
+                foreach (BE_VentasDetalle item in detalle)
+                {
+                    var linea = new SapDocumentLines
+                    {
+                        ItemCode = item.codproducto.Trim(),
+                        Quantity = item.cantsunat,
+                        UnitPrice = item.preciounidad,
+                        TaxCode = item.destributo,
+                        WarehouseCode = item.codalmacen,
+                        AccountCode = item.AccountCode,
+                        CostingCode = item.CostingCode,
+                        CostingCode2 = item.CostingCode2,
+                        CostingCode3 = item.CostingCode3,
+                        CostingCode4 = item.CostingCode4,
+                        BatchNumbers = new List<SapBatchNumbers>(),
+                        DocumentLinesBinAllocations = new List<SapBinAllocations>()
+                    };
+
+                    document.DocumentLines.Add(linea);
+                }
+
+                try
+                {
+                    cadena = "Invoices";
+                    dataDocument = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<SapDocument>>(cadena, document);
+
+                    if (dataDocument.DocEntry != 0)
+                    {
+                        using (SqlCommand cmd = new SqlCommand(SP_POST_COMPROBANTES_INFO_SAP_UPDATE, conn, transaction))
+                        {
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.Add(new SqlParameter("@codcomprobante", value.codcomprobante));
+                            cmd.Parameters.Add(new SqlParameter("@doc_entry", dataDocument.DocEntry));
+                            cmd.Parameters.Add(new SqlParameter("@fec_docentry", DateTime.Now));
+
+                            await cmd.ExecuteNonQueryAsync();
+                        }
+                    }
+                    else
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = dataDocument.Mensaje;
+                        return vResultadoTransaccion;
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = "PROCESADO CORRECTAMENTE";
+                    vResultadoTransaccion.data = value.codcomprobante;
+                }
+                catch (Exception ex)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                }
+
+                #endregion
+
+                #region <<< Pago >>>
+
+                SapIncomingPayments IncomingPayments = new SapIncomingPayments();
+
+                if (vResultadoTransaccion.ResultadoCodigo == 0)
+                {
+                    foreach (var item in value.cuadreCaja)
+                    {
+                        if (item.tipopago != "D")
+                        {
+                            DateTime? transferDate = null;
+
+                            if (item.tipopago == "A") transferDate = response[0].fechaemision;
+
+                            IncomingPayments = new SapIncomingPayments()
+                            {
+                                DocType = "rCustomer",
+                                DocDate = response[0].fechaemision,
+                                CardCode = response[0].cardcode.Trim(),
+                                DocCurrency = response[0].c_simbolomoneda.Trim(),
+                                CashSum = (item.tipopago == "E") ? item.monto : 0,
+                                CheckAccount = (item.tipopago == "C") ? "10411004" : "",
+                                TransferAccount = (item.tipopago == "A") ? "10411002" : "",
+                                TransferSum = (item.tipopago == "A") ? item.monto : 0,
+                                TransferDate = transferDate,
+                                TransferReference = (item.tipopago == "A") ? item.numeroentidad : "",
+                                CounterReference = "",
+                                TaxDate = response[0].fechaemision,
+                                DocObjectCode = "bopot_IncomingPayments",
+                                DueDate = response[0].fechaemision,
+                                PaymentChecks = new List<SapPaymentChecks>(),
+                                PaymentInvoices = new List<SapPaymentInvoices>(),
+                                PaymentCreditCards = new List<SapPaymentCreditCards>()
+                            };
+
+                            //I-Factura a la cual esta asociado el Pago, se tiene que colocar el Total
+                            var paymentInvoices = new SapPaymentInvoices()
+                            {
+                                DocEntry = dataDocument.DocEntry,
+                                SumApplied = item.monto,
+                                InvoiceType = "it_Invoice"
+                            };
+                            IncomingPayments.PaymentInvoices.Add(paymentInvoices);
+                            //F-Factura a la cual esta asociado el Pago, se tiene que colocar el Total
+
+                            //I-Cheque
+                            if (item.tipopago == "C")
+                            {
+                                object bankCode;
+
+                                using (SqlCommand cmd = new SqlCommand(SP_GET_TABLAS_CODIGO_BANCO, conn, transaction))
+                                {
+                                    cmd.Parameters.Clear();
+                                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                    cmd.Parameters.Add(new SqlParameter("@codigo", item.nombreentidad));
+
+                                    bankCode = await cmd.ExecuteScalarAsync();
+                                }
+
+                                var paymentChecks = new SapPaymentChecks()
+                                {
+                                    DueDate = response[0].fechaemision,
+                                    CheckNumber = int.Parse(item.numeroentidad),
+                                    BankCode = bankCode.ToString(),
+                                    CheckSum = item.monto,
+                                    Currency = response[0].c_simbolomoneda.Trim(),
+                                    CountryCode = "PE"
+                                };
+                                IncomingPayments.PaymentChecks.Add(paymentChecks);
+                            }
+                            //F-Cheque
+
+                            //I-Tarjeta crédito
+                            if (item.tipopago == "T")
+                            {
+                                int creditCard = 0;
+                                int paymentMethodCode = 0;
+
+                                using (SqlCommand cmd = new SqlCommand(SP_GET_TABLAS_CODIGO_TIPO_TARJETA, conn, transaction))
+                                {
+                                    cmd.Parameters.Clear();
+                                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                    cmd.Parameters.Add(new SqlParameter("@codigo", item.nombreentidad));
+
+                                    using (var reader = await cmd.ExecuteReaderAsync())
+                                    {
+                                        while (await reader.ReadAsync())
+                                        {
+                                            creditCard = int.Parse(reader["valor2"].ToString());
+                                            paymentMethodCode = int.Parse(reader["valor"].ToString());
+                                        }
+                                    }
+                                }
+
+                                var paymentCreditCards = new SapPaymentCreditCards()
+                                {
+                                    CreditCard = creditCard,
+                                    CreditCardNumber = item.numeroentidad,
+                                    CardValidUntil = DateTime.Parse("2023/12/31"), // Revisar como se envia los Pagos a SAP
+                                    VoucherNum = "000",
+                                    PaymentMethodCode = paymentMethodCode,
+                                    NumOfPayments = 1,
+                                    FirstPaymentDue = response[0].fechaemision,
+                                    FirstPaymentSum = item.monto,
+                                    CreditSum = item.monto,
+                                    CreditCur = response[0].c_simbolomoneda.Trim(),
+                                    NumOfCreditPayments = 1
+                                };
+                                IncomingPayments.PaymentCreditCards.Add(paymentCreditCards);
+                            }
+                            //F-Tarjeta crédito
+                        }
+
+                        try
+                        {
+                            cadena = "IncomingPayments";
+                            dataPago = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<SapDocument>>(cadena, IncomingPayments);
+
+                            if (dataPago.DocEntry != 0)
+                            {
+                                using (SqlCommand cmd = new SqlCommand(SP_POST_CUADRECAJA_INFO_SAP_UPDATE, conn, transaction))
+                                {
+                                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                    cmd.Parameters.Add(new SqlParameter("@documento", value.codcomprobante));
+                                    cmd.Parameters.Add(new SqlParameter("@doc_entry", dataDocument.DocEntry));
+                                    cmd.Parameters.Add(new SqlParameter("@ide_trans", dataPago.DocEntry));
+                                    cmd.Parameters.Add(new SqlParameter("@fec_enviosap", DateTime.Now));
+
+                                    await cmd.ExecuteNonQueryAsync();
+                                }
+                            }
+                            else
+                            {
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = "ERROR AL ENVIAR EL PAGO A SAP.";
+                                return vResultadoTransaccion;
+                            }
+
+                            vResultadoTransaccion.IdRegistro = 0;
+                            vResultadoTransaccion.ResultadoCodigo = 0;
+                            vResultadoTransaccion.ResultadoDescripcion = "PROCESADO CORRECTAMENTE";
+                            vResultadoTransaccion.data = value.codcomprobante;
+                        }
+                        catch (Exception ex)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                        }
+                    }
+                }
+                #endregion
+            }
+
+            #endregion <<< SAP >>>
+            //F-SAP
+            return vResultadoTransaccion;
+        }
+        private long Metodo_Registrar_FB(string pCodcomprobante, string pTipoCodigo_BarraHash, string pTipoOtorgamiento, ref string pXML)
+        {
+
+            pXML = string.Empty;
+            string wTipoComp_TCI = "";
+            //pTipoCodigo_BarraHash; '"1" 'Se envía "0" si se desea obtener el código de barras; se envía "1" si se desea obtener el código hash.
+            //pTipoOtorgamiento;     '"1" 'Se envía "0" si se otorgará manualmente, se envía "1" si se otorgará automáticamente
+
+            ComprobanteElectronicoRepository CPERepository = new ComprobanteElectronicoRepository(context, _configuration);
+            ResultadoTransaccion<BE_ComprobanteElectronico> vResultadoTransaccion = new ResultadoTransaccion<BE_ComprobanteElectronico>();
+
+            if (pCodcomprobante.Substring(0, 1) == "F" || pCodcomprobante.Substring(0, 1) == "B")
+            {
+                //wNumError = zFarmacia.Sp_ComprobantesElectronicosLOG_XML_Cab(wCodcomprobante, 0)
+                vResultadoTransaccion = CPERepository.GetComprobantesElectronicosXml(pCodcomprobante, 0).Result;
+            }
+            else if (pCodcomprobante.Substring(0, 1) == "C" || pCodcomprobante.Substring(0, 1) == "D")
+            {
+                //wNumError = zFarmacia.Sp_NotaElectronicaLOG_XML(wCodcomprobante, 0)
+            }
+
+            //' ------------------- Invocación del Web Service
+
+            string secuencia = "\r";
+            var CPTCI_XML = new ComprobanteElectronicaTCIXml();
+            string XML_Cabecera = CPTCI_XML.f_ENComprobante_LOG(vResultadoTransaccion.dataList.ToList());
+
+            if (XML_Cabecera != "")
+            {
+                string Metodo;
+                Metodo = "";
+                Metodo = Metodo + "<?xml version= " + "1.0" + " encoding= " + "utf-8" + "?> " + secuencia;
+                Metodo = Metodo + "<soap:Envelope xmlns:xsi=" + "http://www.w3.org/2001/XMLSchema-instance" + " xmlns:xsd=" + "http://www.w3.org/2001/XMLSchema" + " ";
+                Metodo = Metodo + " xmlns:soap=" + "http://schemas.xmlsoap.org/soap/envelope/" + ">" + secuencia +
+                        "<soap:Body>" + secuencia +
+                            "<Registrar xmlns=" + "http://tempuri.org/" + ">" + secuencia +
+                                "<oGeneral>" + secuencia + XML_Cabecera + "</oGeneral>" + secuencia +
+                                "<oTipoComprobante>" + wTipoComp_TCI + "</oTipoComprobante>" + secuencia +
+                                "<Cadena></Cadena>" + secuencia +
+                                "<TipoCodigo>" + pTipoCodigo_BarraHash + "</TipoCodigo>" + secuencia +
+                                "<CogigoBarras></CogigoBarras>" + secuencia +
+                                "<CogigoHash></CogigoHash>" + secuencia +
+                                "<Otorgar>" + pTipoOtorgamiento.ToString() + "</Otorgar>" + secuencia +
+                                "<IdComprobanteCliente>0</IdComprobanteCliente>" + secuencia +
+                            "</Registrar>" + secuencia +
+                        "</soap:Body>" + secuencia +
+                    "</soap:Envelope>";
+                pXML = Metodo;
+            }
+            else
+            {
+                pXML = "";
+                return -3; // 'Error al construir XML
+            }
+
+            return 0;
+
+        }
         public async Task<ResultadoTransaccion<BE_ComprobanteElectronicoPrint>> GetComprobanteElectroncioCodVenta(string codComprobante,
             int estadoRegistro, int estadoCdr,string fechaIni,string fechaFin,string codSistema,string tipoCompsunat,string tipoCompcsf,string codComprobanteElec, int orden)
         {
@@ -1549,7 +2102,6 @@ namespace Net.Data
 
         }
 
-
         public async Task<ResultadoTransaccion<BE_ComprobanteElectronicoPrint>> GetComprobanteElectroncioVB(
            string codEmpresa, string codComprobantePK, string codComprobante_e, string codSistema, string tipoCompsunat, int orden)
         {
@@ -1558,7 +2110,7 @@ namespace Net.Data
 
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
-          
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(_cnx))
@@ -1581,13 +2133,54 @@ namespace Net.Data
                         {
                             while (await reader.ReadAsync())
                             {
-                                response.flg_electronico = ((reader["flg_electronico"]) is DBNull) ? string.Empty : reader["flg_electronico"].ToString().Trim();
-                                response.obtener_pdf = ((reader["obtener_pdf"]) is DBNull) ? string.Empty : reader["obtener_pdf"].ToString().Trim();
-                                response.nombreestado_cdr = ((reader["nombreestado_cdr"]) is DBNull) ? string.Empty : reader["nombreestado_cdr"].ToString().Trim();
-                                response.nombreestado_otorgamiento = ((reader["nombreestado_otorgamiento"]) is DBNull) ? string.Empty : reader["nombreestado_otorgamiento"].ToString().Trim();
-                                response.mensaje = ((reader["mensaje"]) is DBNull) ? string.Empty : reader["mensaje"].ToString().Trim();
-                                if (orden.Equals("5")) { 
+                                if (orden.Equals(6))
+                                {
+
+                                    response.flg_electronico = ((reader["flg_electronico"]) is DBNull) ? string.Empty : reader["flg_electronico"].ToString().Trim();
+                                    response.codcomprobante = ((reader["codcomprobante"]) is DBNull) ? string.Empty : reader["codcomprobante"].ToString().Trim();
+                                    response.codcomprobantee = ((reader["codcomprobantee"]) is DBNull) ? string.Empty : reader["codcomprobantee"].ToString().Trim();
+                                    response.estadoFB = ((reader["estadoFB"]) is DBNull) ? string.Empty : reader["estadoFB"].ToString().Trim();
+                                    response.estado_cdr = ((reader["estado_cdr"]) is DBNull) ? string.Empty : reader["estado_cdr"].ToString().Trim();
+                                    response.tipo_otorgamiento = ((reader["tipo_otorgamiento"]) is DBNull) ? string.Empty : reader["tipo_otorgamiento"].ToString().Trim();
+                                    response.flg_otorgamiento = ((reader["flg_otorgamiento"]) is DBNull) ? string.Empty : reader["flg_otorgamiento"].ToString().Trim();
+                                    response.flg_enbaja = ((reader["flg_enbaja"]) is DBNull) ? string.Empty : reader["flg_enbaja"].ToString().Trim();
+                                    response.nombreestado_cdr = ((reader["nombreestado_cdr"]) is DBNull) ? string.Empty : reader["nombreestado_cdr"].ToString().Trim();
+                                    response.nombreestado_otorgamiento = ((reader["nombreestado_otorgamiento"]) is DBNull) ? string.Empty : reader["nombreestado_otorgamiento"].ToString().Trim();
+                                    response.conteo_notas = ((reader["conteo_notas"]) is DBNull) ? string.Empty : reader["conteo_notas"].ToString().Trim();
+                                    response.dar_baja = ((reader["dar_baja"]) is DBNull) ? string.Empty : reader["dar_baja"].ToString().Trim();
+                                    response.mensaje = ((reader["mensaje"]) is DBNull) ? string.Empty : reader["mensaje"].ToString().Trim();
+
+                                }
+                                else if (orden.Equals(5))
+                                {
+
+                                    response.flg_electronico = ((reader["flg_electronico"]) is DBNull) ? string.Empty : reader["flg_electronico"].ToString().Trim();
+                                    response.codcomprobante = ((reader["codcomprobante"]) is DBNull) ? string.Empty : reader["codcomprobante"].ToString().Trim();
+                                    response.codcomprobantee = ((reader["codcomprobantee"]) is DBNull) ? string.Empty : reader["codcomprobantee"].ToString().Trim();
+                                    response.estadoFB = ((reader["estadoFB"]) is DBNull) ? string.Empty : reader["estadoFB"].ToString().Trim();
+                                    response.estado_cdr = ((reader["estado_cdr"]) is DBNull) ? string.Empty : reader["estado_cdr"].ToString().Trim();
+                                    response.tipo_otorgamiento = ((reader["tipo_otorgamiento"]) is DBNull) ? string.Empty : reader["tipo_otorgamiento"].ToString().Trim();
+                                    response.flg_otorgamiento = ((reader["flg_otorgamiento"]) is DBNull) ? string.Empty : reader["flg_otorgamiento"].ToString().Trim();
+                                    response.flg_enbaja = ((reader["flg_enbaja"]) is DBNull) ? string.Empty : reader["flg_enbaja"].ToString().Trim();
+                                    response.nombreestado_cdr = ((reader["nombreestado_cdr"]) is DBNull) ? string.Empty : reader["nombreestado_cdr"].ToString().Trim();
+                                    response.nombreestado_otorgamiento = ((reader["nombreestado_otorgamiento"]) is DBNull) ? string.Empty : reader["nombreestado_otorgamiento"].ToString().Trim();
+                                    response.conteo_notas = ((reader["conteo_notas"]) is DBNull) ? string.Empty : reader["conteo_notas"].ToString().Trim();
                                     response.anular = ((reader["anular"]) is DBNull) ? string.Empty : reader["anular"].ToString().Trim();
+                                    response.mensaje = ((reader["mensaje"]) is DBNull) ? string.Empty : reader["mensaje"].ToString().Trim();
+
+                                }
+                                else
+                                {
+                                    response.flg_electronico = ((reader["flg_electronico"]) is DBNull) ? string.Empty : reader["flg_electronico"].ToString().Trim();
+                                    response.obtener_pdf = ((reader["obtener_pdf"]) is DBNull) ? string.Empty : reader["obtener_pdf"].ToString().Trim();
+                                    response.nombreestado_cdr = ((reader["nombreestado_cdr"]) is DBNull) ? string.Empty : reader["nombreestado_cdr"].ToString().Trim();
+                                    response.nombreestado_otorgamiento = ((reader["nombreestado_otorgamiento"]) is DBNull) ? string.Empty : reader["nombreestado_otorgamiento"].ToString().Trim();
+                                    response.mensaje = ((reader["mensaje"]) is DBNull) ? string.Empty : reader["mensaje"].ToString().Trim();
+                                    if (orden.Equals("5"))
+                                    {
+                                        response.anular = ((reader["anular"]) is DBNull) ? string.Empty : reader["anular"].ToString().Trim();
+                                    }
+
                                 }
 
                             }
@@ -1610,8 +2203,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
-              
 
         #region Vista de Impresion
 
@@ -1691,7 +2282,17 @@ namespace Net.Data
                 imageCell.HorizontalAlignment = Element.ALIGN_CENTER;
                 imageCell.VerticalAlignment = Element.ALIGN_MIDDLE;
 
-                iTextSharp.text.Image imgCodigoBarra = iTextSharp.text.Image.GetInstance(xRutaCodigoBarra);
+                iTextSharp.text.Image imgCodigoBarra = null;
+
+                try
+                {
+                    imgCodigoBarra = iTextSharp.text.Image.GetInstance(xRutaCodigoBarra);
+                }
+                catch (Exception)
+                {
+                    imgCodigoBarra = iTextSharp.text.Image.GetInstance("C:\\temp\\sinbarra.jpg");
+                }
+                
                 imgCodigoBarra.WidthPercentage = 60;
                 imgCodigoBarra.Alignment = 1;
                 PdfPCell imageCodigoBarraCell = new PdfPCell();
@@ -2183,11 +2784,189 @@ namespace Net.Data
 
         #endregion
 
-        #region PAGOS BOT
+        public async Task<ResultadoTransaccion<string>> Comprobante_baja(BE_ComprobantesBaja value)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
 
-     
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_POST_COMPROBANTE_BAJA))
+                    {
 
-        #endregion
+                        cmd.Parameters.Clear();
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@cod_comprobante", value.cod_comprobante));
+                        cmd.Parameters.Add(new SqlParameter("@cod_empresa", value.cod_empresa));
+                        cmd.Parameters.Add(new SqlParameter("@cod_sistema", value.cod_sistema));
+                        cmd.Parameters.Add(new SqlParameter("@cod_comprobantee", value.cod_comprobantee));
+                        cmd.Parameters.Add(new SqlParameter("@fec_baja", value.fec_baja));
+                        cmd.Parameters.Add(new SqlParameter("@fec_emisioncomp", value.fec_emisioncomp));
+                        cmd.Parameters.Add(new SqlParameter("@dsc_motivobaja", value.dsc_motivobaja));
 
+                        SqlParameter oParam = new SqlParameter("@ide_compbaja", SqlDbType.Int, 11)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(oParam);
+
+                        await conn.OpenAsync();
+                        await cmd.ExecuteNonQueryAsync();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = "Su comprobante fue enviado De_Baja. <br>Favor consultar el estado de su solicitud (Aceptado o Rechazado).";
+                        vResultadoTransaccion.data = oParam.Value.ToString().Trim();
+
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = "Error Comprobante al intentar actualizar sus valores" + ex.Message;
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        public async Task<int> GetExisteVentaAnuladaPorCodVenta(string codVenta)
+        {
+            ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            int existeVentaAnualda = 0;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_EXISTE_VENTA_ANULADA_BY_CODVENTA, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codventa", codVenta));
+
+                        BE_VentasCabecera response = new BE_VentasCabecera();
+
+                        await conn.OpenAsync();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                existeVentaAnualda = ((reader["ExiteAnulacion"]) is DBNull) ? 0 : (int)reader["ExiteAnulacion"];
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return existeVentaAnualda;
+
+        }
+        public async Task<ResultadoTransaccion<string>> RegistrarComunicadoBajoComprobante(BE_ComprobantesBaja value)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    conn.Open();
+                    SqlTransaction transaction = conn.BeginTransaction();
+                    try
+                    {
+
+                        var respInsert_transac = await Comprobante_baja_transac(value, conn, transaction);
+                        if (respInsert_transac.IdRegistro != 0)
+                        {
+                            vResultadoTransaccion = respInsert_transac;
+                            transaction.Rollback();
+                            return respInsert_transac;
+                        }
+
+                        vResultadoTransaccion = respInsert_transac;
+
+                    }
+                    catch (Exception)
+                    {
+
+                        throw;
+                    }
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = "Error Comprobante al intentar actualizar sus valores" + ex.Message;
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        public async Task<ResultadoTransaccion<string>> Comprobante_baja_transac(BE_ComprobantesBaja value, SqlConnection conn, SqlTransaction transaction)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(SP_POST_COMPROBANTE_BAJA, conn, transaction))
+                {
+
+                    cmd.Parameters.Clear();
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                    cmd.Parameters.Add(new SqlParameter("@cod_comprobante", value.cod_comprobante));
+                    cmd.Parameters.Add(new SqlParameter("@cod_empresa", value.cod_empresa));
+                    cmd.Parameters.Add(new SqlParameter("@cod_sistema", value.cod_sistema));
+                    cmd.Parameters.Add(new SqlParameter("@cod_comprobantee", value.cod_comprobantee));
+                    cmd.Parameters.Add(new SqlParameter("@fec_baja", value.fec_baja));
+                    cmd.Parameters.Add(new SqlParameter("@fec_emisioncomp", value.fec_emisioncomp));
+                    cmd.Parameters.Add(new SqlParameter("@dsc_motivobaja", value.dsc_motivobaja));
+
+                    SqlParameter oParam = new SqlParameter("@ide_compbaja", SqlDbType.Int, 11)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmd.Parameters.Add(oParam);
+
+                    await conn.OpenAsync();
+                    await cmd.ExecuteNonQueryAsync();
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = "Su comprobante fue enviado De_Baja. <br>Favor consultar el estado de su solicitud (Aceptado o Rechazado).";
+                    vResultadoTransaccion.data = oParam.Value.ToString().Trim();
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = "Error Comprobante al intentar actualizar sus valores" + ex.Message;
+            }
+
+            return vResultadoTransaccion;
+
+        }
     }
 }

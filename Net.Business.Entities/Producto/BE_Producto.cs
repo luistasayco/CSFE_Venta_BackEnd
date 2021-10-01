@@ -113,6 +113,7 @@ namespace Net.Business.Entities
         public string CodPedido { get; set; }
         public decimal ProductoStock { get; set; }
         public string U_SYP_CS_PRODCI { get; set; }
+        public bool binActivat { get; set; }
 
         public List<BE_Stock> ListStockAlmacen { get; set; }
 

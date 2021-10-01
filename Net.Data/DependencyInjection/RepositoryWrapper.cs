@@ -53,7 +53,7 @@ namespace Net.Data
         private ISeparacionCuentaRepository _SeparacionCuenta;
         private IConsolidadoPedidoRepository _ConsolidadoPedido;
         private ICheckListRegistroMovimientoRepository _CheckListRegistroMovimiento;
-
+        private ISynapsisWSRepository _SynapsisWSRepository;
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
             _repoContext = repoContext;
@@ -286,7 +286,7 @@ namespace Net.Data
             {
                 if (_Picking == null)
                 {
-                    _Picking = new PickingRepository(_repoContext, _configuration);
+                    _Picking = new PickingRepository(_clientFactory,_repoContext, _configuration);
                 }
                 return _Picking;
             }
@@ -297,7 +297,7 @@ namespace Net.Data
             {
                 if (_Consolidado == null)
                 {
-                    _Consolidado = new ConsolidadoRepository(_repoContext, _configuration);
+                    _Consolidado = new ConsolidadoRepository(_clientFactory ,_repoContext, _configuration);
                 }
                 return _Consolidado;
             }
@@ -497,7 +497,7 @@ namespace Net.Data
             {
                 if (_SalaOperacion == null)
                 {
-                    _SalaOperacion = new SalaOperacionRepository(_repoContext, _configuration);
+                    _SalaOperacion = new SalaOperacionRepository(_clientFactory, _repoContext, _configuration);
                 }
                 return _SalaOperacion;
             }
@@ -535,6 +535,18 @@ namespace Net.Data
                     _CheckListRegistroMovimiento = new CheckListRegistroMovimientoRepository(_repoContext, _configuration);
                 }
                 return _CheckListRegistroMovimiento;
+            }
+        }
+
+        public ISynapsisWSRepository SynapsisWSRepository
+        {
+            get
+            {
+                if (_SynapsisWSRepository == null)
+                {
+                    _SynapsisWSRepository = new SynapsisWSRepository(_clientFactory, _repoContext, _configuration);
+                }
+                return _SynapsisWSRepository;
             }
         }
     }

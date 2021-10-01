@@ -8,5 +8,6 @@ namespace Net.Data
     public interface IAtencionRepository : IRepositoryBase<BE_Atencion>
     {
         Task<IEnumerable<BE_Atencion>> GetListPacientePorFiltros(string opcion, string codpaciente, string nombres);
+        Task<IEnumerable<BE_AtencionPaquete>> GetListPaquetePorCodAtencion(string codatencion);
     }
 }
