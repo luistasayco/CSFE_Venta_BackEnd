@@ -46,5 +46,6 @@
         IConsolidadoPedidoRepository ConsolidadoPedido { get; }
         ICheckListRegistroMovimientoRepository CheckListRegistroMovimiento { get; }
         ISynapsisWSRepository SynapsisWSRepository { get; }
+        IUbigeoRepository Ubigeo { get; }
     }
 }

@@ -54,6 +54,7 @@ namespace Net.Data
         private IConsolidadoPedidoRepository _ConsolidadoPedido;
         private ICheckListRegistroMovimientoRepository _CheckListRegistroMovimiento;
         private ISynapsisWSRepository _SynapsisWSRepository;
+        private IUbigeoRepository _Ubigeo;
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
             _repoContext = repoContext;
@@ -547,6 +548,18 @@ namespace Net.Data
                     _SynapsisWSRepository = new SynapsisWSRepository(_clientFactory, _repoContext, _configuration);
                 }
                 return _SynapsisWSRepository;
+            }
+        }
+
+        public IUbigeoRepository Ubigeo
+        {
+            get
+            {
+                if (_Ubigeo == null)
+                {
+                    _Ubigeo = new UbigeoRepository(_repoContext, _configuration);
+                }
+                return _Ubigeo;
             }
         }
     }

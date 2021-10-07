@@ -11,6 +11,7 @@ namespace Net.Business.Entities
         /// </summary>
         public int DocEntry { get; set; }
         public int code { get; set; }
+        public string CardCode { get; set; }
         public string Mensaje { get; set; }
         public T data { get; set; }
     }
