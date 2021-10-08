@@ -27,6 +27,8 @@ namespace Net.Business.DTO
         public string cod_ubigeo { get; set; }
         public string docidentidad { get; set; }
         public string tipdocidentidad { get; set; }
+        public int MyProperty { get; set; }
+        public string cardcode { get; set; }
 
         public BE_ClienteLogistica RetornaModelo()
         {
@@ -55,7 +57,8 @@ namespace Net.Business.DTO
                 cod_ubigeo = this.cod_ubigeo,
                 docidentidad = this.docidentidad,
                 tipdocidentidad = this.tipdocidentidad,
-                RegIdUsuario = this.RegIdUsuario
+                RegIdUsuario = this.RegIdUsuario,
+                cardcode = this.cardcode
             };
         }
     }

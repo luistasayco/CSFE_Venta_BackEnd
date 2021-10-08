@@ -82,21 +82,19 @@ namespace Net.Data
 
             try
             {
-                var cadena = "BusinessPartners";
-                SapBaseResponse<BusinessPartners> data = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<BusinessPartners>>(cadena, value);
+                var cadena = "BusinessPartners('" + value.CardCode + "')";
+                SapBaseResponse<bool> data = await _connectServiceLayer.PatchAsyncSBA<SapBaseResponse<bool>>(cadena, value);
 
-                if (data.CardCode == "")
+                if (data != null)
                 {
                     vResultadoTransaccion.IdRegistro = -1;
                     vResultadoTransaccion.ResultadoCodigo = -1;
                     vResultadoTransaccion.ResultadoDescripcion = data.Mensaje;
-                    return vResultadoTransaccion;
                 }
 
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;
                 vResultadoTransaccion.ResultadoDescripcion = "DATOS DE SAP ACTUALIZADO CORRECTAMENTE";
-                vResultadoTransaccion.data = data;
             }
             catch (Exception ex)
             {

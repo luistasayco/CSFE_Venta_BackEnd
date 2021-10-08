@@ -1006,6 +1006,13 @@ namespace Net.Connection.ServiceLayer
                         return responseBody;
                     }
 
+                    if (response_.StatusCode == System.Net.HttpStatusCode.NoContent)
+                    {
+                        //dynamic responseBody = JsonConvert.DeserializeObject<T>(responseText_);
+                        ////responseBody.Mensaje = "OK";
+                        //return responseBody;
+                    }
+
                     // RETORNAMOS EL OBJETO POR DEFECTO ESPERADO
                     return default(T);
                 }

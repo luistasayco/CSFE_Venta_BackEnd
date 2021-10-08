@@ -428,40 +428,40 @@ namespace Net.Data
 
                         var businessPartners = new BusinessPartners
                         {
-                            CardCode = item.codcliente,
-                            CardName = item.nombre,
+                            CardCode = item.cardcode.Trim(),
+                            CardName = item.nombre.Trim(),
                             CardType = "cCustomer",
                             GroupCode = 100,
-                            MailAddress = item.direccion,
+                            MailAddress = item.direccion.Trim(),
                             MailZipCode = item.cod_ubigeo.Substring(2),
-                            Phone1 = item.telefono,
-                            FederalTaxID = item.ruc,
-                            EmailAddress = item.correo,
-                            FreeText = item.observaciones,
-                            U_SYP_BPAP = item.dsc_appaterno,
-                            U_SYP_BPAM = item.dsc_apmaterno,
-                            U_SYP_BPNO = item.dsc_primernombre,
-                            U_SYP_BPN2 = item.dsc_segundonombre,
+                            Phone1 = item.telefono.Trim(),
+                            FederalTaxID = item.ruc.Trim(),
+                            EmailAddress = item.correo.Trim(),
+                            FreeText = item.observaciones.Trim(),
+                            U_SYP_BPAP = item.dsc_appaterno.Trim(),
+                            U_SYP_BPAM = item.dsc_apmaterno.Trim(),
+                            U_SYP_BPNO = item.dsc_primernombre.Trim(),
+                            U_SYP_BPN2 = item.dsc_segundonombre.Trim(),
                             U_SYP_BPTP = item.cod_tipopersona.Trim(),
                             U_SYP_BPTD = item.cod_tipopersona.Equals("TPJ") ? "6" : "1",
                             BPAddresses = new List<Addresses>()
                         };
 
-                        var addresses = new Addresses
-                        {
-                            AddressName = item.direccion,
-                            Street = item.direccion,
-                            Block = item.direccion,
-                            ZipCode = item.cod_ubigeo.Substring(2),
-                            City = item.direccion,
-                            County = item.direccion,
-                            Country = item.cod_ubigeo.Substring(0, 2),
-                        };
+                        //var addresses = new Addresses
+                        //{
+                        //    AddressName = item.direccion.Trim(),
+                        //    Street = item.direccion.Trim(),
+                        //    Block = item.direccion.Trim(),
+                        //    ZipCode = item.cod_ubigeo.Substring(2),
+                        //    City = item.direccion.Trim(),
+                        //    County = item.direccion.Trim(),
+                        //    Country = item.cod_ubigeo.Substring(0, 2),
+                        //};
 
-                        businessPartners.BPAddresses.Add(addresses);
+                        //businessPartners.BPAddresses.Add(addresses);
 
                         BusinessPartnersRepository businessPartnersRepository = new BusinessPartnersRepository(_clientFactory, _configuration, context);
-                        ResultadoTransaccion<SapBaseResponse<BusinessPartners>> resultadoTransaccionBusiness = await businessPartnersRepository.SetCreateBusinessPartners(businessPartners);
+                        ResultadoTransaccion<SapBaseResponse<BusinessPartners>> resultadoTransaccionBusiness = await businessPartnersRepository.SetUpdateBusinessPartners(businessPartners);
 
                         if (resultadoTransaccionBusiness.ResultadoCodigo == -1)
                         {

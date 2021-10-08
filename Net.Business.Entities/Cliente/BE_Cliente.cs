@@ -48,5 +48,6 @@ namespace Net.Business.Entities
         public string docidentidad { get; set; }
         public string tipdocidentidad { get; set; }
         public string nomtipdocidentidad { get; set; }
+        public string cardcode { get; set; }
     }
 }
