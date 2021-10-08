@@ -25,7 +25,7 @@ namespace Net.Data
 
         const string DB_ESQUEMA = "";
         const string SP_GET_ALTERNATIVO_POR_FILTRO = DB_ESQUEMA + "VEN_ListaAlternativoxProductoPorFiltroGet";
-
+        const string SP_GET_AseguradoraxProductoGNC_ConsultaV2 = DB_ESQUEMA + "VEN_AseguradoraxProductoGNC_ConsultaV2";
         public ProductoRepository(IHttpClientFactory clientFactory, IConfiguration configuration, IConnectionSQL context)
              : base(context)
         {
@@ -720,6 +720,125 @@ namespace Net.Data
 
             return vResultadoTransaccion;
 
+        }
+
+        public async Task<ResultadoTransaccion<BE_AseguradoraxProducto>> GetProductoPorCodigoAseguradora(string codaseguradora, string codproducto, int codtipoatencion_mae, int orden)
+        {
+
+            ResultadoTransaccion<BE_AseguradoraxProducto> vResultadoTransaccion = new ResultadoTransaccion<BE_AseguradoraxProducto>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_AseguradoraxProducto>();
+
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_AseguradoraxProductoGNC_ConsultaV2, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codaseguradora", codaseguradora));
+                        cmd.Parameters.Add(new SqlParameter("@codproducto", codproducto));
+                        cmd.Parameters.Add(new SqlParameter("@codtipoatencion_mae", codtipoatencion_mae));
+                        cmd.Parameters.Add(new SqlParameter("@orden", orden));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_AseguradoraxProducto>)context.ConvertTo<BE_AseguradoraxProducto>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<BE_Producto>> GetProductoPorFiltro(string nombreProducto, string nombreFamilia, string nombreLaboratorio)
+        {
+            ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                string filter = string.Empty;
+                nombreProducto = nombreProducto == null ? "" : nombreProducto.Trim().ToUpper();
+                nombreFamilia = nombreFamilia == null ? "" : nombreFamilia.Trim().ToUpper();
+                nombreLaboratorio = nombreLaboratorio == null ? "" : nombreLaboratorio.Trim().ToUpper();
+
+                var cadena = "Items?$select=ItemCode, ItemName,ManageBatchNumbers,Properties1";
+                if (nombreFamilia != string.Empty)
+                {
+                    filter = "&$filter=U_SYP_FAMILIA eq '" + nombreFamilia;
+                }
+                if (nombreLaboratorio != string.Empty)
+                {
+                    filter = "&$filter=U_SYP_CS_LABORATORIO eq '" + nombreFamilia;
+                }
+                if (nombreProducto != string.Empty)
+                {
+                    cadena += "&$filter=startswith(ItemName,'" + nombreProducto + "')";
+                }
+
+                //if (tipo.Equals("FAMILIA"))
+                //{
+                //    filter = "&$filter=U_SYP_FAMILIA eq '" + filtro;
+                //}
+                //else if (tipo.Equals("LABORATORIO"))
+                //{
+                //    filter = "&$filter=U_SYP_CS_LABORATORIO eq '" + filtro;
+                //}
+                //else if (tipo.Equals("PRODUCTO"))
+                //{
+                //    cadena += "&$filter=startswith(ItemName,'" + filtro + "')";
+                //}
+
+                //U_SYP_FAMILIA
+                //U_SYP_CS_LABORATORIO
+                List<BE_Producto> listproducto = await _connectServiceLayer.GetBaseAsync<BE_Producto>(cadena, 20);
+
+                BE_Producto data = new BE_Producto();
+
+                if (listproducto.Count < 0)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = "El producto no existe en SAP HANA";
+                    return vResultadoTransaccion;
+                }
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                vResultadoTransaccion.dataList = listproducto;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
         }
 
     }

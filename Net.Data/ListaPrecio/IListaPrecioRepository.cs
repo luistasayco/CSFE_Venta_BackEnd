@@ -6,5 +6,6 @@ namespace Net.Data
     public interface IListaPrecioRepository
     {
         Task<ResultadoTransaccion<BE_ListaPrecio>> GetPrecioPorCodigo(string codproducto, int pricelist);
+        Task<ResultadoTransaccion<BE_ListaPrecio>> GetListaPrecio();
     }
 }

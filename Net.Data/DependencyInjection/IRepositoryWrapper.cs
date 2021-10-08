@@ -47,5 +47,11 @@
         ICheckListRegistroMovimientoRepository CheckListRegistroMovimiento { get; }
         ISynapsisWSRepository SynapsisWSRepository { get; }
         IUbigeoRepository Ubigeo { get; }
+        ICorreoRepository Correo { get; }
+        ITipoAtencionRepository TipoAtencion { get; }
+        IAseguradoraRepository Aseguradora { get; }
+        IFamiliaRepository Familia { get; }
+        IListaPrecioRepository ListaPrecio { get; }
+        ILaboratorioRepository Laboratorio { get; }
     }
 }

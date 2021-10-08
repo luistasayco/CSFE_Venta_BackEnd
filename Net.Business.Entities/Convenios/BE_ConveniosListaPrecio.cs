@@ -22,5 +22,6 @@ namespace Net.Business.Entities
         public string moneda { get; set; }
         //public bool estado { get; set; }
         public int pricelist { get; set; }
+        public int regcreateidusuario { get; set; }
     }
 }

@@ -55,6 +55,12 @@ namespace Net.Data
         private ICheckListRegistroMovimientoRepository _CheckListRegistroMovimiento;
         private ISynapsisWSRepository _SynapsisWSRepository;
         private IUbigeoRepository _Ubigeo;
+        private ICorreoRepository _Correo;
+        private ITipoAtencionRepository _TipoAtencion;
+        private IAseguradoraRepository _Aseguradora;
+        private IFamiliaRepository _Familia;
+        private IListaPrecioRepository _ListaPrecio;
+        private ILaboratorioRepository _Laboratorio;
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
             _repoContext = repoContext;
@@ -78,7 +84,7 @@ namespace Net.Data
             {
                 if (_Venta == null)
                 {
-                    _Venta = new VentaRepository(_clientFactory,_repoContext, _configuration);
+                    _Venta = new VentaRepository(_clientFactory, _repoContext, _configuration);
                 }
                 return _Venta;
             }
@@ -98,7 +104,7 @@ namespace Net.Data
         {
             get
             {
-                if(_Planes == null)
+                if (_Planes == null)
                 {
                     _Planes = new PlanesRepository(_repoContext, _configuration);
                 }
@@ -287,7 +293,7 @@ namespace Net.Data
             {
                 if (_Picking == null)
                 {
-                    _Picking = new PickingRepository(_clientFactory,_repoContext, _configuration);
+                    _Picking = new PickingRepository(_clientFactory, _repoContext, _configuration);
                 }
                 return _Picking;
             }
@@ -298,7 +304,7 @@ namespace Net.Data
             {
                 if (_Consolidado == null)
                 {
-                    _Consolidado = new ConsolidadoRepository(_clientFactory ,_repoContext, _configuration);
+                    _Consolidado = new ConsolidadoRepository(_clientFactory, _repoContext, _configuration);
                 }
                 return _Consolidado;
             }
@@ -309,7 +315,7 @@ namespace Net.Data
             {
                 if (_Convenios == null)
                 {
-                    _Convenios = new ConveniosRepository(_clientFactory,_repoContext, _configuration);
+                    _Convenios = new ConveniosRepository(_clientFactory, _repoContext, _configuration);
                 }
                 return _Convenios;
             }
@@ -464,7 +470,7 @@ namespace Net.Data
             {
                 if (_VentaCaja == null)
                 {
-                    _VentaCaja = new VentaCajaRepository(_clientFactory ,_repoContext, _configuration);
+                    _VentaCaja = new VentaCajaRepository(_clientFactory, _repoContext, _configuration);
                 }
                 return _VentaCaja;
             }
@@ -560,6 +566,73 @@ namespace Net.Data
                     _Ubigeo = new UbigeoRepository(_repoContext, _configuration);
                 }
                 return _Ubigeo;
+            }
+        }
+
+        public ICorreoRepository Correo
+        {
+            get
+            {
+                if (_Correo == null)
+                {
+                    _Correo = new CorreoRepository(_repoContext, _configuration);
+                }
+                return _Correo;
+            }
+        }
+        public ITipoAtencionRepository TipoAtencion  
+        {
+            get
+            {
+                if (_TipoAtencion == null)
+                {
+                    _TipoAtencion = new TipoAtencionRepository(_repoContext, _configuration);
+                }
+                return _TipoAtencion;
+            }
+        }
+        public IAseguradoraRepository Aseguradora
+        {
+            get
+            {
+                if (_Aseguradora == null)
+                {
+                    _Aseguradora = new AseguradoraRepository(_repoContext, _configuration);
+                }
+                return _Aseguradora;
+            }
+        }
+        public IFamiliaRepository Familia
+        {
+            get
+            {
+                if (_Familia == null)
+                {
+                    _Familia = new FamiliaRepository(_repoContext, _clientFactory, _configuration);
+                }
+                return _Familia;
+            }
+        }
+        public IListaPrecioRepository ListaPrecio
+        {
+            get
+            {
+                if (_ListaPrecio == null)
+                {
+                    _ListaPrecio = new ListaPrecioRepository(_clientFactory, _configuration);
+                }
+                return _ListaPrecio;
+            }
+        }
+        public ILaboratorioRepository Laboratorio
+        {
+            get
+            {
+                if (_Laboratorio == null)
+                {
+                    _Laboratorio = new LaboratorioRepository(_clientFactory, _configuration);
+                }
+                return _Laboratorio;
             }
         }
     }

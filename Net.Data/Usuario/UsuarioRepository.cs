@@ -24,6 +24,8 @@ namespace Net.Data
        // const string SP_GET_USUARIO_POR_FILTRO_ESTADODIFERENTE = DB_ESQUEMA + "VEN_ObtenerUsuarioByEstadoDif";
        // const string SP_GET_USUARIO_POR_FILTRO_NOMBRE_LIKE = DB_ESQUEMA + "SEG_ObtenerUsuarioByNombre";
         const string SP_GET_USUARIO_POR_FILTRO_NOMBRE_LIKE = DB_ESQUEMA + "SEG_ObtenerUsuarioByNombre";
+        const string SP_GET_USUARIO_POR_CODVENTE = DB_ESQUEMA + "SEG_UsuarioPorCodVentaGet";
+
 
         public UsuarioRepository(IConnectionSQL context, IConfiguration configuration)
             : base(context)
@@ -118,6 +120,51 @@ namespace Net.Data
                         vResultadoTransaccion.ResultadoCodigo = 0;
                         vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
                         vResultadoTransaccion.dataList = response;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<BE_Usuario>> GetUsuarioPorCodVenta(string codventa)
+        {
+            ResultadoTransaccion<BE_Usuario> vResultadoTransaccion = new ResultadoTransaccion<BE_Usuario>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx_logistica))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_USUARIO_POR_CODVENTE, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codventa", codventa));
+
+                        var response = new BE_Usuario();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = context.Convert<BE_Usuario>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                        vResultadoTransaccion.data = response;
 
                     }
                 }

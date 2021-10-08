@@ -59,5 +59,38 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
+
+        public async Task<ResultadoTransaccion<BE_ListaPrecio>> GetListaPrecio()
+        {
+            ResultadoTransaccion<BE_ListaPrecio> vResultadoTransaccion = new ResultadoTransaccion<BE_ListaPrecio>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                var cadena = "PriceLists";
+                var filter = "";
+                var campos = "?$select=PriceListNo,PriceListName ";
+
+                cadena = cadena + campos + filter;
+
+                List<BE_ListaPrecio> data = await _connectServiceLayer.GetAsync<BE_ListaPrecio>(cadena);
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                vResultadoTransaccion.dataList = data;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
     }
 }

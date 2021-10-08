@@ -16,6 +16,7 @@ using iTextSharp.text;
 using iTextSharp.text.pdf;
 using System.Text;
 using System.Xml.Serialization;
+using Net.TCI;
 
 namespace Net.Data
 {
@@ -5452,6 +5453,298 @@ namespace Net.Data
             }
 
             return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<string>> EnviarCorreoError(string codventa, string pCodcomprobante, string codcomprobanteref, string codatencion, string codtipocliente, string nombretipocliente, string nombrepacientecliente, string anombredequien, string nombremaquina, string mensaje)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            string destino = string.Empty;
+            string asunto = string.Empty;
+            string body = string.Empty;
+            string secuencia = "\r";
+
+            using (SqlConnection conn = new SqlConnection(_cnxClinica))
+            {
+                conn.Open();
+                SqlTransaction transaction = conn.BeginTransaction();
+
+                try
+                {
+                    CorreoRepository correoRepository = new CorreoRepository(context, _configuration);
+                    vResultadoTransaccion = await correoRepository.GetCorreoDestinatario("EFACT_CORREO_ERRORENREGISTRO", "TO");
+
+                    if (vResultadoTransaccion.IdRegistro == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = "NO HAY CORREO DESTINO CONFIGURADO";
+                    }
+
+                    destino = vResultadoTransaccion.data;
+
+                    UsuarioRepository usuarioRepository = new UsuarioRepository(context, _configuration);
+                    ResultadoTransaccion<BE_Usuario> vResultadoTransaccionUsuario = new ResultadoTransaccion<BE_Usuario>();
+                    vResultadoTransaccionUsuario = await usuarioRepository.GetUsuarioPorCodVenta(codventa);
+
+
+                    asunto = "EFact-LOG error en metodo registrar Nota a Pac  " + pCodcomprobante + " - " + codatencion + " - " + nombretipocliente + " - " + vResultadoTransaccionUsuario.data.login;
+
+                    body = "WebService indica que proceso de registrar comprobantes presentó inconvenientes: " + secuencia + secuencia +
+                           "Nota (PK)        : " + pCodcomprobante?.Trim() + secuencia +
+                           "FT/BV            : " + codcomprobanteref?.Trim() + secuencia +
+                           "Tipo Cliente     : " + codtipocliente?.Trim() + " " + nombretipocliente?.Trim() + secuencia +
+                           "CodAtencion      : " + codatencion?.Trim() +
+                           "Paciente         : " + nombrepacientecliente?.Trim() +
+                           "Anombre de       : " + anombredequien?.Trim() + secuencia +
+                           "Usuario          : " + vResultadoTransaccionUsuario.data.nombrecreate?.Trim() + secuencia +
+                           "PC               : " + nombremaquina?.Trim() + secuencia +
+                           "Mensaje_Error    : " + mensaje?.Trim();
+
+
+                    var correo = new BE_Correo()
+                    {
+                        enviara = destino,
+                        asunto = asunto,
+                        cuerpo = body,
+                    };
+
+                    vResultadoTransaccion = await correoRepository.Registrar(correo);
+
+                    if (vResultadoTransaccion.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = "ERROR AL GUARDAR EL CORREO";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                }
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<bool>> NotaVentaSAP(SqlConnection conn, SqlTransaction transaction, string codcomprobante, int RegIdUsuario)
+        {
+            ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                ResultadoTransaccion<BE_VentasCabecera> resultadoTransaccionVenta = await GetVentaPorCodVentaNota(codcomprobante, conn, transaction);
+
+                if (resultadoTransaccionVenta.IdRegistro == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = "ERROR AL OBTENER VENTA";
+                    return vResultadoTransaccion;
+                }
+
+                SapDocumentsRepository sapDocuments = new SapDocumentsRepository(_clientFactory, _configuration, context);
+
+                ResultadoTransaccion<SapBaseResponse<SapDocument>> resultadoSapDocument = await sapDocuments.SetReturnsDocumentNota(resultadoTransaccionVenta.data);
+
+                if (resultadoSapDocument.ResultadoCodigo == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoSapDocument.ResultadoDescripcion;
+                    return vResultadoTransaccion;
+                }
+
+                if (resultadoSapDocument.data.DocEntry > 0)
+                {
+                    resultadoTransaccionVenta.data.ide_docentrysap = resultadoSapDocument.data.DocEntry;
+                    resultadoTransaccionVenta.data.fec_docentrysap = DateTime.Now;
+                    resultadoTransaccionVenta.data.RegIdUsuario = RegIdUsuario;
+
+                    ResultadoTransaccion<bool> resultadoTransaccionVentaUpd = await UpdateSAPVenta(resultadoTransaccionVenta.data, conn, transaction);
+
+                    if (resultadoTransaccionVentaUpd.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionVentaUpd.ResultadoDescripcion;
+                        return vResultadoTransaccion;
+                    }
+
+
+                    ResultadoTransaccion<SapBaseResponse<SapDocument>> resultadoSapDocumentNotaPago = await sapDocuments.SetReturnsDocumentNotaPago(resultadoTransaccionVenta.data);
+
+                    if (resultadoSapDocumentNotaPago.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoSapDocumentNotaPago.ResultadoDescripcion;
+                        return vResultadoTransaccion;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<BE_VentasCabecera>> GetVentaPorCodVentaNota(string codcomprobante, SqlConnection conn, SqlTransaction transaction)
+        {
+            ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                ComprobanteElectronicoRepository comprobante = new ComprobanteElectronicoRepository(context, _configuration);
+                ResultadoTransaccion<BE_ComprobanteElectronico> resultadoTransaccionComprobanteElectronico = new ResultadoTransaccion<BE_ComprobanteElectronico>();
+
+                resultadoTransaccionComprobanteElectronico = await comprobante.GetNotaElectronicaXml(codcomprobante, 0, conn, transaction);
+
+                List<BE_ComprobanteElectronico> responseNotaElectronica = (List<BE_ComprobanteElectronico>)resultadoTransaccionComprobanteElectronico.dataList;
+
+                var responseVenta = new BE_VentasCabecera()
+                {
+                    codventa = responseNotaElectronica[0].codventa,
+                    fechaemision = responseNotaElectronica[0].fechaemision,
+                    cardcode = responseNotaElectronica[0].cardcode.Trim(),
+                    moneda = responseNotaElectronica[0].c_simbolomoneda.Trim(),
+                    observacion = responseNotaElectronica[0].observaciones.Trim(),
+                    porcentajeimpuesto = responseNotaElectronica[0].porcentajeimpuesto,
+                    montototal = responseNotaElectronica[0].d_total_conigv,
+                    CuentaEfectivoPago = responseNotaElectronica[0].CuentaEfectivoPago,
+
+                };
+
+                var responseDetalle = new List<BE_VentasDetalle>();
+
+                foreach (var item in responseNotaElectronica)
+                {
+                    var linea = new BE_VentasDetalle()
+                    {
+                        coddetalle = item.d_orden,
+                        codproducto = item.d_codproducto.Trim(),
+                        cantsunat = item.d_cant_sunat,
+                        preciounidad = item.d_ventaunitario_sinigv,
+                        destributo = item.des_tributo,
+                        codalmacen = item.codalmacen,
+                        //baseentry = item.baseentry,
+                        //baseline = item.baseline,
+                        AccountCode = item.AccountCode,
+                        CostingCode = item.CostingCode,
+                        CostingCode2 = item.CostingCode2,
+                        CostingCode3 = item.CostingCode3,
+                        CostingCode4 = item.CostingCode4,
+                        manBtchNum = item.manbtchnum,
+                        binactivat = item.binactivat
+                    };
+                    responseDetalle.Add(linea);
+                }
+
+                var responseDetalleLote = new List<BE_VentasDetalleLote>();
+
+                using (SqlCommand cmd = new SqlCommand(SP_GET_DETALLEVENTA_LOTE_POR_CODVENTA, conn, transaction))
+                {
+                    foreach (BE_VentasDetalle item in responseDetalle)
+                    {
+                        if (item.manBtchNum || item.binactivat)
+                        {
+                            cmd.Parameters.Clear();
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.Add(new SqlParameter("@coddetalle", item.coddetalle));
+
+                            //conn.Open();
+
+                            using (var reader = await cmd.ExecuteReaderAsync())
+                            {
+                                responseDetalleLote = (List<BE_VentasDetalleLote>)context.ConvertTo<BE_VentasDetalleLote>(reader);
+                            }
+
+                            //conn.Close();
+
+                            responseDetalle.Find(xFila => xFila.coddetalle == item.coddetalle).listVentasDetalleLotes = responseDetalleLote;
+                        }
+                    }
+                }
+
+                responseVenta.listaVentaDetalle = responseDetalle;
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                vResultadoTransaccion.data = responseVenta;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        private long Metodo_Registrar_FB(List<BE_ComprobanteElectronico> response, string pTipoCodigo_BarraHash, string pTipoOtorgamiento, ref string pXML)
+        {
+            pXML = string.Empty;
+            string wTipoComp_TCI = string.Empty;
+
+            //' ------------------- Invocación del Web Service
+            string secuencia = "\r";
+
+            wTipoComp_TCI = response[0].tipocomp_tci;
+
+            var CPTCI_XML = new ComprobanteElectronicaTCIXml();
+            string XML_Cabecera = CPTCI_XML.f_ENComprobante_LOG(response);
+
+            if (XML_Cabecera != "")
+            {
+                string Metodo;
+                Metodo = "";
+                Metodo = Metodo + "<?xml version= " + "\"1.0\"" + " encoding = " + "\"utf-8\"" + "?> " + secuencia;
+                Metodo = Metodo + "<soap:Envelope xmlns:xsi=" + "\"http://www.w3.org/2001/XMLSchema-instance\"" + " xmlns:xsd=" + "\"http://www.w3.org/2001/XMLSchema\"" + " ";
+                Metodo = Metodo + " xmlns:soap=" + "\"http://schemas.xmlsoap.org/soap/envelope/\"" + " > " + secuencia +
+                        "<soap:Body>" + secuencia +
+                            "<Registrar xmlns=" + "\"http://tempuri.org/\"" + ">" + secuencia +
+                                "<oGeneral>" + secuencia + XML_Cabecera + "</oGeneral>" + secuencia +
+                                "<oTipoComprobante>" + wTipoComp_TCI?.Trim() + "</oTipoComprobante>" + secuencia +
+                                "<Cadena></Cadena>" + secuencia +
+                                "<TipoCodigo>" + pTipoCodigo_BarraHash + "</TipoCodigo>" + secuencia +
+                                "<CogigoBarras></CogigoBarras>" + secuencia +
+                                "<CogigoHash></CogigoHash>" + secuencia +
+                                "<Otorgar>" + pTipoOtorgamiento.ToString() + "</Otorgar>" + secuencia +
+                                "<IdComprobanteCliente>0</IdComprobanteCliente>" + secuencia +
+                            "</Registrar>" + secuencia +
+                        "</soap:Body>" + secuencia +
+                    "</soap:Envelope>";
+                pXML = Metodo;
+            }
+            else
+            {
+                pXML = "";
+                return -3; // 'Error al construir XML
+            }
+
+            return 0;
+
         }
     }
 }

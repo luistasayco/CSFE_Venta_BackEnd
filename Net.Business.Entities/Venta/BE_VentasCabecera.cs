@@ -245,5 +245,7 @@ namespace Net.Business.Entities
         public string strTienedevolucion { get; set; }
         [DataMember, XmlAttribute]
         public int idborrador { get; set; }
+        [DataMember, XmlIgnore]
+        public string CuentaEfectivoPago { get; set; }
     }
 }

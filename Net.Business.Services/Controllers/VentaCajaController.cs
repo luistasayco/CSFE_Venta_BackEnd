@@ -10,6 +10,7 @@ using Net.Business.Entities;
 using Net.Data;
 using wsComprobanteTCI;
 using static wsComprobanteTCI.WSComprobanteSoapClient;
+//using vs = HCOMHEPSLib;
 
 namespace Net.Business.Services.Controllers
 {
@@ -18,6 +19,7 @@ namespace Net.Business.Services.Controllers
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ApiExplorerSettings(GroupName = "ApiVenta")]
     [Authorize(AuthenticationSchemes = "Bearer")]
+
     public class VentaCajaController : ControllerBase
     {
         private readonly IRepositoryWrapper _repository;
@@ -195,7 +197,7 @@ namespace Net.Business.Services.Controllers
                 {
                     return BadRequest(ModelState);
                 }
-
+                
                 string wStrURL = string.Empty;
 
                 if (value.wFlg_electronico)
@@ -328,11 +330,11 @@ namespace Net.Business.Services.Controllers
 
                 if (objComprobante.IdRegistro == 0)
                 {
-                    return Ok(new { exito = true, comprobante = objComprobante.data, mensaje = $"SE REGISTRO CORRECTAMENTE: {objComprobante.data}" });
+                    return Ok(new { exito = true, comprobante = objComprobante.data, mensaje = $"SE REGISTRO CORRECTAMENTE EL PAGO: {objComprobante.data}" });
                 }
                 else
                 {
-                    return Ok(new { exito = false, mensaje = "SE GENERO UN ERROR AL MOMENTO DE GUARDAR: " + objComprobante.ResultadoDescripcion });
+                    return Ok(new { exito = false, mensaje = "SE GENERO UN ERROR AL MOMENTO DE GUARDAR EL PAGO: " + objComprobante.ResultadoDescripcion });
                 }
 
 
@@ -394,6 +396,9 @@ namespace Net.Business.Services.Controllers
             }
 
             var objectGetById = await _repository.VentaCaja.GenerarPreVistaPrint(codventa, maquina, archivoImg, idusuario, orden);
+            if (objectGetById.IdRegistro == -1) {
+                //return (ActionResult)objectGetById;
+            }
             var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", codventa + ".pdf");
             return pdf;
         }
@@ -626,6 +631,36 @@ namespace Net.Business.Services.Controllers
                     return BadRequest(ModelState);
                 }
 
+               
+
+
+                var objValida =  _repository.VentaCaja.GetMdsynPagosConsulta(0, 0, 0, "", value.codVenta, 4);
+                if (objValida.Result.IdRegistro == -1) return BadRequest(objValida);
+
+                if (objValida.Result.data.est_pagado == "") {
+                    objValida.Result.ResultadoDescripcion = $"La venta {value.codVenta} tiene una orden de pago pendiente.";
+                    return Ok(objValida.Result);
+                }
+
+                if (objValida.Result.data.est_pagado == "S")
+                {
+                    objValida.Result.ResultadoDescripcion = "Esta venta ya tiene un pago por medio de Bot o enlace de pago.";
+                    return Ok(objValida.Result);
+                }
+
+                if (objValida.Result.data.flg_pago_usado == "S")
+                {
+                    objValida.Result.ResultadoDescripcion = $"Esta venta ya fue usado como forma de pago.";
+                    return Ok(objValida.Result);
+                }
+
+                if (value.montoPagar == 0)
+                {
+                    objValida.Result.ResultadoDescripcion = $"El monto no puede ser 0";
+                    return Ok(objValida.Result);
+                }
+
+
                 var datos = value.RetornaMdsynPagos();
 
                 #region Configuracion de SYNAPSIS
@@ -645,6 +680,7 @@ namespace Net.Business.Services.Controllers
                 var objResultApiLink = _repository.Tabla.GetListTablaClinicaPorFiltros("MEDISYN_SYNAPSIS_URL", "01", 50, 1, -1);
                 var objApiLink = objResultApiLink.Result.dataList.FirstOrDefault();
                 string Synapsis_Ws_Url = objApiLink.nombre.Trim();
+               
                 /*(F) Configuracion de SYNAPSIS*/
 
                 #endregion
@@ -654,7 +690,7 @@ namespace Net.Business.Services.Controllers
                 //if (result.data.responseOrderApi.success) {
                 if (result.ResultadoCodigo == 0)
                 {
-                    //return Ok(result.data.responseOrderApi);
+                    result.ResultadoCodigo = 1;
                     return Ok(result);
                 }
                 else
@@ -702,6 +738,7 @@ namespace Net.Business.Services.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ObtenerPagoBot([FromQuery] long ide_pagos_bot, int ide_mdsyn_reserva, int ide_correl_reserva, string cod_liquidacion, string cod_venta, int orden)
         {
+
             cod_liquidacion = cod_liquidacion is null ? string.Empty : cod_liquidacion;
             var objectGetAll = await _repository.VentaCaja.GetMdsynPagosConsulta(ide_pagos_bot, ide_mdsyn_reserva, ide_correl_reserva, cod_liquidacion, cod_venta, orden);
             if (objectGetAll.ResultadoCodigo == -1)
@@ -724,7 +761,7 @@ namespace Net.Business.Services.Controllers
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> darDeBaja([FromBody] DtoComprobanteDarBaja value)
+        public async Task<IActionResult> DarDeBaja([FromBody] DtoComprobanteDarBaja value)
         {
 
             ResultadoTransaccion<string> response = new ResultadoTransaccion<string>();
@@ -771,8 +808,9 @@ namespace Net.Business.Services.Controllers
                 return Ok(response.ResultadoDescripcion);
             }
 
-            var fechaHoy = new DateTime();
-
+             var fechaHoy = DateTime.Now;
+             //var fechaHoy = DateTime.Now.ToString("dd-MM-yyyy");
+            
             if (objE.fechaemision.Month != fechaHoy.Month)
             {
                 response.IdRegistro = -1;
@@ -784,6 +822,12 @@ namespace Net.Business.Services.Controllers
             //var objResponse = objCS.dataList.FirstOrDefault();
 
             var objResponse = await _repository.VentaCaja.GetComprobanteElectroncioCodVenta(codComprobante, 0, 0, "", "", "", "", "", "", 5);
+            if (objResponse.data.codcomprobante == null) {
+                response.IdRegistro = -1;
+                response.ResultadoDescripcion = "No se puede dar de baja al comprobante";
+                return Ok(response.ResultadoDescripcion);
+            }
+
             var objResultCPE = objResponse.data;
 
             //Comprobante_baja
@@ -792,7 +836,8 @@ namespace Net.Business.Services.Controllers
             request.cod_comprobantee = objResultCPE.codcomprobantee;
 
             string pSerieComprobanteE = objResultCPE.codcomprobantee.Substring(0, 4);
-            string pNumeroComprobanteE = objResultCPE.codcomprobantee.Substring(5, objResultCPE.codcomprobantee.Length);
+            //string pNumeroComprobanteE = objResultCPE.codcomprobantee.Substring(5, objResultCPE.codcomprobantee.Length);
+            string pNumeroComprobanteE = objResultCPE.codcomprobantee.Substring(4, (objResultCPE.codcomprobantee.Length-4));
             string pCodComprobanteEFact = objResultCPE.codcomprobantee;
 
             request.cod_tipocompsunat = objResultCPE.tipo_comprobante;
@@ -817,7 +862,7 @@ namespace Net.Business.Services.Controllers
             }
 
 
-            var objResultBaja = await _repository.VentaCaja.RegistrarComunicadoBajoComprobante(request);
+            var objResultBaja = await _repository.VentaCaja.RegistrarComunicadoBajoComprobante(request, xUrlWebService,xRucEmisor);
             if (objResultBaja.IdRegistro == 0)
             {
                 response.IdRegistro = 0;
@@ -832,28 +877,185 @@ namespace Net.Business.Services.Controllers
 
             //GetComprobanteElectroncioCodVenta
 
-            /*wErrorBaja = zEfact.RegistrarComunicadoBajoComprobante(Me.txtCodComprobante, wMotivoBaja, zFarmacia2)
-                    If wErrorBaja = True Then 'OK
-                        Me.MousePointer = vbDefault
-                        MsgBox "Su comprobante fue enviado De_Baja." & Chr(10) _
-                        & "Favor consultar el estado de su solicitud (Aceptado o Rechazado).", vbInformation, "Sunat - " & Me.txtCodComprobante
-                    Else
-                        Me.MousePointer = vbDefault
-                        MsgBox "Su comprobante no pudo ser enviado De_Baja. Favor verificar los estados" & Chr(10) _
-                        & wMensaje & Chr(10) _
-                        & "Regla: Tener CDR-Rechazado, No tener envío a baja, No tener Nota.", vbInformation, Me.txtCodComprobante
-                        Exit Sub
-                    End If*/
+            //wErrorBaja = zEfact.RegistrarComunicadoBajoComprobante(Me.txtCodComprobante, wMotivoBaja, zFarmacia2)
+            //        If wErrorBaja = True Then 'OK
+            //            Me.MousePointer = vbDefault
+            //            MsgBox "Su comprobante fue enviado De_Baja." & Chr(10) _
+            //            & "Favor consultar el estado de su solicitud (Aceptado o Rechazado).", vbInformation, "Sunat - " & Me.txtCodComprobante
+            //        Else
+            //            Me.MousePointer = vbDefault
+            //            MsgBox "Su comprobante no pudo ser enviado De_Baja. Favor verificar los estados" & Chr(10) _
+            //            & wMensaje & Chr(10) _
+            //            & "Regla: Tener CDR-Rechazado, No tener envío a baja, No tener Nota.", vbInformation, Me.txtCodComprobante
+            //            Exit Sub
+            //        End If
 
             return Ok(response); ;
 
         }
 
-
-
-
         #endregion
 
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public  IActionResult GetcomprobanteTranza([FromQuery] string codventa)
+        {
+
+            try
+            {
+                
+                dynamic obj = IzipayTransaccion();
+
+                bool exito = obj.exito;
+                string text = obj.strResp;
+                if (!exito)
+                {
+                    return Ok(new { exito = false, mensaje = text });
+                }
+
+
+                var resultTER = text.IndexOf("ATERM:");
+                var numTER = text.Substring(resultTER + 3, 4);
+
+                var resultID = text.IndexOf("ID:");
+                var numID = text.Substring(resultID + 3, 4);
+
+                var resultREF = text.IndexOf("REF:");
+                var numRef = text.Substring(resultREF + 4, 4);
+
+                var resulTAR = text.IndexOf("ATARJ:");
+                var numTarjeta = text.Substring(resulTAR + 11, 4);
+
+                return Ok(new { exito = true, mensaje = "EXITO", id = numID, terminal = numTER, referencia = numRef, tarjeta = numTarjeta });
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { exito = false, mensaje = ex.Message });
+            }
+
+
+        }
+
+        [HttpPut]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult comprobanteAnulaTranza([FromQuery] string codventa,string refe,string monto)
+        {
+
+            dynamic obj = IzipayAnularTransaccion(refe, monto);
+
+            bool exito = obj.exito;
+            string text = obj.strResp;
+            if (!exito)
+            {
+                return  Ok(new { exito = false, mensaje = text });
+            }
+            else { 
+                return Ok(new { exito = true, mensaje = text });
+            }
+
+          
+        }
+
+
+        static object IzipayTransaccion()
+        {
+            string strResp = string.Empty;
+            //string strError = string.Empty;
+
+            //int intCodError = 0;
+
+            //vs.Caja Obj = new vs.Caja();
+
+            //Obj.Clear();
+
+            //intCodError = Obj.SetField("ecr_aplicacion", "POS");
+            //if (intCodError != 0) response(false, "Error al setear variable");
+
+            //intCodError = Obj.SetField("ecr_transaccion", "01");
+            //if (intCodError != 0) response(false, "Error al setear variable");
+
+            //intCodError = Obj.SetField("ecr_amount", "55000");
+            //if (intCodError != 0) response(false, "Error al setear variable");
+
+            //intCodError = Obj.SetField("ecr_currency_code", "604");
+            //if (intCodError != 0) response(false, "Error al setear variable");
+
+            //intCodError = Obj.SendTran();
+
+            //if (intCodError != 0)
+            //{
+            //    strError = Obj.Error;
+            //    return strError;
+            //}
+            //else
+            //{
+
+            //    intCodError = Obj.GetField("response_code", out strResp);
+            //    if (intCodError != 0) response(false, "No Existe: response_code");
+
+            //    intCodError = Obj.GetField("message", out strResp);
+            //    intCodError = Obj.GetField("approval_code", out strResp);
+            //    intCodError = Obj.GetField("amount", out strResp);
+            //    intCodError = Obj.GetField("print_data", out strResp);
+
+            //}
+
+            return response(true, strResp);
+
+        }
+
+        static object IzipayAnularTransaccion(string refe,string monto)
+        {
+
+            string strResp = string.Empty;
+            //string strError = string.Empty;
+
+            //int intCodError = 0;
+
+            //vs.Caja Obj = new vs.Caja();
+
+            //Obj.Clear();
+
+            //intCodError = Obj.SetField("ecr_aplicacion", "POS");
+            //if (intCodError != 0) response(false, "Error al setear variable");
+
+            //intCodError = Obj.SetField("ecr_transaccion", "06");
+            //if (intCodError != 0) response(false, "Error al setear variable");
+
+            //intCodError = Obj.SetField("ecr_amount", monto);
+            //if (intCodError != 0) response(false, "Error al setear variable");
+
+            //intCodError = Obj.SetField("ecr_currency_code", "604");
+            //if (intCodError != 0) response(false, "Error al setear variable");
+
+            //intCodError = Obj.SendTran();
+
+            //if (intCodError != 0)
+            //{
+            //    strError = Obj.Error;
+            //    return strError;
+            //}
+            //else
+            //{
+
+            //    intCodError = Obj.GetField("response_code", out strResp);
+            //    if (intCodError != 0) response(false, "No Existe: response_code");
+
+            //    intCodError = Obj.GetField("message", out strResp);
+            //    intCodError = Obj.GetField("approval_code", out strResp);
+            //    intCodError = Obj.GetField("amount", out strResp);
+            //    intCodError = Obj.GetField("print_data", out strResp);
+
+            //}
+
+            return response(true, "TRANSACCION CORRECTAMENTE");
+
+        }
+
+        static object response(bool exito, string mensaje) => new { exito = exito, mensaje = mensaje };
 
 
     }

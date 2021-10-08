@@ -55,5 +55,6 @@ namespace Net.Business.Entities
         public string terminal { get; set; }
 
         public string link { get; set; }
+        public string codterminal { get; set; }
     }
 }

@@ -23,7 +23,7 @@ namespace Net.Data
             int estadoRegistro, int estadoCdr, string fechaIni, string fechaFin, string codSistema, string tipoCompsunat, string tipoCompcsf, string codComprobanteElec, int orden);
         Task<ResultadoTransaccion<BE_ConsumoPersonal>> GetCsLimiteConsumoPersonalPorCodPersonal(string codPersonal);
         //ejemplo
-        Task<ResultadoTransaccion<MemoryStream>> GenerarPreVistaPrint(string codcomprobante, string maquina,string archivoImg, int idusuario, int orden);
+        Task<ResultadoTransaccion<MemoryStream>> GenerarPreVistaPrint(string codcomprobante, string maquina, string archivoImg, int idusuario, int orden);
         Task<ResultadoTransaccion<BE_ComprobanteElectronicoLogXmlCabPrint>> GetComprobanteElectroncioLogXmlCab_print(string codcomprobante, string maquina,
             int idusuario, int orden);
 
@@ -33,7 +33,7 @@ namespace Net.Data
         Task<ResultadoTransaccion<BE_VentasCabecera>> ComprobanteElectronicoUpd(string campo, string nuevovalor, string xml, Byte[] codigobarrajpg, string codigo);
         Task<ResultadoTransaccion<string>> Comprobante_baja(BE_ComprobantesBaja value);
         Task<int> GetExisteVentaAnuladaPorCodVenta(string codVenta);
-        Task<ResultadoTransaccion<string>> RegistrarComunicadoBajoComprobante(BE_ComprobantesBaja value);
+        Task<ResultadoTransaccion<string>> RegistrarComunicadoBajoComprobante(BE_ComprobantesBaja value, string xUrlWebService, string xRucEmisor);
 
     }
 }

@@ -20,6 +20,7 @@ namespace Net.Business.Entities
         public string clave { get; set; }
         public string coduserclinica { get; set; }
         public int ide_usuario { get; set; }
+        public string nombrecreate { get; set; }
 
     }
 }

@@ -128,5 +128,7 @@ namespace Net.Business.Entities
         public bool flgsinstock { get; set; }
         //extra
         public string strXml { get; set; }
+        public string tipdocidentidad_sunat { get; set; }
+        public string CuentaEfectivoPago { get; set; }
     }
 }

@@ -5559,6 +5559,57 @@
             <param name="value"></param>
             <returns></returns>
         </member>
+        <member name="M:Net.Business.Services.Controllers.AseguradoraxProductoBuscarController.GetAseguradora(System.String,System.String,System.String)">
+            <summary>
+            Busqueda por aseguradora
+            </summary>
+            <param name="buscar"></param>
+            <param name="estado"></param>
+            <param name="orden"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.AseguradoraxProductoBuscarController.GetFamilia(System.String)">
+            <summary>
+            Busqueda por familia
+            </summary>
+            <param name="nombre"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.AseguradoraxProductoBuscarController.GetLaboratorio(System.String,System.String)">
+            <summary>
+            Busqueda por Laboratorio
+            </summary>
+            <param name="buscar"></param>
+            <param name="orden"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.AseguradoraxProductoController.GetProductoPorCodigoAseguradora(System.String,System.String,System.Int32,System.Int32)">
+            <summary>
+            Carga ltvAsignados: Al seleccionar aseguradora desde la ventana de busqueda
+            </summary>
+            <param name="codaseguradora"></param>
+            <param name="codproducto"></param>
+            <param name="codtipoatencion_mae"></param>
+            <param name="orden"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.AseguradoraxProductoController.GetTipoAtencionPorFiltros(System.String,System.String)">
+            <summary>
+            Al hacer clic a ltvAsignados
+            </summary>
+            <param name="codaseguradora"></param>
+            <param name="codproducto"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.AseguradoraxProductoController.GetProductoPorFiltro(System.String,System.String,System.String)">
+            <summary>
+            Boton buscar 1: Por Familia, Laboratorio o producto --> ltvProductos
+            </summary>
+            <param name="nombreProducto"></param>
+            <param name="nombreFamilia"></param>
+            <param name="nombreLaboratoion"></param>
+            <returns></returns>
+        </member>
         <member name="M:Net.Business.Services.Controllers.AtencionController.GetListPacientePorFiltros(System.String,System.String,System.String)">
             <summary>
             
@@ -5589,6 +5640,18 @@
             <param name="opcion"></param>
             <param name="codpaciente"></param>
             <param name="nombres"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ConveniosController.GetConvenioslistaprecio(System.Int32,System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Obtiene la lista de contatantes de la tabla Cia
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Net.Business.Services.Controllers.ConveniosController.GetListaPrecio">
+            <summary>
+            Obtiene la lista de "Precio lista o lista de precio"
+            </summary>
             <returns></returns>
         </member>
         <member name="M:Net.Business.Services.Controllers.MedicoController.GetListMedicoPorNombre(System.String)">
@@ -5969,7 +6032,7 @@
             <param name="orden"></param>
             <returns></returns>
         </member>
-        <member name="M:Net.Business.Services.Controllers.VentaCajaController.darDeBaja(Net.Business.DTO.DtoComprobanteDarBaja)">
+        <member name="M:Net.Business.Services.Controllers.VentaCajaController.DarDeBaja(Net.Business.DTO.DtoComprobanteDarBaja)">
             <summary>
             
             </summary>
