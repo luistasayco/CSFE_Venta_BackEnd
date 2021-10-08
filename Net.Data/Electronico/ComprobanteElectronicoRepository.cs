@@ -160,7 +160,7 @@ namespace Net.Data
             //return vResultadoTransaccion;
         }
 
-        public async Task<ResultadoTransaccion<BE_ComprobanteElectronico>> GetComprobantesElectronicosXml(string codcomprobante, int orden, SqlConnection conn, SqlTransaction transaction)
+        public async Task<ResultadoTransaccion<BE_ComprobanteElectronico>> GetComprobantesElectronicosXml(string codcomprobante, string maquina, int idusuario, int orden, SqlConnection conn, SqlTransaction transaction)
         {
             ResultadoTransaccion<BE_ComprobanteElectronico> vResultadoTransaccion = new ResultadoTransaccion<BE_ComprobanteElectronico>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
@@ -174,6 +174,8 @@ namespace Net.Data
                 {
                     cmd.CommandType = System.Data.CommandType.StoredProcedure;
                     cmd.Parameters.Add(new SqlParameter("@codcomprobante", codcomprobante));
+                    cmd.Parameters.Add(new SqlParameter("@maquina", maquina));
+                    cmd.Parameters.Add(new SqlParameter("@idusuario", idusuario));
                     cmd.Parameters.Add(new SqlParameter("@orden", orden));
 
                     var response = new List<BE_ComprobanteElectronico>();

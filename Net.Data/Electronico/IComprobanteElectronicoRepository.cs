@@ -9,7 +9,7 @@ namespace Net.Data
     {
         Task<ResultadoTransaccion<BE_ComprobanteElectronico>> GetListComprobanteElectronicoPorFiltro(string codempresa, string codcomprobante, string codcomprobante_e, string codsistema, string tipocomp_sunat, int orden);
         Task<ResultadoTransaccion<string>> EnviarCorreoError(string codcomprobante, string codventa, string codtipocliente, string nombretipocliente, string anombrede, string nombreusuario, string nombremaquina, string mensaje, SqlConnection conn, SqlTransaction trans);
-        Task<ResultadoTransaccion<BE_ComprobanteElectronico>> GetComprobantesElectronicosXml(string codcomprobante, int orden, SqlConnection conn, SqlTransaction transaction);
+        Task<ResultadoTransaccion<BE_ComprobanteElectronico>> GetComprobantesElectronicosXml(string codcomprobante,string maquina, int idusuario, int orden, SqlConnection conn, SqlTransaction transaction);
         Task<ResultadoTransaccion<BE_ComprobanteElectronico>> GetNotaElectronicaXml(string codnota, int orden, SqlConnection conn, SqlTransaction transaction);
         Task<ResultadoTransaccion<string>> ModificarComprobanteElectronico(string campo, string nuevoValor, string XML, string codigo);
         Task<ResultadoTransaccion<string>> GetValirdacionElectronicaNota(string codempresa, string codcomprobante, string codcomprobante_e, string codsistema, string tipocomp_sunat, int orden, SqlConnection conn, SqlTransaction trans);

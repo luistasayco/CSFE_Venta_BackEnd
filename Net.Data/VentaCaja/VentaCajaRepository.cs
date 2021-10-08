@@ -922,7 +922,7 @@ namespace Net.Data
 
 
                             string Xml = string.Empty;
-                            var pRetorno = Metodo_Registrar_FB(codcomprobante, tipoCodigoBarrahash, flg_otorgar.ToString(), ref Xml, conn, transaction);
+                            var pRetorno = Metodo_Registrar_FB(codcomprobante, maquina, value.idusuario ,tipoCodigoBarrahash, flg_otorgar.ToString(), ref Xml, conn, transaction);
                             if (pRetorno != 0)
                             {
                                 transaction.Rollback();
@@ -1111,7 +1111,7 @@ namespace Net.Data
                         #endregion <<< TCI >>>
 
                         ComprobanteElectronicoRepository comprobante = new ComprobanteElectronicoRepository(context, _configuration);
-                        ResultadoTransaccion<BE_ComprobanteElectronico> resultadoTransaccionComprobanteElectronico = await comprobante.GetComprobantesElectronicosXml(value.codcomprobante, 0, conn, transaction);
+                        ResultadoTransaccion<BE_ComprobanteElectronico> resultadoTransaccionComprobanteElectronico = await comprobante.GetComprobantesElectronicosXml(value.codcomprobante, maquina, value.idusuario, 0,  conn, transaction);
 
                         if (resultadoTransaccionComprobanteElectronico.ResultadoCodigo == -1)
                         {
@@ -3375,7 +3375,7 @@ namespace Net.Data
 
         }
 
-        private long Metodo_Registrar_FB(string pCodcomprobante, string pTipoCodigo_BarraHash, string pTipoOtorgamiento, ref string pXML, SqlConnection conn, SqlTransaction trans)
+        private long Metodo_Registrar_FB(string pCodcomprobante, string maquina, int idusuario, string pTipoCodigo_BarraHash, string pTipoOtorgamiento, ref string pXML, SqlConnection conn, SqlTransaction trans)
         {
             pXML = string.Empty;
             string wTipoComp_TCI = "";
@@ -3388,7 +3388,7 @@ namespace Net.Data
             if (pCodcomprobante.Substring(0, 1) == "F" || pCodcomprobante.Substring(0, 1) == "B")
             {
                 //wNumError = zFarmacia.Sp_ComprobantesElectronicosLOG_XML_Cab(wCodcomprobante, 0)
-                vResultadoTransaccion = CPERepository.GetComprobantesElectronicosXml(pCodcomprobante, 0, conn, trans).Result;
+                vResultadoTransaccion = CPERepository.GetComprobantesElectronicosXml(pCodcomprobante, maquina, idusuario, 0, conn, trans).Result;
             }
             else if (pCodcomprobante.Substring(0, 1) == "C" || pCodcomprobante.Substring(0, 1) == "D")
             {

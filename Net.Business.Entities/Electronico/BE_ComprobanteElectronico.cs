@@ -20,7 +20,9 @@ namespace Net.Business.Entities
         public string anombrede { get; set; }
         public string direccion { get; set; }
         public string ruc { get; set; }
-        public string tipodocidentidad_sunat { get; set; }
+        //public string tipodocidentidad_sunat { get; set; }
+        public string tipdocidentidad_sunat { get; set; }
+
         public string ruc_sunat { get; set; }
         public string receptor_correo { get; set; }
         public string empresa_ruc { get; set; }
@@ -128,7 +130,9 @@ namespace Net.Business.Entities
         public bool flgsinstock { get; set; }
         //extra
         public string strXml { get; set; }
-        public string tipdocidentidad_sunat { get; set; }
+        public string nomtipocliente { get; set; }
         public string CuentaEfectivoPago { get; set; }
+        public string tipodocidentidad_sunat { get; set; }
+
     }
 }
