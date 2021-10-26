@@ -11,7 +11,7 @@ namespace Net.Business.Entities
         public decimal cantidad { get; set; }
         public decimal cantidadpicking { get; set; }
         public string lote { get; set; }
-        public DateTime fechavencimiento { get; set; }
+        public DateTime? fechavencimiento { get; set; }
         public string codalmacen { get; set; }
         public int ubicacion { get; set; }
         public string codusuarioapu { get; set; }

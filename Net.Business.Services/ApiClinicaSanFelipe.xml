@@ -5871,8 +5871,12 @@
             <summary>
             Lista Generico por codigo
             </summary>
-            <param name="codigo"></param>
-            <returns></returns>
+            <example>
+            </example>
+            <param name="codproducto">Código del Producto</param>
+            <param name="codaseguradora">Código Aseguradora</param>
+            <param name="codcia">Código Contratante</param>/// 
+            <returns>Listado de Productos alternativos por codigo</returns>
         </member>
         <member name="M:Net.Business.Services.Controllers.SalaOperacionController.Registrar(Net.Business.DTO.DtoSalaOperacionRegistrar)">
             <summary>

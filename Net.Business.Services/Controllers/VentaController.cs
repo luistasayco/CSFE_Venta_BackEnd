@@ -396,7 +396,7 @@ namespace Net.Business.Services.Controllers
                 }
                 else
                 {
-                    return Ok(response.dataList);
+                    return Ok(response);
                 }
             }
             catch (Exception ex)
@@ -518,6 +518,7 @@ namespace Net.Business.Services.Controllers
             }
 
         }
+
         [HttpGet("{codatencion}", Name = "GenerarHojaDatosPrint")]
         [ProducesResponseType(200)]
         [ProducesResponseType(404)]

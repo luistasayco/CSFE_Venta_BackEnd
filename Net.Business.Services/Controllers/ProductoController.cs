@@ -65,7 +65,15 @@ namespace Net.Business.Services.Controllers
         //    return Ok(objectGetAll.dataList);
         //}
 
-        
+        /// <summary>
+        /// Lista Generico por codigo
+        /// </summary>
+        /// <example>
+        /// </example>
+        /// <param name="codproducto">Código del Producto</param>
+        /// <param name="codaseguradora">Código Aseguradora</param>
+        /// <param name="codcia">Código Contratante</param>/// 
+        /// <returns>Listado de Productos alternativos por codigo</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

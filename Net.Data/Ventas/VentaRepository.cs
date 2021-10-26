@@ -227,7 +227,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<BE_VentasCabecera>> GetVentaPorCodVenta(string codventa)
         {
             ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
@@ -407,7 +406,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<BE_VentasDetalle>> GetVentaDetallePorCodVenta(string codventa)
         {
             ResultadoTransaccion<BE_VentasDetalle> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasDetalle>();
@@ -454,7 +452,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<BE_VentasDetalleLote>> GetDetalleLoteVentaPorCodDetalle(string coddetalle)
         {
             ResultadoTransaccion<BE_VentasDetalleLote> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasDetalleLote>();
@@ -503,7 +500,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<BE_VentasCabecera>> GetVentaCabeceraPendientePorFiltro(DateTime fecha)
         {
             ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
@@ -552,7 +548,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<BE_VentasDetalle>> GetVentaChequea1MesPorFiltro(string codpaciente, int cuantosmesesantes)
         {
             ResultadoTransaccion<BE_VentasDetalle> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasDetalle>();
@@ -597,7 +592,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<BE_VentasCabecera>> ModificarVentaCabeceraEnvioPiso(BE_VentasCabecera value)
         {
             ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
@@ -664,7 +658,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<Boolean>> GetGastoCubiertoPorFiltro(string codaseguradora, string codproducto, int tipoatencion)
         {
             ResultadoTransaccion<Boolean> vResultadoTransaccion = new ResultadoTransaccion<Boolean>();
@@ -731,7 +724,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         public async Task<ResultadoTransaccion<BE_VentasCabecera>> ValidacionRegistraVentaCabecera(BE_VentasCabecera value)
         {
             ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
@@ -922,7 +914,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<BE_VentasGenerado>> RegistrarVentaCabecera(BE_VentasCabecera value, bool ventaAutomatica)
         {
             ResultadoTransaccion<BE_VentasGenerado> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasGenerado>();
@@ -1142,7 +1133,7 @@ namespace Net.Data
                                         {
                                             if (lote.Quantityinput > 0)
                                             {
-                                                var itemLote = new BE_VentasDetalleLote { codproducto = lote.ItemCode, lote = lote.BatchNum, cantidad = lote.Quantityinput, coddetalle = item.coddetalle, fechavencimiento = (DateTime)lote.ExpDate };
+                                                var itemLote = new BE_VentasDetalleLote { codproducto = lote.ItemCode, lote = lote.BatchNum, cantidad = lote.Quantityinput, coddetalle = item.coddetalle, fechavencimiento = (DateTime)lote.ExpDate, ubicacion = (int)lote.BinAbs };
 
                                                 listNewVentasDetalleLote.Add(itemLote);
                                             }
@@ -1212,7 +1203,7 @@ namespace Net.Data
                                                 {
                                                     if (lote.Quantityinput > 0)
                                                     {
-                                                        var itemLote = new BE_VentasDetalleLote { codproducto = lote.ItemCode, lote = lote.BatchNum, cantidad = lote.Quantityinput, coddetalle = item.coddetalle, fechavencimiento = (DateTime)lote.ExpDate };
+                                                        var itemLote = new BE_VentasDetalleLote { codproducto = lote.ItemCode, lote = lote.BatchNum, cantidad = lote.Quantityinput, coddetalle = item.coddetalle, fechavencimiento = (DateTime)lote.ExpDate, ubicacion = (int)lote.BinAbs };
                                                         listNewVentasDetalleLote.Add(itemLote);
                                                     }
                                                 }
@@ -1363,7 +1354,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<bool>> EnviarVentaSAP(SqlConnection conn, SqlTransaction transaction, string codventa, int RegIdUsuario)
         {
             ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
@@ -1493,7 +1483,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<bool>> DevolucionVentaSAP(SqlConnection conn, SqlTransaction transaction, string codventa, int RegIdUsuario)
         {
             ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
@@ -1557,7 +1546,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<BE_VentasGenerado>> RegistraVentaXml(SqlConnection conn, SqlTransaction transaction, BE_VentaXml item, int RegIdUsuario)
         {
             ResultadoTransaccion<BE_VentasGenerado> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasGenerado>();
@@ -1572,7 +1560,7 @@ namespace Net.Data
                 {
                     cmdDatos.Parameters.Clear();
                     cmdDatos.CommandType = System.Data.CommandType.StoredProcedure;
-
+                    cmdDatos.CommandTimeout = 0;
                     SqlParameter outputCodVentaParamDato = new SqlParameter("@codventa", SqlDbType.Char, 8)
                     {
                         Direction = ParameterDirection.Output
@@ -1627,7 +1615,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         //public async Task<ResultadoTransaccion<BE_VentasGenerado>> RegistrarVentaCabecera_Old(BE_VentasCabecera value, bool ventaAutomatica)
         //{
         //    ResultadoTransaccion<BE_VentasGenerado> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasGenerado>();
@@ -3189,7 +3176,6 @@ namespace Net.Data
 
         //    return vResultadoTransaccion;
         //}
-
         private BE_VentasCabecera CalculaTotales(BE_VentasDetalleQuiebre itemQuiebre, BE_VentasCabecera value)
         {
             BE_VentasCabecera ventasCabecera = new BE_VentasCabecera();
@@ -5454,7 +5440,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<string>> EnviarCorreoError(string codventa, string pCodcomprobante, string codcomprobanteref, string codatencion, string codtipocliente, string nombretipocliente, string nombrepacientecliente, string anombredequien, string nombremaquina, string mensaje)
         {
             ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
@@ -5532,7 +5517,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<bool>> NotaVentaSAP(SqlConnection conn, SqlTransaction transaction, string codcomprobante, int RegIdUsuario)
         {
             ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
@@ -5602,7 +5586,6 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-
         public async Task<ResultadoTransaccion<BE_VentasCabecera>> GetVentaPorCodVentaNota(string codcomprobante, SqlConnection conn, SqlTransaction transaction)
         {
             ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
@@ -5701,7 +5684,6 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         private long Metodo_Registrar_FB(List<BE_ComprobanteElectronico> response, string pTipoCodigo_BarraHash, string pTipoOtorgamiento, ref string pXML)
         {
             pXML = string.Empty;
