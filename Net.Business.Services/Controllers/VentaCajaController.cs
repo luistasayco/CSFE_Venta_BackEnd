@@ -211,6 +211,7 @@ namespace Net.Business.Services.Controllers
                     {
                         return Ok("No se tiene configurado en url del servicio");
                     }
+
                 }
 
                 //code 18 -> Verifica TipoMovimiento de Venta y code 27 Verifica Datos de Venta
@@ -633,7 +634,6 @@ namespace Net.Business.Services.Controllers
 
                
 
-
                 var objValida =  _repository.VentaCaja.GetMdsynPagosConsulta(0, 0, 0, "", value.codVenta, 4);
                 if (objValida.Result.IdRegistro == -1) return BadRequest(objValida);
 
@@ -708,6 +708,7 @@ namespace Net.Business.Services.Controllers
             }
 
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -749,6 +750,18 @@ namespace Net.Business.Services.Controllers
             return Ok(new DtoObtenerPagoBotResponse().RetornarObtenerPagoBot(objectGetAll.data));
 
         }
+
+        //[HttpGet]
+        //[ProducesResponseType(StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status404NotFound)]
+        //public async Task<IActionResult> ObtenerPagoBot1(DtoComprobanteDarBaja value)
+        //{
+
+        //  return Ok();
+
+        //  //return Ok(new DtoObtenerPagoBotResponse().RetornarObtenerPagoBot(objectGetAll.data));
+
+        //}
 
         #region darDeBaja
 
@@ -868,11 +881,12 @@ namespace Net.Business.Services.Controllers
                 response.IdRegistro = 0;
                 response.ResultadoDescripcion = "Su comprobante fue enviado De_Baja.<br>Favor consultar el estado de su solicitud (Aceptado o Rechazado).";
             }
-            else
-            {
-                response.IdRegistro = -1;
-                response.ResultadoDescripcion = "Su comprobante no pudo ser enviado De_Baja. Favor verificar los estados<br>Regla: Tener CDR-Rechazado, No tener envío a baja, No tener Nota.";
-            }
+
+            //else
+            //{
+            //    response.IdRegistro = -1;
+            //    response.ResultadoDescripcion = "Su comprobante no pudo ser enviado De_Baja. Favor verificar los estados<br>Regla: Tener CDR-Rechazado, No tener envío a baja, No tener Nota.";
+            //}
 
 
             //GetComprobanteElectroncioCodVenta
@@ -896,162 +910,205 @@ namespace Net.Business.Services.Controllers
 
         #endregion
 
-        [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public  IActionResult GetcomprobanteTranza([FromQuery] string codventa)
+        //[HttpGet]
+        //[ProducesResponseType(StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status404NotFound)]
+        //public  IActionResult GetcomprobanteTranza([FromQuery] string codventa)
+        //{
+
+        //    try
+        //    {
+
+        //        dynamic obj = cIzipay.Izipay.IzipayTransac();
+        //        //dynamic obj = IzipayTransaccion();
+        //        //dynamic obj = _repository.Izipay.IzipayTransaccion();
+
+        //        bool exito = obj.exito;
+        //        string text = obj.strResp;
+
+        //        if (!exito)
+        //        {
+        //            return Ok(new { exito = false, mensaje = text });
+        //        }
+
+
+        //        var resultTER = text.IndexOf("ATERM:");
+        //        var numTER = text.Substring(resultTER + 3, 4);
+
+        //        var resultID = text.IndexOf("ID:");
+        //        var numID = text.Substring(resultID + 3, 4);
+
+        //        var resultREF = text.IndexOf("REF:");
+        //        var numRef = text.Substring(resultREF + 4, 4);
+
+        //        var resulTAR = text.IndexOf("ATARJ:");
+        //        var numTarjeta = text.Substring(resulTAR + 11, 4);
+
+        //        return Ok(new { exito = true, mensaje = "EXITO", id = numID, terminal = numTER, referencia = numRef, tarjeta = numTarjeta });
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Ok(new { exito = false, mensaje = ex.Message });
+        //    }
+
+
+        //}
+
+        //[HttpPut]
+        //[ProducesResponseType(StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status404NotFound)]
+        //public IActionResult comprobanteAnulaTranza([FromQuery] string codventa,string refe,string monto)
+        //{
+
+        //    //dynamic obj = (refe, monto);
+        //    dynamic obj = Object();
+        //    //dynamic obj = IzipayAnularTransaccion(refe, monto);
+        //    //dynamic obj = _repository.Izipay.IzipayAnularTransaccion(refe, monto);
+
+        //    bool exito = obj.exito;
+        //    string text = obj.strResp;
+        //    if (!exito)
+        //    {
+        //        return  Ok(new { exito = false, mensaje = text });
+        //    }
+        //    else { 
+        //        return Ok(new { exito = true, mensaje = text });
+        //    }
+
+
+        //}
+
+
+        //static object IzipayTransaccion()
+        //{
+
+        //    string strResp = string.Empty;
+        //    string strError = string.Empty;
+
+        //    int intCodError = 0;
+
+
+        //    vs.ICaja Obj = new vs.Caja();
+
+
+        //    Obj.Clear();
+
+        //    intCodError = Obj.SetField("ecr_aplicacion", "POS");
+        //    if (intCodError != 0) response(false, "Error al setear variable");
+
+        //    intCodError = Obj.SetField("ecr_transaccion", "01");
+        //    if (intCodError != 0) response(false, "Error al setear variable");
+
+        //    intCodError = Obj.SetField("ecr_amount", "55000");
+        //    if (intCodError != 0) response(false, "Error al setear variable");
+
+        //    intCodError = Obj.SetField("ecr_currency_code", "604");
+        //    if (intCodError != 0) response(false, "Error al setear variable");
+
+        //    intCodError = Obj.SendTran();
+
+        //    if (intCodError != 0)
+        //    {
+        //        strError = Obj.Error;
+        //        return strError;
+        //    }
+        //    else
+        //    {
+
+        //        intCodError = Obj.GetField("response_code", out strResp);
+        //        if (intCodError != 0) response(false, "No Existe: response_code");
+
+        //        intCodError = Obj.GetField("message", out strResp);
+        //        intCodError = Obj.GetField("approval_code", out strResp);
+        //        intCodError = Obj.GetField("amount", out strResp);
+        //        intCodError = Obj.GetField("print_data", out strResp);
+
+        //    }
+
+        //    return response(true, strResp);
+
+        //}
+
+        //static object IzipayAnularTransaccion(string refe, string monto)
+        //{
+
+        //    string strResp = string.Empty;
+        //    string strError = string.Empty;
+
+        //    int intCodError = 0;
+
+        //    vs.Caja Obj = new vs.Caja();
+
+        //    Obj.Clear();
+
+        //    intCodError = Obj.SetField("ecr_aplicacion", "POS");
+        //    if (intCodError != 0) response(false, "Error al setear variable");
+
+        //    intCodError = Obj.SetField("ecr_transaccion", "06");
+        //    if (intCodError != 0) response(false, "Error al setear variable");
+
+        //    intCodError = Obj.SetField("ecr_amount", monto);
+        //    if (intCodError != 0) response(false, "Error al setear variable");
+
+        //    intCodError = Obj.SetField("ecr_currency_code", "604");
+        //    if (intCodError != 0) response(false, "Error al setear variable");
+
+        //    intCodError = Obj.SendTran();
+
+        //    if (intCodError != 0)
+        //    {
+        //        strError = Obj.Error;
+        //        return strError;
+        //    }
+        //    else
+        //    {
+        //        intCodError = Obj.GetField("response_code", out strResp);
+        //        if (intCodError != 0) response(false, "No Existe: response_code");
+        //        intCodError = Obj.GetField("message", out strResp);
+        //        intCodError = Obj.GetField("approval_code", out strResp);
+        //        intCodError = Obj.GetField("amount", out strResp);
+        //        intCodError = Obj.GetField("print_data", out strResp);
+        //    }
+        //    return response(true, "TRANSACCION CORRECTAMENTE");
+        //}
+
+        //[HttpPost]
+        //[ProducesResponseType(StatusCodes.Status204NoContent)]
+        //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+        //public async Task<IActionResult> GuardarPagoIzipay([FromBody] DtoTransaccionPagosRegResponse value)
+        //{
+            
+        //    var resp = await _repository.TransaccionPagos.RegistrarTransaccionPagos(value.RetornarDatos());
+        //    if(resp.IdRegistro==-1) return BadRequest(resp);
+        //    return Ok(resp);
+
+        //}
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GuardarPagoIzipay([FromBody] DtoProcesarTransaccionRequest value)
         {
 
-            try
-            {
-                
-                dynamic obj = IzipayTransaccion();
-
-                bool exito = obj.exito;
-                string text = obj.strResp;
-                if (!exito)
-                {
-                    return Ok(new { exito = false, mensaje = text });
-                }
-
-
-                var resultTER = text.IndexOf("ATERM:");
-                var numTER = text.Substring(resultTER + 3, 4);
-
-                var resultID = text.IndexOf("ID:");
-                var numID = text.Substring(resultID + 3, 4);
-
-                var resultREF = text.IndexOf("REF:");
-                var numRef = text.Substring(resultREF + 4, 4);
-
-                var resulTAR = text.IndexOf("ATARJ:");
-                var numTarjeta = text.Substring(resulTAR + 11, 4);
-
-                return Ok(new { exito = true, mensaje = "EXITO", id = numID, terminal = numTER, referencia = numRef, tarjeta = numTarjeta });
-
-            }
-            catch (Exception ex)
-            {
-                return Ok(new { exito = false, mensaje = ex.Message });
-            }
-
-
+            // Izipay => 01 = Compra
+            value.transaccion = "01";
+            var resp = await _repository.TransaccionPagos.ProcesarTransaccion(value.RetornarPagosDatos(), value.codventa, value.regcreateusuario);
+            if (resp.IdRegistro == -1) return BadRequest(resp);
+            return Ok(resp);
         }
 
-        [HttpPut]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult comprobanteAnulaTranza([FromQuery] string codventa,string refe,string monto)
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> AnularTransaccion([FromBody] DtoProcesarTransaccionRequest value)
         {
 
-            dynamic obj = IzipayAnularTransaccion(refe, monto);
-
-            bool exito = obj.exito;
-            string text = obj.strResp;
-            if (!exito)
-            {
-                return  Ok(new { exito = false, mensaje = text });
-            }
-            else { 
-                return Ok(new { exito = true, mensaje = text });
-            }
-
-          
-        }
-
-
-        static object IzipayTransaccion()
-        {
-            string strResp = string.Empty;
-            //string strError = string.Empty;
-
-            //int intCodError = 0;
-
-            //vs.Caja Obj = new vs.Caja();
-
-            //Obj.Clear();
-
-            //intCodError = Obj.SetField("ecr_aplicacion", "POS");
-            //if (intCodError != 0) response(false, "Error al setear variable");
-
-            //intCodError = Obj.SetField("ecr_transaccion", "01");
-            //if (intCodError != 0) response(false, "Error al setear variable");
-
-            //intCodError = Obj.SetField("ecr_amount", "55000");
-            //if (intCodError != 0) response(false, "Error al setear variable");
-
-            //intCodError = Obj.SetField("ecr_currency_code", "604");
-            //if (intCodError != 0) response(false, "Error al setear variable");
-
-            //intCodError = Obj.SendTran();
-
-            //if (intCodError != 0)
-            //{
-            //    strError = Obj.Error;
-            //    return strError;
-            //}
-            //else
-            //{
-
-            //    intCodError = Obj.GetField("response_code", out strResp);
-            //    if (intCodError != 0) response(false, "No Existe: response_code");
-
-            //    intCodError = Obj.GetField("message", out strResp);
-            //    intCodError = Obj.GetField("approval_code", out strResp);
-            //    intCodError = Obj.GetField("amount", out strResp);
-            //    intCodError = Obj.GetField("print_data", out strResp);
-
-            //}
-
-            return response(true, strResp);
-
-        }
-
-        static object IzipayAnularTransaccion(string refe,string monto)
-        {
-
-            string strResp = string.Empty;
-            //string strError = string.Empty;
-
-            //int intCodError = 0;
-
-            //vs.Caja Obj = new vs.Caja();
-
-            //Obj.Clear();
-
-            //intCodError = Obj.SetField("ecr_aplicacion", "POS");
-            //if (intCodError != 0) response(false, "Error al setear variable");
-
-            //intCodError = Obj.SetField("ecr_transaccion", "06");
-            //if (intCodError != 0) response(false, "Error al setear variable");
-
-            //intCodError = Obj.SetField("ecr_amount", monto);
-            //if (intCodError != 0) response(false, "Error al setear variable");
-
-            //intCodError = Obj.SetField("ecr_currency_code", "604");
-            //if (intCodError != 0) response(false, "Error al setear variable");
-
-            //intCodError = Obj.SendTran();
-
-            //if (intCodError != 0)
-            //{
-            //    strError = Obj.Error;
-            //    return strError;
-            //}
-            //else
-            //{
-
-            //    intCodError = Obj.GetField("response_code", out strResp);
-            //    if (intCodError != 0) response(false, "No Existe: response_code");
-
-            //    intCodError = Obj.GetField("message", out strResp);
-            //    intCodError = Obj.GetField("approval_code", out strResp);
-            //    intCodError = Obj.GetField("amount", out strResp);
-            //    intCodError = Obj.GetField("print_data", out strResp);
-
-            //}
-
-            return response(true, "TRANSACCION CORRECTAMENTE");
+            // Izipay => 06 = Anulación de Compra
+            value.transaccion = "06";
+            var resp = await _repository.TransaccionPagos.AnularTransaccion(value.RetornarAnularDatos(), value.codventa, value.regcreateusuario);
+            if (resp.IdRegistro == -1) return BadRequest(resp);
+            return Ok(resp);
 
         }
 

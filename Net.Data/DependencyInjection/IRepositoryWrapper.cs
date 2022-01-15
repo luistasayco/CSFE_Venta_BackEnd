@@ -53,5 +53,9 @@
         IFamiliaRepository Familia { get; }
         IListaPrecioRepository ListaPrecio { get; }
         ILaboratorioRepository Laboratorio { get; }
+        ICiasRepository Cias { get; }
+        ITransaccionPagosRepository TransaccionPagos { get; }
+        IConceptoRepository Concepto { get; }
+        ITipoConceptoRepository TipoConcepto { get; }
     }
 }

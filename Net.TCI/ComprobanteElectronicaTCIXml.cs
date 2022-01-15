@@ -508,11 +508,12 @@ namespace Net.TCI
             string wImpTasaAplicada;
             string wImpMontoBase;
             string wImpuestoTotal;
-            string wdTotalCondsctoigv;
+            //string wdTotalCondsctoigv;
             string wDporcdctoplan;
             string wDvalorVVP;
             string wDsctoUnitario;
             string wCodigoProductoSunat;
+
 
             XMLT = "";
             XML2 = "";
@@ -546,13 +547,14 @@ namespace Net.TCI
 
             wImpMontoBase = "0";                //'ENComprobanteDetalle.ENComprobanteDetalleImpuestos.MontoBase         TMACASSI 2/02/2019
             wImpTasaAplicada = "0";             //'ENComprobanteDetalle.ENComprobanteDetalleImpuestos.TasaAplicada      TMACASSI 22/02/2019
-            wdTotalCondsctoigv = "0";           //'ENComprobanteDetalle.ENComprobanteDetalle.ValorVentaUnitarioIncIgv   TMACASSI 22/02/2019  total de item con dscto con impuesto
+            //wdTotalCondsctoigv = "0";           //'ENComprobanteDetalle.ENComprobanteDetalle.ValorVentaUnitarioIncIgv   TMACASSI 22/02/2019  total de item con dscto con impuesto
             wImpuestoTotal = "0";               //'ENComprobanteDetalle.ImpuestoTotal         TMACASSI 22/02/2019
             wD_montobase = "0";                 //'ENComprobante.ComprobanteDetalle.DescuentoCargoDetalle.MontoBase     TMACASSI 05/06/2019
             wCodigoProductoSunat = "0";         //'ENComprobante.ComprobanteDetalle.CodigoProductoSunat        TMACASSI 05/06/2019
             wDporcdctoplan = "0";
             wDvalorVVP = "0";
             wDsctoUnitario = "0";
+
 
             WCodcomprobante = response[0].codcomprobantee;
 
@@ -561,9 +563,9 @@ namespace Net.TCI
                 foreach (var item in response)
                 {
                     wContador += 1;
-                    wUnidadComercial = item.d_unidad;
+                    wUnidadComercial = item.d_unidad.Trim();
                     wNombreProducto = item.nombreproducto.Trim();
-                    wCantidad = item.d_cant_sunat.ToString();
+                    wCantidad = item.d_cant_sunat.ToString().Trim();
                     wValorVentaUnitario = item.d_ventaunitario_sinigv.ToString("N2");
                     wValorVentaUnitarioIncIgv = item.d_ventaunitario_conigv.ToString("N2");
                     wDescuento_Indicador = "0";
@@ -576,22 +578,24 @@ namespace Net.TCI
                     wImporteTributo = item.d_montoigv.ToString("N2");
                     wImporteExplicito = wImporteTributo;
                     wPorcentajeIGV = item.porcentajeimpuesto.ToString();
-                    wAfectacionIGV = item.d_afectacionigv;
+                    //wAfectacionIGV = item.d_afectacionigv;
                     wMontoInafecto = item.c_montoinafecto.ToString("N2");
                     wImpMontoBase = wMontoTotal;
                     wImpTasaAplicada = wPorcentajeIGV;
 
-                    wCodigoTributo = item.cod_tributo;
-                    wAfectacionIGV = item.cod_afectacionIGV;
+                    wCodigoTributo = item.cod_tributo.Trim();
+                    wAfectacionIGV = item.cod_afectacionIGV.Trim();
                     wDesTributo = item.des_tributo;
-                    wCodigoUN = item.cod_UN;
-                    wD_montobase = item.d_montobase.ToString();
+                    wCodigoUN = item.cod_UN.Trim();
+                    wD_montobase = item.d_montobase.ToString("N2");
                     wImpuestoTotal = item.d_montoigv.ToString();
                     wDporcdctoplan = item.d_porcdctoplan.ToString();
-                    wdTotalCondsctoigv = item.d_total_condsctoigv.ToString();
-                    wDvalorVVP = item.d_dscto_montobase.ToString("N2");
-                    wDsctoUnitario = item.d_dscto_unitario.ToString();
-                    wCodigoProductoSunat = item.CodProductoSUNAT;
+                    //wdTotalCondsctoigv = item.d_total_condsctoigv.ToString().Trim();
+                    wDvalorVVP = item.d_dscto_montobase.ToString("N2").Trim();
+                    wDsctoUnitario = item.d_dscto_unitario.ToString().Trim();
+                    wCodigoProductoSunat = item.CodProductoSUNAT.Trim();
+                    //wMontoNeto = item.c_montoneto.ToString().Trim();
+
                     if (item.flg_gratuito == "1")
                     {
                         wImpGratuito = "1";
@@ -619,7 +623,7 @@ namespace Net.TCI
                     string wNota;
                     wCodigoDescuento = "00";
                     string wCoaseguro;
-                    string wNota2;
+                    string wNota2="0";
                     wCoaseguro = item.porcentajecoaseguro.ToString();
 
                     if (wImpGratuito == "0")           //'Se agrega - Se envía Dcto solo a F,B,NC normales; no aplica a gratuitos.
@@ -627,17 +631,26 @@ namespace Net.TCI
                         if (decimal.Parse(wMontoDescuento) > 0)
                         {
                             wNota = item.d_dscto_sinigv.ToString("N2");
-                            wNota2 = item.d_dscto_conigv.ToString("N");
+                            wNota2 = item.d_dscto_conigv.ToString("N2");
                             wD_montobase = item.d_dscto_montobase.ToString();
                             decimal a = 0m;
 
                             bool exito = decimal.TryParse(wCoaseguro, out a);
 
-                            if (decimal.Parse(wCoaseguro) > 0 && (WCodcomprobante.Substring(0, 1) == "C" | WCodcomprobante.Substring(0, 1) == "D"))
-                            {
-                                wValorVentaUnitarioIncIgv = wdTotalCondsctoigv;
-                            }
+                            //if (decimal.Parse(wCoaseguro) > 0 && (WCodcomprobante.Substring(0, 1) == "C" | WCodcomprobante.Substring(0, 1) == "D"))
+                            //{
+                            //    wValorVentaUnitarioIncIgv = wdTotalCondsctoigv;
+                            //}
 
+                            if (decimal.Parse(wCoaseguro) > 0 && (WCodcomprobante.Substring(0, 1) == "F" | WCodcomprobante.Substring(0, 1) == "B"))
+                            {
+                                wValorVentaUnitarioIncIgv = wValorVentaUnitarioIncIgv;// ''10 / 06 / 2019
+                            }
+                            else {
+                                //wValorVentaUnitarioIncIgv = wdTotalCondsctoigv; //''10 / 06 / 2019
+                                wValorVentaUnitarioIncIgv = wMontoTotalIncIgv;
+                            }
+                                                      
                             XML2 = "<DescuentoCargoDetalle>" + secuencia +
                                     "<ENDescuentoCargoDetalle>" + secuencia +
                                         "<Monto>" + wNota + "</Monto>" + secuencia +
@@ -655,11 +668,13 @@ namespace Net.TCI
                             wNota2 = "0";
                         }
 
-                        //'PREGUNTAR a karla sobre descuento catalogo 53 wCodigoDescuento
+                    }
+
+                    //'PREGUNTAR a karla sobre descuento catalogo 53 wCodigoDescuento
 
 
-                        //'11/07/2016 - Se envía Dcto solo a F,B,NC normales; no aplica a gratuitos.
-                        if (wImpGratuito == "0")
+                    //'11/07/2016 - Se envía Dcto solo a F,B,NC normales; no aplica a gratuitos.
+                    if (wImpGratuito == "0")
                         {
                             XML4 = "<DescuentoIncIgv>" + wMontoDescuentoIncIgv + "</DescuentoIncIgv>" + secuencia;
                         }
@@ -697,7 +712,7 @@ namespace Net.TCI
                                             "<CodigoTipoPrecio>" + wCodigoTipoPrecio + "</CodigoTipoPrecio>" + secuencia +
                                             "<ComprobanteDetalleImpuestos>" + secuencia + XML3 + "</ComprobanteDetalleImpuestos>" + secuencia +
                                         "</ENComprobanteDetalle>" + secuencia;
-                    }
+                   
                 }
             }
             else
@@ -765,7 +780,9 @@ namespace Net.TCI
 
             return xResultado;
         }
-        
+
+
+      
 
     }
 }

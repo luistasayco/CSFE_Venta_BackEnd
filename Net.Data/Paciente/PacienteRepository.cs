@@ -19,6 +19,7 @@ namespace Net.Data
         private readonly IConfiguration _configuration;
         const string DB_ESQUEMA = "";
         const string SP_GET = DB_ESQUEMA + "VEN_PacientesInfoFarmaPorAtencionGet";
+        const string SP_GET_PACIENTE_FILTRO = DB_ESQUEMA + "VEN_ListaPacientePorFiltrosGet";
 
         public PacienteRepository(IConnectionSQL context, IConfiguration configuration)
             : base(context)
@@ -208,6 +209,54 @@ namespace Net.Data
                         vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
                         vResultadoTransaccion.dataList = response;
 
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        public async Task<ResultadoTransaccion<BE_Paciente>> GetPacientePorFiltro(string opcion, string codpaciente, string nombres)
+        {
+            ResultadoTransaccion<BE_Paciente> vResultadoTransaccion = new ResultadoTransaccion<BE_Paciente>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_PACIENTE_FILTRO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@opcion", opcion));
+                        cmd.Parameters.Add(new SqlParameter("@codpaciente", codpaciente));
+                        cmd.Parameters.Add(new SqlParameter("@nombres", nombres));
+
+                        var response = new List<BE_Paciente>();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_Paciente>)context.ConvertTo<BE_Paciente>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
                     }
                 }
             }

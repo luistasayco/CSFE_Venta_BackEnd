@@ -247,5 +247,11 @@ namespace Net.Business.Entities
         public int idborrador { get; set; }
         [DataMember, XmlIgnore]
         public string CuentaEfectivoPago { get; set; }
+        [DataMember, XmlAttribute]
+        public int idparaquien { get; set; }
+        [DataMember, XmlAttribute]
+        public string codclienteparaquien { get; set; }
+        [DataMember, XmlAttribute]
+        public string cardcodeparaquien { get; set; }
     }
 }

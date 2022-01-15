@@ -388,7 +388,7 @@ namespace Net.Data
                     using (SqlCommand cmd = new SqlCommand(SP_SET_INSERT_CONSOLIDADOSPEDIDO, conn))
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
-
+                        cmd.CommandTimeout = 0;
                         cmd.Parameters.Add(new SqlParameter("@XmlData", value.XmlData));
                         cmd.Parameters.Add(new SqlParameter("@Opcion", value.Opcion));
                         cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));

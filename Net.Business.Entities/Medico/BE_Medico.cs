@@ -7,5 +7,6 @@
         public string ruc { get; set; }
         public string direccion { get; set; }
         public string telefono { get; set; }
+        public string cardcode { get; set; }
     }
 }

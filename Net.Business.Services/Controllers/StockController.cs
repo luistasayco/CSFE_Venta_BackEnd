@@ -35,21 +35,21 @@ namespace Net.Business.Services.Controllers
             return Ok(objectGetAll.dataList);
         }
 
-        [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetListStockPorProductoAlmacen([FromQuery] string codalmacen, string codproducto)
-        {
+        //[HttpGet]
+        //[ProducesResponseType(StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status404NotFound)]
+        //public async Task<IActionResult> GetListStockPorProductoAlmacen([FromQuery] string codalmacen, string codproducto)
+        //{
 
-            var objectGetAll = await _repository.Stock.GetListStockPorProductoAlmacen(codalmacen, codproducto);
+        //    var objectGetAll = await _repository.Stock.GetListStockPorProductoAlmacen(codalmacen, codproducto);
 
-            if (objectGetAll.ResultadoCodigo == -1)
-            {
-                return BadRequest(objectGetAll);
-            }
+        //    if (objectGetAll.ResultadoCodigo == -1)
+        //    {
+        //        return BadRequest(objectGetAll);
+        //    }
 
-            return Ok(objectGetAll.dataList);
-        }
+        //    return Ok(objectGetAll.dataList);
+        //}
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]

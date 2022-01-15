@@ -7,5 +7,8 @@
         public int PriceList { get; set; }
         public decimal? Price { get; set; }
         public decimal? Factor { get; set; }
+
+        public int PriceListNo { get; set; }
+        public string PriceListName { get; set; }
     }
 }

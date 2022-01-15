@@ -20,7 +20,7 @@ namespace Net.Data
         private readonly Regex regex = new Regex(@"<(\w+)>.*");
 
         const string DB_ESQUEMA = "";
-        const string SP_GET = DB_ESQUEMA + "Fa_Personal_Consulta";
+        const string SP_GET = DB_ESQUEMA + "VEN_Planilla_Personal_Consulta";
 
         const string SP_GET_LIMITE_CONSUMO = DB_ESQUEMA + "VEN_LimiteConsumoPersonalPorPersonalGet";
 
@@ -40,7 +40,7 @@ namespace Net.Data
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
             try
             {
-                using (SqlConnection conn = new SqlConnection(_cnx))
+                using (SqlConnection conn = new SqlConnection(_cnxLogistica))
                 {
                     using (SqlCommand cmd = new SqlCommand(SP_GET, conn))
                     {

@@ -7,13 +7,15 @@ using Microsoft.Data.SqlClient;
 using System;
 using System.Text.RegularExpressions;
 using Net.CrossCotting;
+using System.Net.Http;
 
 namespace Net.Data
 {
     public class PedidoRepository : RepositoryBase<BE_Pedido>, IPedidoRepository
     {
         private readonly string _cnx;
-
+        private readonly IHttpClientFactory _clientFactory;
+        private readonly IConfiguration _configuration;
         private string _aplicacionName;
         private string _metodoName;
         private readonly Regex regex = new Regex(@"<(\w+)>.*");
@@ -29,10 +31,12 @@ namespace Net.Data
         // Devoluciones
         const string SP_GET_LIST_PEDIDOS_VENTA_DEVOLUCION = DB_ESQUEMA + "VEN_DevolucionSRV_Productos";
 
-        public PedidoRepository(IConnectionSQL context, IConfiguration configuration)
+        public PedidoRepository(IConnectionSQL context, IConfiguration configuration, IHttpClientFactory clientFactory)
             : base(context)
         {
             _aplicacionName = this.GetType().Name;
+            _clientFactory = clientFactory;
+            _configuration = configuration;
             _cnx = configuration.GetConnectionString("cnnSqlLogistica");
         }
 
@@ -197,6 +201,24 @@ namespace Net.Data
                         using (var reader = await cmd.ExecuteReaderAsync())
                         {
                             response = (List<BE_PedidoDevolucion>)context.ConvertTo<BE_PedidoDevolucion>(reader);
+                        }
+
+                        StockRepository stockRepository = new StockRepository(_clientFactory, _configuration);
+
+                        List<BE_PedidoDevolucion> pedidoDevolucions = new List<BE_PedidoDevolucion>();
+
+                        foreach (BE_PedidoDevolucion item in response)
+                        {
+                            var data = await stockRepository.GetListStockPorFiltro(item.codalmacen, string.Empty, item.codproducto, true);
+
+                            List<BE_Stock> listProducto = (List<BE_Stock>)data.dataList;
+
+                            if (listProducto.Count > 0)
+                            {
+
+                                response.Find(xFila => xFila.codproducto == item.codproducto).stockalmacen = (decimal)listProducto[0].OnHandALM;
+                                response.Find(xFila => xFila.codproducto == item.codproducto).manbtchnum = listProducto[0].ManBtchNum.Equals("Y") ? true : false;
+                            }
                         }
 
                         conn.Close();

@@ -217,5 +217,42 @@ namespace Net.Data
             return vResultadoTransaccion;
         }
 
+        public async Task<ResultadoTransaccion<BE_SerieConfig>> GetListConfigDocumentoPorNombreMaquinaTrans(string nombremaquina, SqlConnection conn, SqlTransaction trans)
+        {
+            ResultadoTransaccion<BE_SerieConfig> vResultadoTransaccion = new ResultadoTransaccion<BE_SerieConfig>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(SP_GET_CONFIG_SERIE, conn, trans))
+                {
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                    cmd.Parameters.Add(new SqlParameter("@nombremaquina", nombremaquina));
+
+                    var response = new BE_SerieConfig();
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        response = context.Convert<BE_SerieConfig>(reader);
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = "";
+                    vResultadoTransaccion.data = response;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
     }
 }

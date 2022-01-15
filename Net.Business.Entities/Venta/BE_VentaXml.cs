@@ -10,5 +10,17 @@ namespace Net.Business.Entities
         [DBParameter(SqlDbType.Xml, 0, ActionType.Everything)]
         public string XmlData { get; set; }
     }
+
+    public class BE_VentaDevolucionXml : EntityBase
+    {
+        [DBParameter(SqlDbType.VarChar, 10, ActionType.Everything)]
+        public string codventa { get; set; }
+        [DBParameter(SqlDbType.Xml, 0, ActionType.Everything)]
+        public string XmlData { get; set; }
+        public string nombremaquina { get; set; }
+        public string codcomprobante { get; set; }
+        public string tipodevolucion { get; set; }
+        public bool flgelectronico { get; set; }
+    }
 }
 

@@ -61,6 +61,10 @@ namespace Net.Data
         private IFamiliaRepository _Familia;
         private IListaPrecioRepository _ListaPrecio;
         private ILaboratorioRepository _Laboratorio;
+        private ICiasRepository _Cias;
+        private ITransaccionPagosRepository _TransaccionPagos;
+        private IConceptoRepository _Concepto;
+        private ITipoConceptoRepository _TipoConcepto;
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
             _repoContext = repoContext;
@@ -194,7 +198,7 @@ namespace Net.Data
             {
                 if (_Pedido == null)
                 {
-                    _Pedido = new PedidoRepository(_repoContext, _configuration);
+                    _Pedido = new PedidoRepository(_repoContext, _configuration, _clientFactory);
                 }
                 return _Pedido;
             }
@@ -633,6 +637,52 @@ namespace Net.Data
                     _Laboratorio = new LaboratorioRepository(_clientFactory, _configuration);
                 }
                 return _Laboratorio;
+            }
+        }
+        public ICiasRepository Cias
+        {
+            get
+            {
+                if (_Cias == null)
+                {
+                    _Cias = new CiasRepository(_repoContext, _configuration);
+                }
+                return _Cias;
+            }
+        }
+        public ITransaccionPagosRepository TransaccionPagos
+        {
+            get
+            {
+                if (_TransaccionPagos == null)
+                {
+                    _TransaccionPagos = new TransaccionPagosRepository(_clientFactory ,_repoContext, _configuration);
+                }
+                return _TransaccionPagos;
+            }
+        }
+
+        public IConceptoRepository Concepto
+        {
+            get
+            {
+                if (_Concepto == null)
+                {
+                    _Concepto = new ConceptoRepository(_repoContext, _configuration);
+                }
+                return _Concepto;
+            }
+        }
+
+        public ITipoConceptoRepository TipoConcepto
+        {
+            get
+            {
+                if (_TipoConcepto == null)
+                {
+                    _TipoConcepto = new TipoConceptoRepository(_repoContext, _configuration);
+                }
+                return _TipoConcepto;
             }
         }
     }

@@ -86,10 +86,39 @@ namespace Net.Data
 
                 List<BE_Stock> data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
 
+                List<BE_Stock> dataFilter = new List<BE_Stock>();
+
+                if (data.Count > 0)
+                {
+                    if (constock)
+                    {
+                        foreach (var item in data)
+                        {
+                            var reserva = item.ReserverdALM == null ? 0 : item.ReserverdALM;
+                            var diferencia = item.OnHandALM - reserva;
+
+                            item.Price = item.Price == null ? 0 : item.Price;
+
+                            if (diferencia > 0)
+                            {
+                                item.OnHandALM = item.OnHandALM - reserva;
+                                dataFilter.Add(item);
+                            }
+                        }
+                    } else
+                    {
+                        dataFilter = data;
+                    }
+                }
+                else
+                {
+                    dataFilter = data;
+                }
+
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;
                 vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", data.Count);
-                vResultadoTransaccion.dataList = data;
+                vResultadoTransaccion.dataList = dataFilter;
             }
             catch (Exception ex)
             {
@@ -100,7 +129,7 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-        public async Task<ResultadoTransaccion<BE_Stock>> GetListStockPorProductoAlmacen(string codalmacen, string codproducto)
+        public async Task<ResultadoTransaccion<BE_Stock>> GetListStockPorProductoAlmacen(string codalmacen, string codproducto, bool constock)
         {
             ResultadoTransaccion<BE_Stock> vResultadoTransaccion = new ResultadoTransaccion<BE_Stock>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
@@ -110,20 +139,57 @@ namespace Net.Data
             try
             {
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
+                var ceros = constock ? "N" : "Y";
 
-                var modelo = "sml.svc/SBASTKGParameters(CODITEM='" + codproducto + "',CODALM='" + codalmacen + "',CEROS='N')/SBASTKG";
+                var modelo = "sml.svc/SBASTKGParameters(CODITEM='" + codproducto + "',CODALM='" + codalmacen + "',CEROS='" + ceros + "')/SBASTKG";
                 var campos = "?$select=* ";
                 var filter = "&$filter = WhsCode eq '" + codalmacen + "' and ItemCode eq '" + codproducto + "'  and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
-                var filterConStock = "and OnHandALM gt 0";
+                var filterConStock = string.Empty;
+
+                if (ceros.Equals("N"))
+                {
+                    filterConStock = " and OnHandALM gt 0";
+                }
+                else
+                {
+                    filterConStock = " and OnHandALM eq 0";
+                }
 
                 modelo = modelo + campos + filter + filterConStock;
 
                 List<BE_Stock> data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
 
+                List<BE_Stock> dataFilter = new List<BE_Stock>();
+
+                if (data.Count > 0)
+                {
+                    if (constock)
+                    {
+                        foreach (var item in data)
+                        {
+                            var reserva = item.ReserverdALM == null ? 0 : item.ReserverdALM;
+                            var diferencia = item.OnHandALM - reserva;
+                            if (diferencia > 0)
+                            {
+                                item.OnHandALM = item.OnHandALM - reserva;
+                                dataFilter.Add(item);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        dataFilter = data;
+                    }
+                }
+                else
+                {
+                    dataFilter = data;
+                }
+
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;
                 vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
-                vResultadoTransaccion.dataList = data;
+                vResultadoTransaccion.dataList = dataFilter;
             }
             catch (Exception ex)
             {
@@ -164,10 +230,37 @@ namespace Net.Data
 
                 List<BE_StockLote> data = await _connectServiceLayer.GetAsync<BE_StockLote>(modelo);
 
+                List<BE_StockLote> dataFilter = new List<BE_StockLote>();
+
+                if (data.Count > 0)
+                {
+                    if (constock)
+                    {
+                        foreach (var item in data)
+                        {
+                            var reserva = item.ReservedLote == null ? 0 : item.ReservedLote;
+                            var diferenciaLote = item.QuantityLote - reserva;
+
+                            if (diferenciaLote > 0)
+                            {
+                                item.QuantityLote = diferenciaLote;
+                                dataFilter.Add(item);
+                            }
+                        }
+                    } else
+                    {
+                        dataFilter = data;
+                    }
+                }
+                else
+                {
+                    dataFilter = data;
+                }
+
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;
                 vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", data.Count);
-                vResultadoTransaccion.dataList = data;
+                vResultadoTransaccion.dataList = dataFilter;
             }
             catch (Exception ex)
             {
@@ -208,10 +301,41 @@ namespace Net.Data
 
                 List<BE_StockLote> data = await _connectServiceLayer.GetAsync<BE_StockLote>(modelo);
 
+                List<BE_StockLote> dataFilter = new List<BE_StockLote>();
+
+                if (data.Count > 0)
+                {
+                    if (constock)
+                    {
+                        foreach (var item in data)
+                        {
+                            var reserva = item.ReserverdQty == null ? 0 : item.ReserverdQty;
+
+                            var diferenciaUbicacion = item.OnHandQty - reserva;
+                            var diferenciaLote = item.OnHandQty - reserva;
+
+                            if (diferenciaUbicacion > 0)
+                            {
+                                item.OnHandQty = diferenciaUbicacion;
+                                item.QuantityLote = diferenciaLote;
+                                dataFilter.Add(item);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        dataFilter = data;
+                    }
+                }
+                else
+                {
+                    dataFilter = data;
+                }
+
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;
                 vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", data.Count);
-                vResultadoTransaccion.dataList = data;
+                vResultadoTransaccion.dataList = dataFilter;
             }
             catch (Exception ex)
             {
@@ -249,10 +373,37 @@ namespace Net.Data
 
                 List<BE_Stock> data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
 
+                List<BE_Stock> dataFilter = new List<BE_Stock>();
+
+                if (data.Count > 0)
+                {
+                    if (constock)
+                    {
+                        foreach (var item in data)
+                        {
+                            var reserva = item.ReserverdALM == null ? 0 : item.ReserverdALM;
+                            var diferencia = item.OnHandALM - reserva;
+                            if (diferencia > 0)
+                            {
+                                item.OnHandALM = item.OnHandALM - reserva;
+                                dataFilter.Add(item);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        dataFilter = data;
+                    }
+                }
+                else
+                {
+                    dataFilter = data;
+                }
+
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;
                 vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", data.Count);
-                vResultadoTransaccion.dataList = data;
+                vResultadoTransaccion.dataList = dataFilter;
             }
             catch (Exception ex)
             {
@@ -276,6 +427,7 @@ namespace Net.Data
                 List<BE_Stock> listDCI = await _connectServiceLayer.GetAsync<BE_Stock>("U_SYP_CS_PRODCI?$select=U_SYP_CS_DCI&$filter = Code eq '" + codprodci + "'");
 
                 List<BE_Stock> data = new List<BE_Stock>();
+                List<BE_Stock> dataFilter = new List<BE_Stock>();
 
                 if (listDCI.Count > 0)
                 {
@@ -320,6 +472,31 @@ namespace Net.Data
                             }
 
                             data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
+
+                            if (data.Count > 0)
+                            {
+                                if (constock)
+                                {
+                                    foreach (var item in data)
+                                    {
+                                        var reserva = item.ReserverdALM == null ? 0 : item.ReserverdALM;
+                                        var diferencia = item.OnHandALM - reserva;
+                                        if (diferencia > 0)
+                                        {
+                                            item.OnHandALM = item.OnHandALM - reserva;
+                                            dataFilter.Add(item);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    dataFilter = data;
+                                }
+                            }
+                            else
+                            {
+                                dataFilter = data;
+                            }
                         }
                     }
                 }
@@ -327,7 +504,7 @@ namespace Net.Data
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;
                 vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", data.Count);
-                vResultadoTransaccion.dataList = data;
+                vResultadoTransaccion.dataList = dataFilter;
             }
             catch (Exception ex)
             {
@@ -348,7 +525,7 @@ namespace Net.Data
             try
             {
                 List<BE_Stock> data = new List<BE_Stock>();
-
+                List<BE_Stock> dataFilter = new List<BE_Stock>();
                 List<BE_Stock> listProdDCI = await _connectServiceLayer.GetAsync<BE_Stock>("U_SYP_CS_PRODCI?$select=Code&$filter = U_SYP_CS_DCI eq '" + coddci + "'");
 
                 if (listProdDCI.Count > 0)
@@ -386,12 +563,37 @@ namespace Net.Data
                     }
 
                     data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
+
+                    if (data.Count > 0)
+                    {
+                        if (constock)
+                        {
+                            foreach (var item in data)
+                            {
+                                var reserva = item.ReserverdALM == null ? 0 : item.ReserverdALM;
+                                var diferencia = item.OnHandALM - reserva;
+                                if (diferencia > 0)
+                                {
+                                    item.OnHandALM = item.OnHandALM - reserva;
+                                    dataFilter.Add(item);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            dataFilter = data;
+                        }
+                    }
+                    else
+                    {
+                        dataFilter = data;
+                    }
                 }
 
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;
                 vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", data.Count);
-                vResultadoTransaccion.dataList = data;
+                vResultadoTransaccion.dataList = dataFilter;
             }
             catch (Exception ex)
             {

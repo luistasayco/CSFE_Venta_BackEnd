@@ -6,9 +6,11 @@ namespace Net.Business.Entities
 {
     public class BE_Cliente
     {
+        public string codcliente { get; set; }
         public string CardCode { get; set; }
         public string CardName { get; set; }
         public string MailAddress { get; set; }
+        public string Address { get; set; }
         public string Phone1 { get; set; }
         public string FederalTaxID { get; set; }
         public string U_SYP_BPAP { get; set; }

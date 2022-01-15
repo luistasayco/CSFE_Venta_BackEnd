@@ -190,7 +190,7 @@ namespace Net.Data
 
                         vResultadoTransaccion.IdRegistro = 0;
                         vResultadoTransaccion.ResultadoCodigo = 0;
-                        vResultadoTransaccion.ResultadoDescripcion = (existe > 0) ? "Ya Existe..." : "No Existe..."; //"Producto existe";
+                        vResultadoTransaccion.ResultadoDescripcion = (existe > 0) ? string.Format("Producto {0}, ya existe para la Aseguradora seleccionado...", codproducto) : "No Existe..."; //"Producto existe";
                         vResultadoTransaccion.data = (existe>0)? true:false;
 
                     }

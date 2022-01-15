@@ -69,19 +69,19 @@
         /// <summary>
         /// Precio
         /// </summary>
-        public decimal Price { get; set; }
+        public decimal? Price { get; set; }
         /// <summary>
         /// Stock Total (Solo del almacén)
         /// </summary>
-        public decimal OnHandALM { get; set; }
+        public decimal? OnHandALM { get; set; }
         /// <summary>
         /// Cantidad Solicitada (Solo del almacén)
         /// </summary>
-        public decimal OnOrderALM { get; set; }
+        public decimal? OnOrderALM { get; set; }
         /// <summary>
         /// Cantidad Comprometida (Solo del almacén)
         /// </summary>
-        public decimal IsCommitedALM { get; set; }
+        public decimal? IsCommitedALM { get; set; }
         /// <summary>
         /// Stock Lote (Solo del almacén)
         /// </summary>
@@ -89,11 +89,11 @@
         /// <summary>
         /// Cantidad Solicitada Lote (Solo del almacén)
         /// </summary>
-        public decimal IsCommitedLote { get; set; }
+        public decimal? IsCommitedLote { get; set; }
         /// <summary>
         /// Cantidad Comprometida Lote (Solo del almacén)
         /// </summary>
-        public decimal OnOrderLote { get; set; }
+        public decimal? OnOrderLote { get; set; }
         /// <summary>
         /// Descripción del Almacén
         /// </summary>
@@ -111,5 +111,11 @@
         /// Indicador que si se maneja Ubicación
         /// </summary>
         public string BinActivat { get; set; }
+        /// <summary>
+        /// Descripción del Laboratorio
+        /// </summary>
+        public string Name { get; set; }
+
+        public decimal? ReserverdALM { get; set; }
     }
 }

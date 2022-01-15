@@ -31,7 +31,6 @@ namespace Net.Data
         const string SP_ESTADO = DB_ESQUEMA + "VEN_SalaOperacionEstadoUpd";
         const string SP_GET_DETALLE = DB_ESQUEMA + "VEN_ListaSalaOperacionDetallePorId";
         const string SP_GET_DETALLE_RESERVA = DB_ESQUEMA + "VEN_ListaDetalleReservaIdBorrador";
-
         const string SP_GET_DETALLE_LOTE_UBI = DB_ESQUEMA + "VEN_ListaSOPDetalleLotePorIdBorradorDetalleGet";
 
         public SalaOperacionRepository(IHttpClientFactory clientFactory, IConnectionSQL context, IConfiguration configuration)

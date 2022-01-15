@@ -93,7 +93,9 @@ namespace Net.Business.DTO
         [DataMember]
         [XmlElement(ElementName = "ListVentasDetalle", Type = typeof(List<BE_VentasDetalle>))]
         public List<BE_VentasDetalle> listaVentaDetalle { get; set; }
-
+        [DataMember]
+        [XmlElement(ElementName = "ListVentasDetalleLoteLecturado", Type = typeof(List<VentasDetalleLoteLecturado>))]
+        public List<VentasDetalleLoteLecturado> listVentasDetalleLoteLecturado { get; set; }
         public BE_VentaXml RetornaModelo()
         {
 

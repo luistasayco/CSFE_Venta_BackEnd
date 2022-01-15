@@ -196,7 +196,7 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-        public async Task<ResultadoTransaccion<BE_Producto>> GetProductoPorCodigo(string codalmacen, string codproducto, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
+        public async Task<ResultadoTransaccion<BE_Producto>> GetProductoPorCodigo(string codalmacen, string codproducto, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion, bool constock)
         {
             ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
@@ -208,7 +208,7 @@ namespace Net.Data
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
 
                 var cadena = "Items";
-                var filter = "&$filter=ItemCode eq '" + codproducto + "'";
+                var filter = "&$filter=ItemCode eq '" + codproducto + "' InventoryItem eq 'tYES' and SalesItem eq 'tYES' and Valid eq 'tYES'";
                 var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, U_SYP_FAMILIA, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART, ItemsGroupCode, ManageBatchNumbers, ArTaxCode, Properties1, U_SYP_CS_DCTO, U_SYP_CS_FRVTA, U_SYP_CS_PRODCI ";
 
                 cadena = cadena + campos + filter;
@@ -259,7 +259,7 @@ namespace Net.Data
                     }
 
                     StockRepository stockRepository = new StockRepository(_clientFactory, _configuration);
-                    ResultadoTransaccion<BE_Stock> resultadoTransaccionStock = await stockRepository.GetListStockPorProductoAlmacen(codalmacen, codproducto);
+                    ResultadoTransaccion<BE_Stock> resultadoTransaccionStock = await stockRepository.GetListStockPorProductoAlmacen(codalmacen, codproducto, constock);
 
                     if (resultadoTransaccionStock.ResultadoCodigo == -1)
                     {
@@ -273,7 +273,7 @@ namespace Net.Data
                     {
                         BE_Stock stockProducto = ((List<BE_Stock>)resultadoTransaccionStock.dataList)[0];
 
-                        data.ProductoStock = stockProducto.OnHandALM;
+                        data.ProductoStock = (decimal)stockProducto.OnHandALM;
                         data.valorVVP = (decimal)stockProducto.Price;
                     }
 
@@ -337,7 +337,7 @@ namespace Net.Data
                     }
 
                     VentaRepository ventaRepository = new VentaRepository(_clientFactory, context, _configuration);
-                    ResultadoTransaccion<bool> resultadoTransaccionGastoCubierto = await ventaRepository.GetGastoCubiertoPorFiltro(codaseguradora, codproducto, 1);
+                    ResultadoTransaccion<bool> resultadoTransaccionGastoCubierto = await ventaRepository.GetGastoCubiertoPorFiltro(codaseguradora, codproducto, tipoatencion);
 
                     data.GastoCubierto = false;
 
@@ -465,7 +465,7 @@ namespace Net.Data
 
                 List<BE_Producto> listProductos = new List<BE_Producto>();
 
-                PedidoRepository pedidoRepository = new PedidoRepository(context, _configuration);
+                PedidoRepository pedidoRepository = new PedidoRepository(context, _configuration, _clientFactory);
                 ResultadoTransaccion<BE_PedidoDetalle> resultadoTransaccionDetallePedido = await pedidoRepository.GetListPedidoDetallePorPedido(codpedido);
 
                 if (resultadoTransaccionDetallePedido.ResultadoCodigo == -1)
@@ -486,7 +486,7 @@ namespace Net.Data
 
                     foreach (BE_PedidoDetalle item in listPedidoDetalle)
                     {
-                        ResultadoTransaccion<BE_Producto> resultadoTransaccionProducto = await GetProductoPorCodigo(codalmacen, item.codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
+                        ResultadoTransaccion<BE_Producto> resultadoTransaccionProducto = await GetProductoPorCodigo(codalmacen, item.codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion, true);
 
                         if (resultadoTransaccionProducto.ResultadoCodigo == -1 && resultadoTransaccionProducto.IdRegistro == -1)
                         {
@@ -579,7 +579,7 @@ namespace Net.Data
 
                     foreach (BE_RecetaDetalle item in lisDetalleReceta)
                     {
-                        ResultadoTransaccion<BE_Producto> resultadoTransaccionProducto = await GetProductoPorCodigo(codalmacen, item.codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
+                        ResultadoTransaccion<BE_Producto> resultadoTransaccionProducto = await GetProductoPorCodigo(codalmacen, item.codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion, true);
 
                         if (resultadoTransaccionProducto.ResultadoCodigo == -1 && resultadoTransaccionProducto.IdRegistro == -1)
                         {
@@ -660,7 +660,7 @@ namespace Net.Data
 
                     foreach (BE_SalaOperacionDetalle item in lisDetalle)
                     {
-                        ResultadoTransaccion<BE_Producto> resultadoTransaccionProducto = await GetProductoPorCodigo(codalmacen, item.codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
+                        ResultadoTransaccion<BE_Producto> resultadoTransaccionProducto = await GetProductoPorCodigo(codalmacen, item.codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion, true);
 
                         if (resultadoTransaccionProducto.ResultadoCodigo == -1 && resultadoTransaccionProducto.IdRegistro == -1)
                         {
@@ -785,18 +785,19 @@ namespace Net.Data
                 nombreFamilia = nombreFamilia == null ? "" : nombreFamilia.Trim().ToUpper();
                 nombreLaboratorio = nombreLaboratorio == null ? "" : nombreLaboratorio.Trim().ToUpper();
 
-                var cadena = "Items?$select=ItemCode, ItemName,ManageBatchNumbers,Properties1";
+                var cadena = "Items?$select=ItemCode, ItemName,ManageBatchNumbers,Properties1 &$filter= InventoryItem eq 'tYES' and SalesItem eq 'tYES' and Valid eq 'tYES'";
+
                 if (nombreFamilia != string.Empty)
                 {
-                    filter = "&$filter=U_SYP_FAMILIA eq '" + nombreFamilia;
+                    filter = " and U_SYP_FAMILIA eq '" + nombreFamilia;
                 }
                 if (nombreLaboratorio != string.Empty)
                 {
-                    filter = "&$filter=U_SYP_CS_LABORATORIO eq '" + nombreFamilia;
+                    filter = " and U_SYP_CS_LABORATORIO eq '" + nombreLaboratorio;
                 }
                 if (nombreProducto != string.Empty)
                 {
-                    cadena += "&$filter=startswith(ItemName,'" + nombreProducto + "')";
+                    cadena += " and startswith(ItemName,'" + nombreProducto + "')";
                 }
 
                 //if (tipo.Equals("FAMILIA"))
@@ -814,7 +815,7 @@ namespace Net.Data
 
                 //U_SYP_FAMILIA
                 //U_SYP_CS_LABORATORIO
-                List<BE_Producto> listproducto = await _connectServiceLayer.GetBaseAsync<BE_Producto>(cadena, 20);
+                List<BE_Producto> listproducto = await _connectServiceLayer.GetBaseAsync<BE_Producto>(cadena, 200);
 
                 BE_Producto data = new BE_Producto();
 
@@ -841,5 +842,66 @@ namespace Net.Data
             return vResultadoTransaccion;
         }
 
+        public async Task<ResultadoTransaccion<BE_Stock>> GetProductoPorCodigoBarra(string codalmacen, string codigoBarra)
+        {
+            ResultadoTransaccion<BE_Stock> vResultadoTransaccion = new ResultadoTransaccion<BE_Stock>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                codalmacen = codalmacen == null ? "" : codalmacen.Trim().ToUpper();
+                codigoBarra = codigoBarra == null ? "" : codigoBarra.Trim().ToUpper();
+
+                string query = string.Empty;
+                string vista = string.Empty;
+                string Select = string.Empty;
+                string filter = string.Empty;
+
+                if (codigoBarra.Length <= 8)
+                {
+                    string codProducto = codigoBarra.Substring(0, 8).Trim();
+                    vista = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='',CEROS='N')/SBASTKG?";
+                    Select = "$select=* ";
+                    filter = $"&$filter =WhsCode eq '{codalmacen}' and ItemCode eq '{codProducto}'";
+                }
+                else
+                {
+                    //var cadena = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTKG?$filter = WhsCode eq'" + WhsCode + "' and validFor = 'Y' and InvntItem = 'Y'";
+                    string codProducto = codigoBarra.Substring(0, 8).Trim();
+                    string codLote = Microsoft.VisualBasic.Strings.Right(codigoBarra, (codigoBarra.Length) - (codProducto.Length + 1)).Trim();
+
+                    vista = "sml.svc/SBASTCKParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTCK?";
+                    Select = "$select=* ";
+                    filter = $"&$filter =WhsCode eq '{codalmacen}' and ItemCode eq '{codProducto}' and BatchNum eq '{codLote}'  ";
+                }
+
+                query = string.Concat(vista, Select, filter);
+
+                List<BE_Stock> listproducto = await _connectServiceLayer.GetBaseAsync<BE_Stock>(query, 20);
+
+                if (listproducto.Count < 0)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = "El producto no existe en SAP HANA";
+                    return vResultadoTransaccion;
+                }
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                vResultadoTransaccion.dataList = listproducto;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
     }
 }

@@ -152,5 +152,22 @@ namespace Net.Business.Entities
         public int baseentrydevolucion { get; set; }
         [DataMember, XmlIgnore]
         public int baselinedevolucion { get; set; }
+        [DataMember, XmlIgnore]
+        public string nombrelaboratorio { get; set; }
+    }
+
+    [DataContract]
+    [Serializable]
+    [XmlRoot("VentasDetalleLoteLecturado")]
+    public class VentasDetalleLoteLecturado
+    {
+        [DataMember, XmlAttribute]
+        public string codproducto { get; set; }
+        [DataMember, XmlAttribute]
+        public string lote { get; set; }
+        [DataMember, XmlAttribute]
+        public string nombreproducto { get; set; }
+        [DataMember, XmlAttribute]
+        public decimal cantidad { get; set; }
     }
 }

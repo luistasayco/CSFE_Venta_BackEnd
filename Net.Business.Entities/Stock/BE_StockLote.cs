@@ -48,5 +48,8 @@ namespace Net.Business.Entities
         /// Stock Por Ubicación
         /// </summary>
         public decimal? OnHandQty { get; set; }
+
+        public decimal? ReservedLote { get; set; }
+        public decimal? ReserverdQty { get; set; }
     }
 }

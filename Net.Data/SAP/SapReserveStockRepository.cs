@@ -81,10 +81,18 @@ namespace Net.Data
                 var cadena = string.Format("U_SBA_AJSTINV({0})", value);
                 SapBaseResponse<SapReserveStock> data = await _connectServiceLayer.DeleteAsyncSBA<SapBaseResponse<SapReserveStock>>(cadena);
 
-                vResultadoTransaccion.IdRegistro = 0;
-                vResultadoTransaccion.ResultadoCodigo = 0;
-                vResultadoTransaccion.ResultadoDescripcion = "DATOS DE SAP ACTUALIZADO CORRECTAMENTE";
-
+                if (data == null)
+                {
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = "DATOS DE SAP ACTUALIZADO CORRECTAMENTE";
+                }else
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = data.Mensaje.ToString();
+                    return vResultadoTransaccion;
+                }
             }
             catch (Exception ex)
             {

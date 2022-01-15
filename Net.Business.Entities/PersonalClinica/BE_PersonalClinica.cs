@@ -13,5 +13,6 @@ namespace Net.Business.Entities
         public string telefonocasa { get; set; }
         public string codempresa { get; set; }
         public string nombreempresa { get; set; }
+        public string cardcode { get; set; }
     }
 }

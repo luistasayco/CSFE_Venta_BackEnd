@@ -131,6 +131,24 @@ namespace Net.Business.Services
                     }
                 });
 
+                options.SwaggerDoc("ApiVentaCaja", new Microsoft.OpenApi.Models.OpenApiInfo()
+                {
+                    Title = "API General Ventas Caja",
+                    Version = "1",
+                    Description = "BackEnd Ventas",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact()
+                    {
+                        Email = "luis.tasayco@sba.pe",
+                        Name = "Grupo SBA",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense()
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://www.linkedin.com/in/luis-miguel-tasayco-marquez/")
+                    }
+                });
+
                 options.SwaggerDoc("ApiComprobante", new Microsoft.OpenApi.Models.OpenApiInfo()
                 {
                     Title = "API General Comprobante",
@@ -451,6 +469,7 @@ namespace Net.Business.Services
                 options.SwaggerEndpoint("/swagger/ApiCentro/swagger.json", "API General Centro");
                 options.SwaggerEndpoint("/swagger/ApiCliente/swagger.json", "API General Cliente");
                 options.SwaggerEndpoint("/swagger/ApiVenta/swagger.json", "API General Ventas");
+                options.SwaggerEndpoint("/swagger/ApiVentaCaja/swagger.json", "API General Ventas Caja");
                 options.SwaggerEndpoint("/swagger/ApiComprobante/swagger.json", "API General Comprobante");
                 options.SwaggerEndpoint("/swagger/ApiHospital/swagger.json", "API General Hospital");
                 options.SwaggerEndpoint("/swagger/ApiMedico/swagger.json", "API General Médico");

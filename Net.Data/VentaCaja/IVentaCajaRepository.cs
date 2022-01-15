@@ -31,7 +31,7 @@ namespace Net.Data
             string codComprobantePK, string codComprobante_e, string codSistema, string tipoCompsunat, int orden);
 
         Task<ResultadoTransaccion<BE_VentasCabecera>> ComprobanteElectronicoUpd(string campo, string nuevovalor, string xml, Byte[] codigobarrajpg, string codigo);
-        Task<ResultadoTransaccion<string>> Comprobante_baja(BE_ComprobantesBaja value);
+        //Task<ResultadoTransaccion<string>> Comprobante_baja(BE_ComprobantesBaja value);
         Task<int> GetExisteVentaAnuladaPorCodVenta(string codVenta);
         Task<ResultadoTransaccion<string>> RegistrarComunicadoBajoComprobante(BE_ComprobantesBaja value, string xUrlWebService, string xRucEmisor);
 

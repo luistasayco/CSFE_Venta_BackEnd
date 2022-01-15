@@ -39,5 +39,21 @@ namespace Net.Business.Services.Controllers
 
             return Ok(objectGetAll.data);
         }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetListPacientePorFiltros([FromQuery] string opcion, string codpaciente, string nombres)
+        {
+
+            var objectGetAll = await _repository.Paciente.GetPacientePorFiltro(opcion, codpaciente, nombres);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
     }
 }

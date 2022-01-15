@@ -922,7 +922,7 @@ namespace Net.Data
 
 
                             string Xml = string.Empty;
-                            var pRetorno = Metodo_Registrar_FB(codcomprobante, maquina, value.idusuario ,tipoCodigoBarrahash, flg_otorgar.ToString(), ref Xml, conn, transaction);
+                            var pRetorno = Metodo_Registrar_FB(codcomprobante, tipoCodigoBarrahash, flg_otorgar.ToString(), maquina, value.idusuario, ref Xml, conn, transaction);
                             if (pRetorno != 0)
                             {
                                 transaction.Rollback();
@@ -2495,11 +2495,8 @@ namespace Net.Data
 
         }
 
-
-
         #region Vista de Impresion
-
-        public async Task<ResultadoTransaccion<MemoryStream>> GenerarPreVistaPrint(string codcomprobante, string maquina,string archivoImg, int idusuario, int orden)
+        public async Task<ResultadoTransaccion<MemoryStream>> GenerarPreVistaPrint(string codcomprobante, string maquina, string archivoImg, int idusuario, int orden)
         {
 
             ResultadoTransaccion<MemoryStream> vResultadoTransaccion = new ResultadoTransaccion<MemoryStream>();
@@ -2509,7 +2506,8 @@ namespace Net.Data
 
             string Numero = "{0:###,###,###,###.00;-###,###,###,###.00;0.00;0.00}";
 
-            if (maquina==null) {
+            if (maquina == null)
+            {
                 vResultadoTransaccion.IdRegistro = -1;
                 vResultadoTransaccion.ResultadoCodigo = -1;
                 vResultadoTransaccion.ResultadoDescripcion = "el nombre de la maquina no puede ser nulo";
@@ -2522,10 +2520,11 @@ namespace Net.Data
                 string xRutaCodigoBarra = string.Empty;
 
                 var objCPE = await GetComprobanteElectroncioCodVenta(codcomprobante, 0, 0, "", "", "", "", "", "", 1);
-                if (objCPE.data.codcomprobante !=null)
+                if (objCPE.data.codcomprobante != null)
                 {
                     var respCodigoBarra = objCPE.data.codigobarra;
-                    if (respCodigoBarra.Length == 0) {
+                    if (respCodigoBarra.Length == 0)
+                    {
 
                         vResultadoTransaccion.IdRegistro = -1;
                         vResultadoTransaccion.ResultadoCodigo = -1;
@@ -2538,7 +2537,8 @@ namespace Net.Data
                     xRutaCodigoBarra = archivoImg + codcomprobante + ".jpg";
                     File.WriteAllBytes(xRutaCodigoBarra, respCodigoBarra); //Creamos el archivo 
                 }
-                else {
+                else
+                {
                     vResultadoTransaccion.IdRegistro = -1;
                     vResultadoTransaccion.ResultadoCodigo = -1;
                     vResultadoTransaccion.ResultadoDescripcion = "El comprobante que esta intentado obtener no es electrónico.";
@@ -2552,7 +2552,7 @@ namespace Net.Data
 
                 var cabecera = data.dataList.ToList()[0];
                 var Detalle = data.dataList.ToList();
-                int xTamanio = 400 * ((Detalle.Count()==1) ? 2: Detalle.Count());
+                int xTamanio = 400 * ((Detalle.Count() == 1) ? 2 : Detalle.Count());
 
 
                 decimal pC_MontoAfecto = cabecera.c_montoafecto;
@@ -2602,7 +2602,7 @@ namespace Net.Data
                 BaseFont curier = BaseFont.CreateFont(BaseFont.COURIER, BaseFont.CP1250, true);
 
                 // Titulo
-                Font Header1= new iTextSharp.text.Font(helvetica, 8, iTextSharp.text.Font.BOLD, BaseColor.Black);
+                Font Header1 = new iTextSharp.text.Font(helvetica, 8, iTextSharp.text.Font.BOLD, BaseColor.Black);
                 Font Header2 = new iTextSharp.text.Font(curier, 10, iTextSharp.text.Font.BOLD, BaseColor.Black);
                 Font subTitulo = new iTextSharp.text.Font(helvetica, 12f, iTextSharp.text.Font.BOLD, BaseColor.Black);
                 Font parrafoNegroNegrita = new iTextSharp.text.Font(helvetica, 10f, iTextSharp.text.Font.BOLD, BaseColor.Black);
@@ -2651,7 +2651,7 @@ namespace Net.Data
                 doc.Add(tbl);
 
                 tbl = new PdfPTable(new float[] { 30f }) { WidthPercentage = 100 };
-                c1 = new PdfPCell(new Phrase(cabecera.codcomprobante_e+ "\n\n", Header1)) { Border = 0 };
+                c1 = new PdfPCell(new Phrase(cabecera.codcomprobante_e + "\n\n", Header1)) { Border = 0 };
                 c1.HorizontalAlignment = Element.ALIGN_CENTER;
                 c1.VerticalAlignment = Element.ALIGN_MIDDLE;
                 tbl.AddCell(c1);
@@ -2678,11 +2678,11 @@ namespace Net.Data
                 //}
 
                 // Generamos la Cabecera
-                tbl = new PdfPTable(new float[] { 15f,85f }) { WidthPercentage = 100 };
+                tbl = new PdfPTable(new float[] { 15f, 85f }) { WidthPercentage = 100 };
                 //Linea 1
                 c1 = new PdfPCell(new Phrase("Nombre", subHeader3)) { Border = 0 };
                 tbl.AddCell(c1);
-                c1 = new PdfPCell(new Phrase(": "+cabecera.anombrede.Trim(), subHeader3)) { Border = 0 };
+                c1 = new PdfPCell(new Phrase(": " + cabecera.anombrede.Trim(), subHeader3)) { Border = 0 };
                 tbl.AddCell(c1);
 
                 c1 = new PdfPCell(new Phrase("Dirección", subHeader3)) { Border = 0 };
@@ -2714,7 +2714,8 @@ namespace Net.Data
                     c1 = new PdfPCell(new Phrase(": " + cabecera.ruc_sunat.Trim(), subHeader3)) { Border = 0 };
                     tbl.AddCell(c1);
                 }
-                else {
+                else
+                {
                     c1 = new PdfPCell(new Phrase("RUC", subHeader3)) { Border = 0 };
                     tbl.AddCell(c1);
                     c1 = new PdfPCell(new Phrase(": " + cabecera.ruc_sunat.Trim(), subHeader3)) { Border = 0 };
@@ -2805,7 +2806,7 @@ namespace Net.Data
                 }
                 doc.Add(tbl);
 
-                
+
                 tbl = new PdfPTable(new float[] { 46f, 8f, 8f }) { WidthPercentage = 100 };
 
                 c1 = new PdfPCell(new Phrase("\n\n", subHeader4));
@@ -2870,7 +2871,7 @@ namespace Net.Data
                 c1 = new PdfPCell(new Phrase("\n\n")) { Border = 0 };
                 c1.Colspan = 4;
                 tbl.AddCell(c1);
-                
+
                 doc.Add(tbl);
 
                 tbl = new PdfPTable(new float[] { 30f }) { WidthPercentage = 100 };
@@ -2900,7 +2901,7 @@ namespace Net.Data
                 c1.VerticalAlignment = Element.ALIGN_MIDDLE;
                 tbl.AddCell(c1);
 
-                c1 = new PdfPCell(new Phrase("Resolución Nro: "+ wResolucion + " / SUNAT", new Font(Font.HELVETICA, 8f, Font.NORMAL, BaseColor.Black)));
+                c1 = new PdfPCell(new Phrase("Resolución Nro: " + wResolucion + " / SUNAT", new Font(Font.HELVETICA, 8f, Font.NORMAL, BaseColor.Black)));
                 c1.Border = 0;
                 c1.HorizontalAlignment = Element.ALIGN_LEFT;
                 c1.VerticalAlignment = Element.ALIGN_MIDDLE;
@@ -2960,7 +2961,7 @@ namespace Net.Data
                 c1.VerticalAlignment = Element.ALIGN_MIDDLE;
                 tbl.AddCell(c1);
 
-                c1 = new PdfPCell(new Phrase("Fecha de Emisión: " + cfecha.ToShortDateString()+ " Hora: "+ cfecha.ToShortTimeString(), new Font(Font.HELVETICA, 8f, Font.NORMAL, BaseColor.Black)));
+                c1 = new PdfPCell(new Phrase("Fecha de Emisión: " + cfecha.ToShortDateString() + " Hora: " + cfecha.ToShortTimeString(), new Font(Font.HELVETICA, 8f, Font.NORMAL, BaseColor.Black)));
                 c1.Border = 0;
                 c1.HorizontalAlignment = Element.ALIGN_LEFT;
                 c1.VerticalAlignment = Element.ALIGN_MIDDLE;
@@ -2972,7 +2973,7 @@ namespace Net.Data
                 c1.VerticalAlignment = Element.ALIGN_MIDDLE;
                 tbl.AddCell(c1);
 
-                c1 = new PdfPCell(new Phrase("Estado: "+ pNombreEstado, new Font(Font.HELVETICA, 8f, Font.NORMAL, BaseColor.Black)));
+                c1 = new PdfPCell(new Phrase("Estado: " + pNombreEstado, new Font(Font.HELVETICA, 8f, Font.NORMAL, BaseColor.Black)));
                 c1.Border = 0;
                 c1.HorizontalAlignment = Element.ALIGN_LEFT;
                 c1.VerticalAlignment = Element.ALIGN_MIDDLE;
@@ -3014,13 +3015,9 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
-        
-
         #endregion
 
         #region "Consulta Servicios"
-
         public async Task<ResultadoTransaccion<string>> GetWebServicesPorCodTabla(string codTabla)
         {
             ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
@@ -3037,7 +3034,7 @@ namespace Net.Data
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@codtabla", codTabla));
-                       
+
                         await conn.OpenAsync();
                         string nombre = string.Empty;
                         vResultadoTransaccion.ResultadoDescripcion = string.Empty;
@@ -3068,58 +3065,57 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
-
         #endregion
 
-        public async Task<ResultadoTransaccion<string>> Comprobante_baja(BE_ComprobantesBaja value)
-        {
-            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+        //public async Task<ResultadoTransaccion<string>> Comprobante_baja(BE_ComprobantesBaja value)
+        //{
+        //    ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
 
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(_cnx))
-                {
-                    using (SqlCommand cmd = new SqlCommand(SP_POST_COMPROBANTE_BAJA))
-                    {
+        //    try
+        //    {
+        //        using (SqlConnection conn = new SqlConnection(_cnx))
+        //        {
+        //            using (SqlCommand cmd = new SqlCommand(SP_POST_COMPROBANTE_BAJA))
+        //            {
 
-                        cmd.Parameters.Clear();
-                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                        cmd.Parameters.Add(new SqlParameter("@cod_comprobante", value.cod_comprobante));
-                        cmd.Parameters.Add(new SqlParameter("@cod_empresa", value.cod_empresa));
-                        cmd.Parameters.Add(new SqlParameter("@cod_sistema", value.cod_sistema));
-                        cmd.Parameters.Add(new SqlParameter("@cod_comprobantee", value.cod_comprobantee));
-                        cmd.Parameters.Add(new SqlParameter("@fec_baja", value.fec_baja));
-                        cmd.Parameters.Add(new SqlParameter("@fec_emisioncomp", value.fec_emisioncomp));
-                        cmd.Parameters.Add(new SqlParameter("@dsc_motivobaja", value.dsc_motivobaja));
+        //                cmd.Parameters.Clear();
+        //                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+        //                cmd.Parameters.Add(new SqlParameter("@cod_comprobante", value.cod_comprobante));
+        //                cmd.Parameters.Add(new SqlParameter("@cod_empresa", value.cod_empresa));
+        //                cmd.Parameters.Add(new SqlParameter("@cod_sistema", value.cod_sistema));
+        //                cmd.Parameters.Add(new SqlParameter("@cod_comprobantee", value.cod_comprobantee));
+        //                cmd.Parameters.Add(new SqlParameter("@fec_baja", value.fec_baja));
+        //                cmd.Parameters.Add(new SqlParameter("@fec_emisioncomp", value.fec_emisioncomp));
+        //                cmd.Parameters.Add(new SqlParameter("@dsc_motivobaja", value.dsc_motivobaja));
 
-                        SqlParameter oParam = new SqlParameter("@ide_compbaja", SqlDbType.Int, 11)
-                        {
-                            Direction = ParameterDirection.Output
-                        };
-                        cmd.Parameters.Add(oParam);
+        //                SqlParameter oParam = new SqlParameter("@ide_compbaja", SqlDbType.Int, 11)
+        //                {
+        //                    Direction = ParameterDirection.Output
+        //                };
+        //                cmd.Parameters.Add(oParam);
 
-                        await conn.OpenAsync();
-                        await cmd.ExecuteNonQueryAsync();
+        //                await conn.OpenAsync();
+        //                await cmd.ExecuteNonQueryAsync();
 
-                        vResultadoTransaccion.IdRegistro = 0;
-                        vResultadoTransaccion.ResultadoCodigo = 0;
-                        vResultadoTransaccion.ResultadoDescripcion = "Su comprobante fue enviado De_Baja. <br>Favor consultar el estado de su solicitud (Aceptado o Rechazado).";
-                        vResultadoTransaccion.data = oParam.Value.ToString().Trim();
+        //                vResultadoTransaccion.IdRegistro = 0;
+        //                vResultadoTransaccion.ResultadoCodigo = 0;
+        //                vResultadoTransaccion.ResultadoDescripcion = "Su comprobante fue enviado De_Baja. <br>Favor consultar el estado de su solicitud (Aceptado o Rechazado).";
+        //                vResultadoTransaccion.data = oParam.Value.ToString().Trim();
 
-                    }
-                }
+        //            }
+        //        }
 
-            }
-            catch (Exception ex)
-            {
-                vResultadoTransaccion.IdRegistro = -1;
-                vResultadoTransaccion.ResultadoCodigo = -1;
-                vResultadoTransaccion.ResultadoDescripcion = "Error Comprobante al intentar actualizar sus valores" + ex.Message;
-            }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        vResultadoTransaccion.IdRegistro = -1;
+        //        vResultadoTransaccion.ResultadoCodigo = -1;
+        //        vResultadoTransaccion.ResultadoDescripcion = "Error Comprobante al intentar actualizar sus valores" + ex.Message;
+        //    }
 
-            return vResultadoTransaccion;
+        //    return vResultadoTransaccion;
 
-        }
+        //}
 
         public async Task<int> GetExisteVentaAnuladaPorCodVenta(string codVenta)
         {
@@ -3189,12 +3185,13 @@ namespace Net.Data
 
                         vResultadoTransaccion = respInsert_transac;
                         //pENEnumeradosNoEmitidos = pENEnumeradosNoEmitidos + ENNumeradosNoEmitidos("1", pTipoCompSunat, pSerieComprobanteE, pNumeroComprobanteE, pMotivoBaja)
-                        string pNumeroComprobanteE = value.cod_comprobantee.Substring(4, value.cod_comprobantee.Length-4);
-                        pENEnumeradosNoEmitidos = pENEnumeradosNoEmitidos + ENNumeradosNoEmitidos("1", value.cod_tipocompsunat, value.cod_comprobantee.Substring(0, 4), pNumeroComprobanteE, value.dsc_motivobaja);
+                        int pNumeroComprobanteE = Int32.Parse(value.cod_comprobantee.Substring(4, value.cod_comprobantee.Length - 4));
+                        value.dsc_motivobaja = "SE DIO DE BAJA " + value.cod_comprobante;
+                        pENEnumeradosNoEmitidos = pENEnumeradosNoEmitidos + ENNumeradosNoEmitidos("1", value.cod_tipocompsunat, value.cod_comprobantee.Substring(0, 4), pNumeroComprobanteE.ToString(), value.dsc_motivobaja);
                         string pENErrorComunicacion = string.Empty;
 
-                        var ObjXmlResponse = await RegistrarComunicacionBajaTCI(pFechaEmision: value.fec_emisioncomp,pFechaGenera: value.fec_baja,pIdCompBaja: value.ide_compbaja,pENEnumeradosNoEmitidos: pENEnumeradosNoEmitidos, pENErrorComunicacion:"", xUrlWebService, xRucEmisor);
-                        string xmlResponse= ObjXmlResponse.data;
+                        var ObjXmlResponse = await RegistrarComunicacionBajaTCI(pFechaEmision: value.fec_emisioncomp, pFechaGenera: value.fec_baja, pIdCompBaja: value.ide_compbaja, pENEnumeradosNoEmitidos: pENEnumeradosNoEmitidos, pENErrorComunicacion: "", xUrlWebService, xRucEmisor);
+                        string xmlResponse = ObjXmlResponse.data;
 
                         if (xmlResponse != string.Empty)
                         {
@@ -3203,31 +3200,27 @@ namespace Net.Data
 
                             string wRespuestaBajaXML = XMLDoc.selectSingleNode("soap:Envelope/soap:Body/RegistrarComunicacionBajaResponse/RegistrarComunicacionBajaResult").text;
 
+                            ComprobanteElectronicaTCIXml comprobanteElectronicaTCIXml = new ComprobanteElectronicaTCIXml();
+                            string DescripcionError = comprobanteElectronicaTCIXml.Leer_ResponseXML(xmlResponse, "<DescripcionError>", "</DescripcionError>");
+
+
                             if (wRespuestaBajaXML == "true")
                             {
-
-                                var respUpd = await ComprobanteElectronicoUpd("flg_enbaja", "E", "", null, value.cod_comprobante);
-                                //xClinica.Sp_ComprobantesElectronicos_Update "flg_enbaja", "E", "", pCodComprobantePK
+                                var respUpd = await ComprobanteElectronicoUpd_Transac("flg_enbaja", "E", "", null, value.cod_comprobante, conn, transaction);
                                 transaction.Commit();
+
                             }
                             else
                             {
 
+                                vResultadoTransaccion.ResultadoDescripcion = DescripcionError;
+                                vResultadoTransaccion.IdRegistro = -1;
                                 transaction.Rollback();
 
                             }
-
-                            //wRespuestaBajaXML = XMLDoc.selectSingleNode("soap:Envelope/soap:Body/RegistrarComunicacionBajaResponse/RegistrarComunicacionBajaResult").Text
-                            //If wRespuestaBajaXML = True Then
-                            //    RegistrarComunicadoBajoComprobante = True
-                            //    xClinica.Sp_ComprobantesElectronicos_Update "flg_enbaja", "E", "", pCodComprobantePK
-                            //    xClinica.CommitTrans
-                            //Else
-                            //    xClinica.RollbackTrans
-                            //End If
-
                         }
-                        else {
+                        else
+                        {
                             transaction.Rollback();
                         }
 
@@ -3252,12 +3245,54 @@ namespace Net.Data
 
         }
 
+        public async Task<ResultadoTransaccion<BE_VentasCabecera>> ComprobanteElectronicoUpd_Transac(string campo, string nuevovalor, string xml, Byte[] codigobarrajpg, string codigo, SqlConnection conn, SqlTransaction transaction)
+        {
+            ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(SP_POST_CLINICA_COMPROBANTE_UPDATE, conn, transaction))
+                {
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                    cmd.Parameters.Add(new SqlParameter("@campo", campo));
+                    cmd.Parameters.Add(new SqlParameter("@nuevovalor", nuevovalor));
+                    cmd.Parameters.Add(new SqlParameter("@xml", xml));
+                    cmd.Parameters.Add(new SqlParameter("@codigobarrajpg", codigobarrajpg));
+                    cmd.Parameters.Add(new SqlParameter("@codigo", codigo));
+
+                    BE_VentasCabecera response = new BE_VentasCabecera();
+
+                    await cmd.ExecuteNonQueryAsync();
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                    vResultadoTransaccion.data = response;
+
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = "Error al actualizar el archivo en la Base de Datos. Posibles errores: 1.- Ya sea porque existe el archivo en la BD. 2.- No se encuentra registrado el comprobante en la BD por eso no puede actualizar. otros:" + ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
         public string ENNumeradosNoEmitidos(
             string pItem,
             string pTipoComprobanteSunat,
             string pSerieComprobanteE,
             string pNumeroComprobanteE,
-            string pMotivoBaja) {
+            string pMotivoBaja)
+        {
 
             string TextoXML = "<ENNumeradosNoEmitidos>" +
                                "<Item>" + pItem + "</Item>" +
@@ -3278,32 +3313,33 @@ namespace Net.Data
             string pENEnumeradosNoEmitidos,
             string pENErrorComunicacion,
             string xUrlWebService,
-            string xRucEmisor) {
+            string xRucEmisor)
+        {
 
             string strUrl = xUrlWebService; //' pUrlWebServices '"http://200.106.52.10/WS_TCI/Service.asmx?wsdl";
             string strSoapAction = "http://tempuri.org/RegistrarComunicacionBaja";
 
-           
-           string Metodo =    "<?xml version= " + "\"1.0\"" + " encoding = " + "\"utf-8\"" + "?> ";
+
+            string Metodo = "<?xml version= " + "\"1.0\"" + " encoding = " + "\"utf-8\"" + "?> ";
             Metodo = Metodo + "<soap:Envelope xmlns:xsi=" + "\"http://www.w3.org/2001/XMLSchema-instance\"" + " xmlns:xsd=" + "\"http://www.w3.org/2001/XMLSchema\"" + " ";
             Metodo = Metodo + " xmlns:soap=" + "\"http://schemas.xmlsoap.org/soap/envelope/\"" + " > " +
                               "<soap:Body>" +
-                                        "<RegistrarComunicacionBaja xmlns=" + "\"http://tempuri.org/\"" + ">" + 
+                                        "<RegistrarComunicacionBaja xmlns=" + "\"http://tempuri.org/\"" + ">" +
                                             "<oGeneral>" +
                                                 "<oENNumeradosNoEmitidosCab>" +
                                                     "<FechaEmision>" + pFechaEmision.ToString("yyyy-MM-dd") + "</FechaEmision>" +
                                                     "<FechaGeneracion>" + pFechaGenera.ToString("yyyy-MM-dd") + "</FechaGeneracion>" +
                                                     "<NumeradosNoEmitidos>" + pENEnumeradosNoEmitidos + "</NumeradosNoEmitidos>" +
                                                 "</oENNumeradosNoEmitidosCab>" +
-                                                "<oENEmpresa>"+
-                                                    "<Ruc>" + xRucEmisor + "</Ruc>"+
+                                                "<oENEmpresa>" +
+                                                    "<Ruc>" + xRucEmisor + "</Ruc>" +
                                                 "</oENEmpresa > " +
                                             "</oGeneral>" +
                                             "<Cadena/>" +
                                             "<ListaError/>" +
-                                            "<IdCliente>" + pIdCompBaja.ToString() + "</IdCliente>"+
-                                        "</RegistrarComunicacionBaja>" + 
-                                    "</soap:Body>" + 
+                                            "<IdCliente>" + pIdCompBaja.ToString() + "</IdCliente>" +
+                                        "</RegistrarComunicacionBaja>" +
+                                    "</soap:Body>" +
                                 "</soap:Envelope>";
 
 
@@ -3317,7 +3353,8 @@ namespace Net.Data
                 objRespuestaTransaccion.ResultadoCodigo = 0;
                 objRespuestaTransaccion.data = xmlResponse.xml;
             }
-            else {
+            else
+            {
                 objRespuestaTransaccion.IdRegistro = 0;
                 objRespuestaTransaccion.ResultadoCodigo = 0;
                 objRespuestaTransaccion.data = "Metodo_ConsultarRespuestaComprobante => Error al invocar el webservice";
@@ -3355,7 +3392,7 @@ namespace Net.Data
 
                     await cmd.ExecuteNonQueryAsync();
 
-                    value.ide_compbaja= (int)oParam.Value;
+                    value.ide_compbaja = (int)oParam.Value;
                     vResultadoTransaccion.IdRegistro = 0;
                     vResultadoTransaccion.ResultadoCodigo = 0;
                     vResultadoTransaccion.ResultadoDescripcion = "Su comprobante fue enviado De_Baja. <br>Favor consultar el estado de su solicitud (Aceptado o Rechazado).";
@@ -3375,7 +3412,7 @@ namespace Net.Data
 
         }
 
-        private long Metodo_Registrar_FB(string pCodcomprobante, string maquina, int idusuario, string pTipoCodigo_BarraHash, string pTipoOtorgamiento, ref string pXML, SqlConnection conn, SqlTransaction trans)
+        private long Metodo_Registrar_FB(string pCodcomprobante, string pTipoCodigo_BarraHash, string pTipoOtorgamiento, string maquina, int idusuario, ref string pXML, SqlConnection conn, SqlTransaction trans)
         {
             pXML = string.Empty;
             string wTipoComp_TCI = "";

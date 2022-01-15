@@ -5642,7 +5642,7 @@
             <param name="nombres"></param>
             <returns></returns>
         </member>
-        <member name="M:Net.Business.Services.Controllers.ConveniosController.GetConvenioslistaprecio(System.Int32,System.String,System.String,System.String,System.String,System.String,System.String)">
+        <member name="M:Net.Business.Services.Controllers.ConveniosController.GetConvenioslistaprecio(System.Int32,System.Int32,System.String,System.String,System.String,System.String,System.String,System.String)">
             <summary>
             Obtiene la lista de contatantes de la tabla Cia
             </summary>

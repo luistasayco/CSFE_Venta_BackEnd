@@ -21,5 +21,8 @@
         public string desalmacen { get; set; }
         public string tipopaciente { get; set; }
         public string destipopaciente { get; set; }
+        public bool manbtchnum { get; set; }
+        public bool binactivat { get; set; }
+        public decimal stockalmacen { get; set; }
     }
 }

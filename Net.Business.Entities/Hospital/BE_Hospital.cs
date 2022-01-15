@@ -72,7 +72,7 @@ namespace Net.Business.Entities
         public string codmedico { get; set; }
         public string tipomedico { get; set; }
         public string titular { get; set; }
-        public int quirofano { get; set; }
+        public string quirofano { get; set; }
         public string codcia { get; set; }
         public string quiencreoregistro { get; set; }
         public string quienmodificoregistro { get; set; }

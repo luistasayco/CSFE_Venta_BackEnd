@@ -50,6 +50,9 @@ namespace Net.Business.DTO
         public string usuario { get; set; }
         public bool flgsinstock { get; set; }
         public int idborrador { get; set; }
+        public int idparaquien { get; set; }
+        public string codclienteparaquien { get; set; }
+        public string cardcodeparaquien { get; set; }
         //public string correocliente { get; set; }
         public List<BE_VentasDetalle> listaVentaDetalle { get; set; }
         public List<BE_VentasDetalleUbicacion> listVentasDetalleUbicacion { get; set; }
@@ -99,7 +102,10 @@ namespace Net.Business.DTO
                 idborrador = this.idborrador,
                 listaVentaDetalle = this.listaVentaDetalle,
                 listVentasDetalleUbicacion = this.listVentasDetalleUbicacion,
-                RegIdUsuario = this.RegIdUsuario
+                RegIdUsuario = this.RegIdUsuario,
+                idparaquien = this.idparaquien,
+                codclienteparaquien = this.codclienteparaquien,
+                cardcodeparaquien = this.cardcodeparaquien
             };
         }
 

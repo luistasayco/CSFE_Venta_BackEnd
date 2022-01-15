@@ -13,6 +13,7 @@ namespace Net.Business.Entities
         public string codcentro { get; set; }
         public string codalmacen { get; set; }
         public string codmedico { get; set; }
+        public string nommedico { get; set; }
         public string codatencion { get; set; }
         public string cama { get; set; }
         public string codpoliza { get; set; }

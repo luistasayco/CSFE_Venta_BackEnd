@@ -118,23 +118,29 @@ namespace Net.Business.DTO
         public string cardcode { get; set; }
         [DataMember, XmlAttribute]
         public bool  flg_gratuito { get; set; }
+        [DataMember, XmlIgnore]
+        public bool flgelectronico { get; set; }
         /// <summary>
         /// Devuelve el XML
         /// </summary>
         /// <returns></returns>
-        public BE_VentaXml RetornaModelo()
+        public BE_VentaDevolucionXml RetornaModelo()
         {
 
-            var entiDom = new BE_VentaXml();
+            var entiDom = new BE_VentaDevolucionXml();
             var ser = new Serializador();
             var ms = new MemoryStream();
             ser.SerializarXml(this, ms);
             entiDom.XmlData = Encoding.UTF8.GetString(ms.ToArray());
             ms.Dispose();
 
-            return new BE_VentaXml
+            return new BE_VentaDevolucionXml
             {
                 XmlData = entiDom.XmlData,
+                nombremaquina = this.nombremaquina,
+                codcomprobante = this.codcomprobante,
+                tipodevolucion = this.tipodevolucion,
+                flgelectronico = this.flgelectronico,
                 RegIdUsuario = this.RegIdUsuario
             };
         }

@@ -23,7 +23,7 @@ namespace Net.Data
         const string SP_GET_LISTA_CLIENTE_POR_FILTRO = DB_ESQUEMA + "VEN_ListaClientePorFiltro";
         const string SP_GET_LISTA_CLIENTE_LOGISTICA_POR_FILTRO = DB_ESQUEMA + "VEN_ListaClienteLogisticaPorFiltro";
         const string SP_GET_LISTA_CLIENTE_LOGISTICA_POR_CLIENTE = DB_ESQUEMA + "VEN_ListaClienteLogisticaPorCliente";
-
+        const string SP_GET_LISTA_CLIENTE_POR_CODIGO = DB_ESQUEMA + "VEN_ClientePorCodCliente";
         const string SP_INSERT = DB_ESQUEMA + "VEN_ClienteIns";
 
         const string SP_UPDATE = DB_ESQUEMA + "VEN_ClienteUpd";
@@ -135,7 +135,53 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
+        public async Task<ResultadoTransaccion<BE_Cliente>> GetCodigoClientePorCodigo(string codigoCliente)
+        {
+            ResultadoTransaccion<BE_Cliente> vResultadoTransaccion = new ResultadoTransaccion<BE_Cliente>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_LISTA_CLIENTE_POR_CODIGO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codcliente", codigoCliente));
+
+                        conn.Open();
+
+                        var response = new BE_Cliente();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = context.Convert<BE_Cliente>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                        vResultadoTransaccion.data = response;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
         public async Task<ResultadoTransaccion<BE_ClienteLogistica>> GetListDataClienteLogisticaPorFiltro(string ruc, string nombre)
         {
             ResultadoTransaccion<BE_ClienteLogistica> vResultadoTransaccion = new ResultadoTransaccion<BE_ClienteLogistica>();

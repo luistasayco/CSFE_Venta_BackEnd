@@ -29,12 +29,13 @@ namespace Net.Business.DTO
         public string correo { get; set; }
         public string codTipoAfectacionIgv { get; set; }
         public string codTipoCliente { get; set; }
+        public string tipoCliente { get; set; }
         public virtual List<DtoComprobanteTipoPagoRegistrar> tipoPagos { get; set; }
         public long idePagosBot { get; set; }
         public bool flgPagoUsado { get; set; }
 
         //public string serie { get; set; }
-        //public int gratuito { get; set; }
+        public int gratuito { get; set; }
 
         //extra
         public bool wFlg_electronico { get; set; } //para sacar la ruta del webservices
@@ -42,7 +43,6 @@ namespace Net.Business.DTO
         public int flg_otorgar { get; set; }
         //public string tipoCodigo { get; set; }
         public int tipoCodigoBarrahash { get; set; }
-        public bool flg_gratuito { get; set; }
 
         public BE_Comprobante RetornaComprobanteCabecera() {
 
@@ -60,8 +60,9 @@ namespace Net.Business.DTO
             obj.correo = correo;
             obj.tipdocidentidad = tipdocidentidad;
             obj.docidentidad = numdocumentoIdentidad;
-            obj.flg_gratuito = flg_gratuito;
-            obj.flg_electronico = wFlg_electronico;
+            obj.codtipocliente = codTipoCliente;
+            obj.nombretipocliente = tipoCliente;
+            obj.flg_gratuito =  (gratuito==1)? true:false;
 
             decimal li_importe = 0;
             decimal li_valor_mn = 0;

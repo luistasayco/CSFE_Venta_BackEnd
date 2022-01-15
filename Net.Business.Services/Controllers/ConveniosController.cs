@@ -44,10 +44,10 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetConvenioslistaprecio([FromQuery] int pricelist, string codtipocliente, string codpaciente, string codaseguradora, string codcliente,string fechareg,string tmovimiento)
+        public async Task<IActionResult> GetConvenioslistaprecio([FromQuery] int idconvenio, int pricelist, string codtipocliente, string codpaciente, string codaseguradora, string codcliente,string fechareg,string tmovimiento)
         {
 
-            var objectGetAll = await _repository.Convenios.GetConvenioslistaprecio(pricelist, codtipocliente, codpaciente, codaseguradora, codcliente, fechareg, tmovimiento);
+            var objectGetAll = await _repository.Convenios.GetConvenioslistaprecio(idconvenio,pricelist, codtipocliente, codpaciente, codaseguradora, codcliente, fechareg, tmovimiento);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {
@@ -55,6 +55,7 @@ namespace Net.Business.Services.Controllers
             }
 
             return Ok(objectGetAll.dataList);
+
         }
 
 
@@ -90,8 +91,6 @@ namespace Net.Business.Services.Controllers
                 {
                     return BadRequest(ModelState);
                 }
-
-                value.codtipocliente = "01";
 
                 var response = await _repository.Convenios.Registrar(value.RetornaConveniosListaPrecio());
 
@@ -152,7 +151,7 @@ namespace Net.Business.Services.Controllers
                     return BadRequest(ModelState);
                 }
 
-                var response = await _repository.Convenios.Eliminar(value.idconvenio);
+                var response = await _repository.Convenios.Eliminar(value.idconvenio, value.idUsuario);
 
                 if (response.ResultadoCodigo == -1)
                 {
@@ -168,6 +167,37 @@ namespace Net.Business.Services.Controllers
                 return BadRequest($"Hubo un error al eliminar : { ex.Message.ToString() }");
             }
         }
+
+        [HttpPut]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Modificar([FromBody] DtoConveniosListaPrecioModificar value)
+        {
+            try
+            {
+                if (value.idconvenio == 0)
+                {
+                    return BadRequest("");
+                }
+
+                var response = await _repository.Convenios.Modificar(value.RetornaConveniosListaPrecio());
+
+                if (response.ResultadoCodigo == -1)
+                {
+                    return BadRequest(response);
+                }
+                else
+                {
+                    return Ok(response);
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error al eliminar : { ex.Message.ToString() }");
+            }
+        }
+
+
 
     }
 }

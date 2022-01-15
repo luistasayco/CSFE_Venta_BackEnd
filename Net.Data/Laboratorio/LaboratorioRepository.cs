@@ -53,7 +53,7 @@ namespace Net.Data
 
                 cadena = cadena + campos + filter;
 
-                List<BE_Laboratorio> data = await _connectServiceLayer.GetBaseAsync<BE_Laboratorio>(cadena,50);
+                List<BE_Laboratorio> data = await _connectServiceLayer.GetBaseAsync<BE_Laboratorio>(cadena,200);
 
                 vResultadoTransaccion.IdRegistro = 0;
                 vResultadoTransaccion.ResultadoCodigo = 0;

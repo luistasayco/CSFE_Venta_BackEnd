@@ -26,7 +26,7 @@ namespace Net.Business.DTO
                 idconvenio = this.idconvenio,
                 codalmacen = this.codalmacen,
                 tipomovimiento = this.tipomovimiento,
-                codtipocliente = this.codtipocliente,
+                codtipocliente = codtipocliente,
                 codcliente = this.codcliente,
                 codpaciente = this.codpaciente,
                 codaseguradora = this.codaseguradora,

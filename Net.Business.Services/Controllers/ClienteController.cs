@@ -84,6 +84,21 @@ namespace Net.Business.Services.Controllers
 
             return Ok(objectGetAll.dataList);
         }
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCodigoClientePorCodigo([FromQuery] string codCliente)
+        {
+
+            var objectGetAll = await _repository.Cliente.GetCodigoClientePorCodigo(codCliente);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.data);
+        }
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]

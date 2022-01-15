@@ -101,7 +101,7 @@ namespace Net.Data
                         foreach (BE_SeperacionCuenta item in seperacionCuentasDevolucion)
                         {
                             // Realizando Devoluciones
-                            ResultadoTransaccion<bool> resultadoTransaccionVenta = await ventaRepository.DevolucionVentaSAP(conn, transaction, item.codventa, (int)value.RegIdUsuario);
+                            ResultadoTransaccion<bool> resultadoTransaccionVenta = await ventaRepository.DevolucionVentaSAPBase(conn, transaction, item.codventa, (int)value.RegIdUsuario);
 
                             if (resultadoTransaccionVenta.IdRegistro == -1)
                             {

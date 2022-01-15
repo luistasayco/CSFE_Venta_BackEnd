@@ -93,10 +93,10 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetProductoPorCodigo([FromQuery] string codalmacen, string codproducto, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
+        public async Task<IActionResult> GetProductoPorCodigo([FromQuery] string codalmacen, string codproducto, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion, bool constock)
         {
 
-            var objectGetAll = await _repository.Producto.GetProductoPorCodigo(codalmacen, codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
+            var objectGetAll = await _repository.Producto.GetProductoPorCodigo(codalmacen, codproducto, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion, constock);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {
@@ -161,6 +161,22 @@ namespace Net.Business.Services.Controllers
         {
 
             var objectGetAll = await _repository.Producto.GetListDetalleProductoPorIdBorrador(idborrador, codalmacen, codaseguradora, codcia, tipomovimiento, codtipocliente, codcliente, codpaciente, tipoatencion);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetProductoPorCodigoBarra([FromQuery] string codigoAlmacen, string codigoBarra)
+        {
+
+            var objectGetAll = await _repository.Producto.GetProductoPorCodigoBarra(codigoAlmacen, codigoBarra);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {

@@ -11,7 +11,7 @@ namespace Net.Business.Entities
         public string nombre { get; set; }
         //public string valor { get; set; }
         public bool bvalor { get; set; }
-        public DateTime fec_registro { get; set; }
+        public DateTime? fec_registro { get; set; }
 
     }
 }
