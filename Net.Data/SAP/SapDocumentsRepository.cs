@@ -65,7 +65,22 @@ namespace Net.Data
                     TaxDate = value.fechaemision,
                     Comments = value.observacion,
                     DocObjectCode = "oDeliveryNotes",
-                    DocumentLines = new List<SapDocumentLines>()
+                    DocumentLines = new List<SapDocumentLines>(),
+                    //Campos de Usuario
+                    U_SYP_EXTERNO = value.tipomovimiento + value.codventa,
+                    Reference2 = value.tipomovimiento + value.codventa,
+                    U_SYP_MDTS = "TSI",
+                    U_SYP_MDMT = "01",
+                    U_SYP_TPOSALME = value.tipomovimiento,
+                    U_SYP_ALMACENERO = value.usuario,
+                    U_SYP_SOLICITANTE = value.usuario,
+                    U_SYP_CS_PRESOTOR = value.codpresotor,
+                    U_SYP_CS_OA = value.codatencion,
+                    U_SYP_CS_DNI_PAC = value.docidentidad,
+                    U_SYP_CS_NOM_PAC = value.nombre,
+                    U_SYP_CS_PAC_HC = value.codpaciente,
+                    U_SYP_CS_MOV_ORIGEN = value.codventadevolucion,
+                    U_SBA_ORIG = "SBA"
                 };
 
                 foreach (BE_VentasDetalle item in value.listaVentaDetalle)
@@ -83,6 +98,7 @@ namespace Net.Data
                         CostingCode2 = item.CostingCode2,
                         CostingCode3 = item.CostingCode3,
                         CostingCode4 = item.CostingCode4,
+                        U_SYP_EXT_LINEA = item.coddetalle,
                         BatchNumbers = new List<SapBatchNumbers>(),
                         DocumentLinesBinAllocations = new List<SapBinAllocations>()
                     };
@@ -259,7 +275,22 @@ namespace Net.Data
                     TaxDate = value.fechaemision,
                     Comments = value.observacion,
                     DocObjectCode = "oReturns",
-                    DocumentLines = new List<SapDocumentLinesBase>()
+                    DocumentLines = new List<SapDocumentLinesBase>(),
+                    //Campos de Usuario
+                    U_SYP_EXTERNO = value.tipomovimiento + value.codventa,
+                    Reference2 = value.tipomovimiento + value.codventa,
+                    //U_SYP_MDTS = "TSI",
+                    U_SYP_MDMT = "24",
+                    U_SYP_TPOSALME = value.tipomovimiento,
+                    U_SYP_ALMACENERO = value.usuario,
+                    U_SYP_SOLICITANTE = value.usuario,
+                    U_SYP_CS_PRESOTOR = value.codpresotor,
+                    U_SYP_CS_OA = value.codatencion,
+                    U_SYP_CS_DNI_PAC = value.docidentidad,
+                    U_SYP_CS_NOM_PAC = value.nombre,
+                    U_SYP_CS_PAC_HC = value.codpaciente,
+                    U_SYP_CS_MOV_ORIGEN = value.codventadevolucion,
+                    U_SBA_ORIG = "SBA"
                 };
 
                 foreach (BE_VentasDetalle item in value.listaVentaDetalle)
@@ -283,6 +314,7 @@ namespace Net.Data
                         BaseType = 15,
                         BaseEntry = item.baseentrydevolucion,
                         BaseLine = item.baselinedevolucion,
+                        U_SYP_EXT_LINEA = item.coddetalle,
                         BatchNumbers = new List<SapBatchNumbers>(),
                         DocumentLinesBinAllocations = new List<SapBinAllocations>()
                     };

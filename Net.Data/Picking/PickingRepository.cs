@@ -248,7 +248,7 @@ namespace Net.Data
                             {
                                 Name = string.Format("APU-RESERVA-ORDEN-{0}", item.codusuarioapu),
                                 U_ITEMCODE = item.codproducto,
-                                U_BINABSENTRY = item.ubicacion,
+                                U_BINABSENTRY = item.ubicacion == null ? 0: (int)item.ubicacion,
                                 U_QUANTITY = item.cantidad,
                                 U_IDEXTERNO = string.Format("APU-{0}", item.codusuarioapu),
                                 U_BATCHNUM = item.lote,

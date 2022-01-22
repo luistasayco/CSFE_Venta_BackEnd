@@ -13,7 +13,7 @@ namespace Net.Business.DTO
         public string lote { get; set; }
         public DateTime? fechavencimiento { get; set; }
         public string codalmacen { get; set; }
-        public int ubicacion { get; set; }
+        public int? ubicacion { get; set; }
         public string codusuarioapu { get; set; }
         public int estado { get; set; }
 

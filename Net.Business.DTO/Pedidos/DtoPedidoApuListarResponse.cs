@@ -22,7 +22,9 @@ namespace Net.Business.DTO
                     fechaatencion = value.fechaatencion,
                     codtipopedido = value.codtipopedido,
                     tipopedido = value.tipopedido,
-                    key = value.key
+                    key = value.key,
+                    codalmacen = value.codalmacen,
+                    nomalmacen = value.nomalmacen
                 }
             );
 

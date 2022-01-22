@@ -15,6 +15,7 @@ namespace Net.Business.Entities
         public string CostingCode2 { get; set; }
         public string CostingCode3 { get; set; }
         public string CostingCode4 { get; set; }
+        public string U_SYP_EXT_LINEA { get; set; }
         public List<SapBatchNumbers> BatchNumbers { get; set; }
         public List<SapBinAllocations> DocumentLinesBinAllocations { get; set; }
     }
@@ -36,6 +37,7 @@ namespace Net.Business.Entities
         public int? BaseType { get; set; }
         public int? BaseEntry { get; set; }
         public int? BaseLine { get; set; }
+        public string U_SYP_EXT_LINEA { get; set; }
         public List<SapBatchNumbers> BatchNumbers { get; set; }
         public List<SapBinAllocations> DocumentLinesBinAllocations { get; set; }
     }

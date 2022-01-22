@@ -145,7 +145,7 @@ namespace Net.Data
                                 return vResultadoTransaccion;
                             }
 
-                            response.porcentajeplan = (decimal)planes.data.PorcentajeDescuento;
+                            response.porcentajeplan = planes.data.PorcentajeDescuento == null ? 0 : (decimal)planes.data.PorcentajeDescuento;
 
                         }
 

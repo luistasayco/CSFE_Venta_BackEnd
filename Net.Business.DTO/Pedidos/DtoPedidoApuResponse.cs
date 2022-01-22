@@ -12,5 +12,7 @@ namespace Net.Business.DTO
         public string codtipopedido { get; set; }
         public string tipopedido { get; set; }
         public string key { get; set; }
+        public string codalmacen { get; set; }
+        public string nomalmacen { get; set; }
     }
 }

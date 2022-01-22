@@ -41,7 +41,7 @@ namespace Net.Data
         const string SP_GET_VENTA_CABECERA_BY_CODVENTA = DB_ESQUEMA + "VEN_VentasCabecera_Consulta";
         const string SP_GET_VENTA_DETALLE_BY_CODVENTA = DB_ESQUEMA + "VEN_VentasDetallePorCodventaGet";
         //--------
-        const string SP_GET_RUC_CONSULTAV2_BY_FILTRO = DB_ESQUEMA + "Fa_Ruc_Consultav2";
+        const string SP_GET_RUC_CONSULTAV2_BY_FILTRO = DB_ESQUEMA + "VEN_Ruc_Consultav2";
         //const string SP_GET_MDSYN_PAGOS_CONSULTA_BY_FILTRO = DB_ESQUEMA + "Sp_MdsynPagos_Consulta";
         const string SP_GET_MDSYN_PAGOS_CONSULTA_BY_FILTRO = DB_ESQUEMA + "VEN_MdsynPagos_Consulta";
         //const string SP_GET_LIMITE_CONSUMO_PERSONAL_BY_CODPERSONAL = DB_ESQUEMA + "Sp_LimiteConsumoPersonal";
@@ -154,6 +154,10 @@ namespace Net.Data
                                 response.flg_gratuito = ((reader["flg_gratuito"]) is DBNull) ? false : (bool)reader["flg_gratuito"];
                                 response.strTienedevolucion = ((reader["tienedevolucion"]) is DBNull) ? string.Empty : reader["tienedevolucion"].ToString();
                                 response.tipomovimiento = ((reader["tipomovimiento"]) is DBNull) ? string.Empty : (string)reader["tipomovimiento"];
+
+                                response.idparaquien = ((reader["idparaquien"]) is DBNull) ? 0 : (int)reader["idparaquien"];
+                                response.codclienteparaquien = ((reader["codclienteparaquien"]) is DBNull) ? string.Empty : (string)reader["codclienteparaquien"];
+                                response.cardcodeparaquien = ((reader["cardcodeparaquien"]) is DBNull) ? string.Empty : (string)reader["cardcodeparaquien"];
 
                             }
                         }
@@ -342,7 +346,7 @@ namespace Net.Data
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(_cnxClinica))
+                using (SqlConnection conn = new SqlConnection(_cnx))
                 {
                     using (SqlCommand cmd = new SqlCommand(SP_GET_RUC_CONSULTAV2_BY_FILTRO, conn))
                     {

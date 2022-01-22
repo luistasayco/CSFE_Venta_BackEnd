@@ -10,5 +10,6 @@
         public decimal igv { get; set; }
         public decimal cantidadpicking { get; set; }
         public bool binactivat { get; set; }
+        public string codalmacen { get; set; }
     }
 }
