@@ -79,6 +79,54 @@ namespace Net.Data
 
         }
 
+        public async Task<ResultadoTransaccion<BE_PersonalClinica>> GetListPersonalClinicaPorCodigo(string codpersonal)
+        {
+            ResultadoTransaccion<BE_PersonalClinica> vResultadoTransaccion = new ResultadoTransaccion<BE_PersonalClinica>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnxLogistica))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@buscar", codpersonal));
+                        cmd.Parameters.Add(new SqlParameter("@key", 1));
+                        cmd.Parameters.Add(new SqlParameter("@numerolineas", 1));
+                        cmd.Parameters.Add(new SqlParameter("@orden", 6));
+
+                        var response = new List<BE_PersonalClinica>();
+
+                        conn.Open();
+
+                        using (IDataReader reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_PersonalClinica>)context.ConvertTo<BE_PersonalClinica>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
         public async Task<ResultadoTransaccion<BE_PersonalLimiteConsumo>> GetListLimiteConsumoPorPersonal(string codpersonal)
         {
             ResultadoTransaccion<BE_PersonalLimiteConsumo> vResultadoTransaccion = new ResultadoTransaccion<BE_PersonalLimiteConsumo>();

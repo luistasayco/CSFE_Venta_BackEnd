@@ -5,5 +5,6 @@
         public string codventa { get; set; }
         public string codpresotor { get; set; }
 
+        public string codcomprobanteNotaCredito { get; set; }
     }
 }

@@ -51,6 +51,7 @@ namespace Net.Business.DTO
         public bool flgsinstock { get; set; }
         public int idborrador { get; set; }
         public int idparaquien { get; set; }
+        public int ide_receta { get; set; }
         public string codclienteparaquien { get; set; }
         public string cardcodeparaquien { get; set; }
         //public string correocliente { get; set; }
@@ -105,7 +106,8 @@ namespace Net.Business.DTO
                 RegIdUsuario = this.RegIdUsuario,
                 idparaquien = this.idparaquien,
                 codclienteparaquien = this.codclienteparaquien,
-                cardcodeparaquien = this.cardcodeparaquien
+                cardcodeparaquien = this.cardcodeparaquien,
+                ide_receta = this.ide_receta
             };
         }
 

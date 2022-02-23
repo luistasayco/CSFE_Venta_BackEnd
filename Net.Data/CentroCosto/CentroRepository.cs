@@ -28,7 +28,7 @@ namespace Net.Data
             _cnx = configuration.GetConnectionString("cnnSqlLogistica");
         }
 
-        public async Task<ResultadoTransaccion<BE_Centro>> GetListCentroContains(string nombre)
+        public async Task<ResultadoTransaccion<BE_Centro>> GetListCentroContains(string nombre, string codigo)
         {
 
             ResultadoTransaccion<BE_Centro> vResultadoTransaccion = new ResultadoTransaccion<BE_Centro>();
@@ -45,6 +45,7 @@ namespace Net.Data
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@nombre", nombre));
+                        cmd.Parameters.Add(new SqlParameter("@codigo", codigo));
 
                         var response = new List<BE_Centro>();
 

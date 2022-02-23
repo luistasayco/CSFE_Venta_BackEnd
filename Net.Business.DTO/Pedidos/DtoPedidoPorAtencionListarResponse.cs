@@ -17,7 +17,8 @@ namespace Net.Business.DTO
                     codpedido = value.codpedido,
                     fechaatencion = value.fechaatencion,
                     estado = value.estado,
-                    listado = value.listado
+                    listado = value.listado,
+                    tipomovimiento = value.tipomovimiento
                 }
             );
 

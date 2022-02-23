@@ -8,7 +8,7 @@ namespace Net.Data
 {
     public interface IVentaRepository : IRepositoryBase<BE_VentasCabecera>
     {
-        Task<ResultadoTransaccion<BE_VentasCabecera>> GetAll(string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin);
+        Task<ResultadoTransaccion<BE_VentasCabecera>> GetAll(string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin, string codatencion);
         Task<ResultadoTransaccion<BE_VentasCabecera>> GetAllSinStock(string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin);
         Task<ResultadoTransaccion<BE_VentasCabecera>> GetVentaPorCodVenta(string codventa);
         Task<ResultadoTransaccion<BE_VentasDetalle>> GetVentaDetallePorCodVenta(string codventa);

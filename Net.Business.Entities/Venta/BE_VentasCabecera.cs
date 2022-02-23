@@ -253,5 +253,19 @@ namespace Net.Business.Entities
         public string codclienteparaquien { get; set; }
         [DataMember, XmlAttribute]
         public string cardcodeparaquien { get; set; }
+        [DataMember, XmlIgnore]
+        public int ide_receta { get; set; }
+
+        //Datos de Factura
+        [DataMember, XmlIgnore]
+        public string anombredecomprobante { get; set; }
+        [DataMember, XmlIgnore]
+        public string ruccomprobante { get; set; }
+        [DataMember, XmlIgnore]
+        public string direccioncomprobante { get; set; }
+        [DataMember, XmlIgnore]
+        public string docidentidadcomprobante { get; set; }
+        [DataMember, XmlIgnore]
+        public string nombretipdocidentidadcomprobante { get; set; }
     }
 }

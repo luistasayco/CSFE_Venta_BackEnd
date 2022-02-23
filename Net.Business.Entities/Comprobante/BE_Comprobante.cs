@@ -55,6 +55,14 @@ namespace Net.Business.Entities
         public string nombreplan { get; set; }
         public string nombretipdocidentidad { get; set; }
         public string correo { get; set; }
-        public string tipoafectacionigv { get; set; }													 
+        public string tipoafectacionigv { get; set; }
+        public string usuario { get; set; }
+        public bool flg_credito { get; set; }
+    }
+
+    public class BE_ComprobanteGenerar
+    {
+        public string codcomprobante { get; set; }
+        public string correlativo { get; set; }
     }
 }

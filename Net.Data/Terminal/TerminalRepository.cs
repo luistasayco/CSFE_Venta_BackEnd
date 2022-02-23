@@ -22,7 +22,7 @@ namespace Net.Data
 
         const string DB_ESQUEMA = "";
         const string SP_GET_TERMINAL_CONSULTAR = DB_ESQUEMA + "Sp_Terminal_Consulta";
-
+        const string SP_GET_TERMINAL_GET_PARAMETRO = DB_ESQUEMA + "VEN_Terminal_GetParametros";
         public TerminalRepository(IHttpClientFactory clientFactory, IConnectionSQL context, IConfiguration configuration)
             : base(context)
         {
@@ -82,7 +82,56 @@ namespace Net.Data
 
         }
 
+        public async Task<ResultadoTransaccion<BE_Terminal>> GetTerminalPorParametros(string numTerminal)
+        {
+            ResultadoTransaccion<BE_Terminal> vResultadoTransaccion = new ResultadoTransaccion<BE_Terminal>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_TERMINAL_GET_PARAMETRO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@numTerminal", numTerminal));
+
+                        BE_Terminal response = new BE_Terminal();
+                        List<BE_Terminal> lista = new List<BE_Terminal>();
+
+                        await conn.OpenAsync();
+                        await cmd.ExecuteNonQueryAsync();
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                response = new BE_Terminal();
+                                response.codterminal = ((reader["codterminal"]) is DBNull) ? string.Empty : (string)reader["codterminal"];
+                                response.numeroterminal = ((reader["numeroterminal"]) is DBNull) ? string.Empty : (string)reader["numeroterminal"];
+                                lista.Add(response);
+                            }
+                        }
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                        vResultadoTransaccion.dataList = lista;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
 
     }
 }

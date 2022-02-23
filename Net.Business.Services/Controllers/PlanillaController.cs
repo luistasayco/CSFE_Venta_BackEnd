@@ -531,5 +531,31 @@ namespace Net.Business.Services.Controllers
             }
         }
 
+        [HttpGet("{numeroplanilla}", Name = "GenerarReportePlanillaPrint")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> GenerarReportePlanillaPrint(string numeroplanilla)
+        {
+            var objectGetById = await _repository.Planilla.GenerarReportePlanillaPrint(numeroplanilla);
+
+            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", numeroplanilla + ".pdf");
+
+            return pdf;
+        }
+
+        [HttpGet("{numeroplanilla}", Name = "GenerarReporteDetallePlanillaPrint")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> GenerarReporteDetallePlanillaPrint(string numeroplanilla)
+        {
+            var objectGetById = await _repository.Planilla.GenerarReporteDetallePlanillaPrint(numeroplanilla);
+
+            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", numeroplanilla + ".pdf");
+
+            return pdf;
+        }
+
     }
 }

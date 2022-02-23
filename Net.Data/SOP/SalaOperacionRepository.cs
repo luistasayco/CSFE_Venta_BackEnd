@@ -26,10 +26,14 @@ namespace Net.Data
         const string SP_GET = DB_ESQUEMA + "VEN_ListaSalaOperacionPorFiltro";
         const string SP_GET_ROL = DB_ESQUEMA + "Sp_RolSalaOperaciones3_Consulta";
         const string SP_INSERT = DB_ESQUEMA + "VEN_SalaOperacionXmlIns";
+        const string SP_UPDATE = DB_ESQUEMA + "VEN_SalaOperacionXmlUpd";
         const string SP_UPDATE_ROL = DB_ESQUEMA + "VEN_SalaOperacionUpd";
         const string SP_DELETE = DB_ESQUEMA + "VEN_SalaOperacionDel";
         const string SP_ESTADO = DB_ESQUEMA + "VEN_SalaOperacionEstadoUpd";
         const string SP_GET_DETALLE = DB_ESQUEMA + "VEN_ListaSalaOperacionDetallePorId";
+        const string SP_GET_POR_ID = DB_ESQUEMA + "VEN_SalaOperacionPorId";
+        const string SP_GET_POR_DETALLE_ID = DB_ESQUEMA + "VEN_SalaOperacionDetallePorId";
+        const string SP_GET_POR_DETALLE_LOTE_ID = DB_ESQUEMA + "VEN_SalaOperacionDetalleLotePorId";
         const string SP_GET_DETALLE_RESERVA = DB_ESQUEMA + "VEN_ListaDetalleReservaIdBorrador";
         const string SP_GET_DETALLE_LOTE_UBI = DB_ESQUEMA + "VEN_ListaSOPDetalleLotePorIdBorradorDetalleGet";
 
@@ -181,6 +185,179 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
+
+        public async Task<ResultadoTransaccion<BE_SalaOperacion>> GetSalaOperacionPorId(int idborrador)
+        {
+            ResultadoTransaccion<BE_SalaOperacion> vResultadoTransaccion = new ResultadoTransaccion<BE_SalaOperacion>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_POR_ID, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@idborrador", idborrador));
+
+                        var response = new BE_SalaOperacion();
+
+                        List<BE_SalaOperacionDetalleLote> salaOperacionDetalleLotes = new List<BE_SalaOperacionDetalleLote>();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (BE_SalaOperacion)context.Convert<BE_SalaOperacion>(reader);
+
+                            ResultadoTransaccion<BE_SalaOperacionDetalle> resultadoTransaccionDetalle = await GetSalaOperacionDetallePorId(idborrador);
+
+                            if (resultadoTransaccionDetalle.ResultadoCodigo == -1)
+                            {
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionDetalle.ResultadoDescripcion;
+                                return vResultadoTransaccion;
+                            }
+
+                            response.SalaOperacionDetalle = (List<BE_SalaOperacionDetalle>)resultadoTransaccionDetalle.dataList;
+
+                            ResultadoTransaccion<BE_SalaOperacionDetalleLote> resultadoTransaccionDetalleLote = await GetSalaOperacionDetalleLotePorId(idborrador);
+
+                            if (resultadoTransaccionDetalleLote.ResultadoCodigo == -1)
+                            {
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionDetalleLote.ResultadoDescripcion;
+                                return vResultadoTransaccion;
+                            }
+
+                            salaOperacionDetalleLotes = (List<BE_SalaOperacionDetalleLote>)resultadoTransaccionDetalleLote.dataList;
+
+                            foreach (BE_SalaOperacionDetalle item in response.SalaOperacionDetalle)
+                            {
+                                var lotePorDetalle = salaOperacionDetalleLotes.FindAll(xFila => xFila.idborradordetalle == item.idborradordetalle);
+
+                                response.SalaOperacionDetalle.Find(xFila => xFila.idborradordetalle == item.idborradordetalle).listaSalaOperacionDetalleLote = lotePorDetalle;
+                            }
+
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                        vResultadoTransaccion.data = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        public async Task<ResultadoTransaccion<BE_SalaOperacionDetalle>> GetSalaOperacionDetallePorId(int idborrador)
+        {
+            ResultadoTransaccion<BE_SalaOperacionDetalle> vResultadoTransaccion = new ResultadoTransaccion<BE_SalaOperacionDetalle>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_POR_DETALLE_ID, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@idborrador", idborrador));
+
+                        var response = new List<BE_SalaOperacionDetalle>();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_SalaOperacionDetalle>)context.ConvertTo<BE_SalaOperacionDetalle>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        public async Task<ResultadoTransaccion<BE_SalaOperacionDetalleLote>> GetSalaOperacionDetalleLotePorId(int idborrador)
+        {
+            ResultadoTransaccion<BE_SalaOperacionDetalleLote> vResultadoTransaccion = new ResultadoTransaccion<BE_SalaOperacionDetalleLote>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_POR_DETALLE_LOTE_ID, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@idborrador", idborrador));
+
+                        var response = new List<BE_SalaOperacionDetalleLote>();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_SalaOperacionDetalleLote>)context.ConvertTo<BE_SalaOperacionDetalleLote>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
         public async Task<ResultadoTransaccion<BE_StockLote>> GetListSalaOperacionDetalleLoteUbiPorId(int idborradordetalle)
         {
             ResultadoTransaccion<BE_StockLote> vResultadoTransaccion = new ResultadoTransaccion<BE_StockLote>();
@@ -355,6 +532,121 @@ namespace Net.Data
                     vResultadoTransaccion.ResultadoCodigo = -1;
                     vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
                 }
+                conn.Close();
+            }
+
+            return vResultadoTransaccion;
+        }
+        public async Task<ResultadoTransaccion<BE_SalaOperacion>> Modificar(BE_SalaOperacionXml value)
+        {
+            ResultadoTransaccion<BE_SalaOperacion> vResultadoTransaccion = new ResultadoTransaccion<BE_SalaOperacion>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+
+            using (SqlConnection conn = new SqlConnection(_cnx))
+            {
+                conn.Open();
+                SqlTransaction transaction = conn.BeginTransaction();
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_UPDATE, conn, transaction))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add(new SqlParameter("@xmldata", value.XmlData));
+                        cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
+
+                        SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputIdTransaccionParam);
+
+                        SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputMsjTransaccionParam);
+
+                        await cmd.ExecuteNonQueryAsync();
+
+                        vResultadoTransaccion.IdRegistro = value.idborrador;
+                        vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                        vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+
+                        // Eliminamos la reserva, si es de sala de operación
+                        SapReserveStockRepository sapReserveStockRepository = new SapReserveStockRepository(_clientFactory, _configuration, context);
+                        string u_idexterno = string.Format("SOP-{0}", value.idborrador);
+                        ResultadoTransaccion<SapReserveStock> resultadoTransaccionReserva = await sapReserveStockRepository.GetListReservaPorIdExterno(u_idexterno);
+
+                        if (resultadoTransaccionReserva.ResultadoCodigo == -1)
+                        {
+                            transaction.Rollback();
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionReserva.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+
+                        foreach (SapReserveStock item in resultadoTransaccionReserva.dataList)
+                        {
+                            ResultadoTransaccion<SapBaseResponse<SapReserveStock>> resultadoTransaccionReservaDelete = await sapReserveStockRepository.SetDeleteReserve(item.Code);
+
+                            if (resultadoTransaccionReservaDelete.ResultadoCodigo == -1)
+                            {
+                                transaction.Rollback();
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionReservaDelete.ResultadoDescripcion;
+                                return vResultadoTransaccion;
+                            }
+                        }
+
+                        // Obtenemos la informacion para realizar la reserva
+                        ResultadoTransaccion<SapReserveStockNew> resultadoTransaccionLista = await GetListDetalleReservaPorIdBorrador(conn, transaction, vResultadoTransaccion.IdRegistro);
+
+                        if (resultadoTransaccionLista.ResultadoCodigo == -1)
+                        {
+                            transaction.Rollback();
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionLista.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+
+                        // Realizamos la reserva de los productos actualizados.
+                        SapReserveStockRepository sapReserve = new SapReserveStockRepository(_clientFactory, _configuration, context);
+
+                        foreach (SapReserveStockNew item in resultadoTransaccionLista.dataList)
+                        {
+                            ResultadoTransaccion<SapBaseResponse<SapReserveStock>> resultadoSapDocument = await sapReserve.SetCreateReserve(item);
+
+                            if (resultadoSapDocument.ResultadoCodigo == -1)
+                            {
+                                transaction.Rollback();
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoSapDocument.ResultadoDescripcion;
+                                return vResultadoTransaccion;
+                            }
+                        }
+                    }
+
+                    transaction.Commit();
+                    transaction.Dispose();
+
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                }
+
                 conn.Close();
             }
 

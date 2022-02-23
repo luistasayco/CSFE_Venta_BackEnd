@@ -9,6 +9,7 @@ namespace Net.Data
     public interface IConsolidadoRepository : IRepositoryBase<BE_Consolidado>
     {
         Task<ResultadoTransaccion<BE_Consolidado>> GetListConsolidadoPorFiltro(DateTime fecinicio, DateTime fecfin);
+        Task<ResultadoTransaccion<BE_Consolidado>> GetListConsolidadoCerradoPorFiltro(DateTime fecinicio, DateTime fecfin);
         Task<ResultadoTransaccion<BE_ConsolidadoPedidoPicking>> GetListConsolidadoPicking(string codpedido, string codproducto);
         Task<ResultadoTransaccion<BE_ConsolidadoPedidoPicking>> GetListConsolidadoPickingPorId(int idconsolidado);
         Task<ResultadoTransaccion<BE_ConsolidadoPedido>> GetListDetalleConsolidado(int idconsolidado);

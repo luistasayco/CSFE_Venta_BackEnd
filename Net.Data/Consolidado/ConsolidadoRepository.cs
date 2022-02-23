@@ -27,7 +27,11 @@ namespace Net.Data
 
         const string DB_ESQUEMA = "";
         const string SP_GET_CONSOLIDADO_POR_FILTRO = DB_ESQUEMA + "VEN_ConsolidadosPorFiltrosGet";
+        const string SP_GET_CONSOLIDADO_CERRADOS_POR_FILTRO = DB_ESQUEMA + "VEN_ConsolidadosCerradosPorFiltrosGet";
         const string SP_GET_CONSOLIDADO_POR_PICKING = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingGet";
+        const string SP_GET_CONSOLIDADO_INDIVIDUAL_POR_PICKING = DB_ESQUEMA + "VEN_ConsolidadosIndividualPedidoPickingGet";
+        const string SP_GET_CONSOLIDADO_POR_PICKING_POR_PEDIDO = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingPorPedidoGet";
+        const string SP_GET_CONSOLIDADO_INDIVIDUAL_POR_PICKING_POR_PEDIDO = DB_ESQUEMA + "VEN_ConsolidadosIndividualPedidoPickingPorPedidoGet";
         const string SP_GET_CONSOLIDADO_PICKING_POR_ID = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingPorIdConsolidadoGet";
         const string SP_GET_DETALLE_CONSOLIDADO_POR_ID = DB_ESQUEMA + "VEN_ConsolidadosPedidoPorIdGet";
         const string SP_GET_DETALLE_CONSOLIDADO_PICKING_POR_ID = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingPorIdGet";
@@ -65,6 +69,56 @@ namespace Net.Data
                     var response = new List<BE_Consolidado>();
 
                     using (SqlCommand cmd = new SqlCommand(SP_GET_CONSOLIDADO_POR_FILTRO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@fechainicio", fechainicio));
+                        cmd.Parameters.Add(new SqlParameter("@fechafin", fechafin));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_Consolidado>)context.ConvertTo<BE_Consolidado>(reader);
+                        }
+
+                        conn.Close();
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                    vResultadoTransaccion.dataList = response;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
+        public async Task<ResultadoTransaccion<BE_Consolidado>> GetListConsolidadoCerradoPorFiltro(DateTime fechainicio, DateTime fechafin)
+        {
+            ResultadoTransaccion<BE_Consolidado> vResultadoTransaccion = new ResultadoTransaccion<BE_Consolidado>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            fechainicio = Utilidades.GetFechaHoraInicioActual(fechainicio);
+            fechafin = Utilidades.GetFechaHoraFinActual(fechafin);
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_Consolidado>();
+
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_CONSOLIDADO_CERRADOS_POR_FILTRO, conn))
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@fechainicio", fechainicio));
@@ -160,6 +214,142 @@ namespace Net.Data
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@codpedido", codpedido));
                         cmd.Parameters.Add(new SqlParameter("@codproducto", codproducto));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_ConsolidadoPedidoPicking>)context.ConvertTo<BE_ConsolidadoPedidoPicking>(reader);
+                        }
+
+                        conn.Close();
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                    vResultadoTransaccion.dataList = response;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+        public async Task<ResultadoTransaccion<BE_ConsolidadoPedidoPicking>> GetListConsolidadoIndividualPicking(string codpedido, string codproducto)
+        {
+            ResultadoTransaccion<BE_ConsolidadoPedidoPicking> vResultadoTransaccion = new ResultadoTransaccion<BE_ConsolidadoPedidoPicking>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_ConsolidadoPedidoPicking>();
+
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_CONSOLIDADO_INDIVIDUAL_POR_PICKING, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codpedido", codpedido));
+                        cmd.Parameters.Add(new SqlParameter("@codproducto", codproducto));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_ConsolidadoPedidoPicking>)context.ConvertTo<BE_ConsolidadoPedidoPicking>(reader);
+                        }
+
+                        conn.Close();
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                    vResultadoTransaccion.dataList = response;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+        public async Task<ResultadoTransaccion<BE_ConsolidadoPedidoPicking>> GetListConsolidadoPorPedidoPicking(string codpedido)
+        {
+            ResultadoTransaccion<BE_ConsolidadoPedidoPicking> vResultadoTransaccion = new ResultadoTransaccion<BE_ConsolidadoPedidoPicking>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_ConsolidadoPedidoPicking>();
+
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_CONSOLIDADO_POR_PICKING_POR_PEDIDO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codpedido", codpedido));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_ConsolidadoPedidoPicking>)context.ConvertTo<BE_ConsolidadoPedidoPicking>(reader);
+                        }
+
+                        conn.Close();
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                    vResultadoTransaccion.dataList = response;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+        public async Task<ResultadoTransaccion<BE_ConsolidadoPedidoPicking>> GetListConsolidadoIndividualPorPedidoPicking(string codpedido)
+        {
+            ResultadoTransaccion<BE_ConsolidadoPedidoPicking> vResultadoTransaccion = new ResultadoTransaccion<BE_ConsolidadoPedidoPicking>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_ConsolidadoPedidoPicking>();
+
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_CONSOLIDADO_INDIVIDUAL_POR_PICKING_POR_PEDIDO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@codpedido", codpedido));
 
                         conn.Open();
 

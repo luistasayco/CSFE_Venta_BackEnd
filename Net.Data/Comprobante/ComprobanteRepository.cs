@@ -233,6 +233,8 @@ namespace Net.Data
                                 response.codventa = ((reader["codventa"]) is DBNull) ? string.Empty : (string)reader["codventa"];
                                 response.estado = ((reader["estado"]) is DBNull) ? string.Empty : (string)reader["estado"];
                                 response.documento = ((reader["documento"]) is DBNull) ? string.Empty : (string)reader["documento"];
+                                response.ide_trans = ((reader["ide_trans"]) is DBNull) ? 0 : (int)reader["ide_trans"];
+                                response.doc_entry = ((reader["doc_entry"]) is DBNull) ? 0 : (int)reader["doc_entry"];
                                 lista.Add(response);
 
                             }

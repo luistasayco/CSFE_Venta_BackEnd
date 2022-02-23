@@ -5,6 +5,8 @@
         public string WarehouseCode { get; set; }
         public string WarehouseName { get; set; }
         public string EnableBinLocations { get; set; }
+
+        public bool BinLocations { get => EnableBinLocations.Equals("tYES") ? true : false; }
         //[DBParameter(SqlDbType.Char, 80, ActionType.Everything)]
         //public string nombre { get; set; }
         //[DBParameter(SqlDbType.Char, 16, ActionType.Everything)]

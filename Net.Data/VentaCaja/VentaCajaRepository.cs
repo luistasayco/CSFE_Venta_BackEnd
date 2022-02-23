@@ -878,16 +878,18 @@ namespace Net.Data
                     try
                     {
                         // Generamos el Comprobante en CSFE
-                        ResultadoTransaccion<string> InsertTransac = await Comprobante_Insert_transaccion(value, tipocomprobante, maquina, codcomprobante, conn, transaction);
+                        ResultadoTransaccion<BE_Comprobante> InsertTransac = await Comprobante_Insert_transaccion(value, tipocomprobante, maquina, codcomprobante, conn, transaction);
                         if (InsertTransac.ResultadoCodigo == -1)
                         {
-                            vResultadoTransaccion = InsertTransac;
                             transaction.Rollback();
-                            return InsertTransac;
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = InsertTransac.ResultadoDescripcion;
+                            return vResultadoTransaccion;
                         }
 
-                        vResultadoTransaccion = InsertTransac;
-                        codcomprobante = InsertTransac.data;
+                        //vResultadoTransaccion = InsertTransac;
+                        codcomprobante = InsertTransac.data.codcomprobante;
                         value.codcomprobante = codcomprobante;
 
                         if (codcomprobante != string.Empty)
@@ -907,7 +909,7 @@ namespace Net.Data
                         #region <<< TCI >>>
 
 
-                        if (wFlg_electronico = true && codcomprobante != null)
+                        if (wFlg_electronico && !string.IsNullOrEmpty(codcomprobante))
                         {
                             string TipoComp_TCI = string.Empty;
                             TablaRepository tablaRepository = new TablaRepository(context, _configuration);
@@ -1209,7 +1211,9 @@ namespace Net.Data
                     DocCurrency = response[0].c_simbolomoneda,
                     TaxDate = response[0].fechaemision,
                     DocObjectCode = "oInvoices",
-                    DocumentLines = new List<SapDocumentLinesBase>()
+                    PaymentGroupCode = value.flg_credito ? 5 : -1,
+                    DocumentLines = new List<SapDocumentLinesBase>(),
+                    U_SYP_EXTERNO = response[0].codcomprobante
                 };
 
                 var detalle = new List<BE_VentasDetalle>();
@@ -1441,7 +1445,6 @@ namespace Net.Data
                 #endregion
 
                 #region <<< Pago >>>
-
                 if (response[0].flg_gratuito == "0")
                 {
                     SapIncomingPayments IncomingPayments = new SapIncomingPayments();
@@ -1553,54 +1556,50 @@ namespace Net.Data
                                     IncomingPayments.PaymentCreditCards.Add(paymentCreditCards);
                                 }
                                 //F-Tarjeta crédito
-                            }
-
-                            try
-                            {
-                                cadena = "IncomingPayments";
-                                dataPago = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<SapDocument>>(cadena, IncomingPayments);
-
-                                if (dataPago.DocEntry != 0)
+                                try
                                 {
-                                    using (SqlCommand cmd = new SqlCommand(SP_POST_CUADRECAJA_INFO_SAP_UPDATE, conn, transaction))
-                                    {
-                                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                                        cmd.Parameters.Add(new SqlParameter("@documento", value.codcomprobante));
-                                        cmd.Parameters.Add(new SqlParameter("@doc_entry", dataDocument.DocEntry));
-                                        cmd.Parameters.Add(new SqlParameter("@ide_trans", dataPago.DocEntry));
-                                        cmd.Parameters.Add(new SqlParameter("@fec_enviosap", DateTime.Now));
+                                    cadena = "IncomingPayments";
+                                    dataPago = await _connectServiceLayer.PostAsyncSBA<SapBaseResponse<SapDocument>>(cadena, IncomingPayments);
 
-                                        await cmd.ExecuteNonQueryAsync();
+                                    if (dataPago.DocEntry != 0)
+                                    {
+                                        using (SqlCommand cmd = new SqlCommand(SP_POST_CUADRECAJA_INFO_SAP_UPDATE, conn, transaction))
+                                        {
+                                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                            cmd.Parameters.Add(new SqlParameter("@documento", value.codcomprobante));
+                                            cmd.Parameters.Add(new SqlParameter("@doc_entry", dataDocument.DocEntry));
+                                            cmd.Parameters.Add(new SqlParameter("@ide_trans", dataPago.DocEntry));
+                                            cmd.Parameters.Add(new SqlParameter("@fec_enviosap", DateTime.Now));
+                                            cmd.Parameters.Add(new SqlParameter("@correlativo", item.correlativo));
+
+                                            await cmd.ExecuteNonQueryAsync();
+                                        }
                                     }
+                                    else
+                                    {
+                                        vResultadoTransaccion.IdRegistro = -1;
+                                        vResultadoTransaccion.ResultadoCodigo = -1;
+                                        vResultadoTransaccion.ResultadoDescripcion = "ERROR AL ENVIAR EL PAGO A SAP.";
+                                        return vResultadoTransaccion;
+                                    }
+
+                                    vResultadoTransaccion.IdRegistro = 0;
+                                    vResultadoTransaccion.ResultadoCodigo = 0;
+                                    vResultadoTransaccion.ResultadoDescripcion = "PROCESADO CORRECTAMENTE";
+                                    vResultadoTransaccion.data = value.codcomprobante;
                                 }
-                                else
+                                catch (Exception ex)
                                 {
                                     vResultadoTransaccion.IdRegistro = -1;
                                     vResultadoTransaccion.ResultadoCodigo = -1;
-                                    vResultadoTransaccion.ResultadoDescripcion = "ERROR AL ENVIAR EL PAGO A SAP.";
-                                    return vResultadoTransaccion;
+                                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
                                 }
-
-                                vResultadoTransaccion.IdRegistro = 0;
-                                vResultadoTransaccion.ResultadoCodigo = 0;
-                                vResultadoTransaccion.ResultadoDescripcion = "PROCESADO CORRECTAMENTE";
-                                vResultadoTransaccion.data = value.codcomprobante;
-                            }
-                            catch (Exception ex)
-                            {
-                                vResultadoTransaccion.IdRegistro = -1;
-                                vResultadoTransaccion.ResultadoCodigo = -1;
-                                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
                             }
                         }
-
-
                     }
                 }
-
                 #endregion
             }
-
             #endregion <<< SAP >>>
             //F-SAP
             return vResultadoTransaccion;
@@ -1851,6 +1850,7 @@ namespace Net.Data
                                     cmd.Parameters.Add(new SqlParameter("@doc_entry", dataDocument.DocEntry));
                                     cmd.Parameters.Add(new SqlParameter("@ide_trans", dataPago.DocEntry));
                                     cmd.Parameters.Add(new SqlParameter("@fec_enviosap", DateTime.Now));
+                                    cmd.Parameters.Add(new SqlParameter("@correlativo", item.correlativo));
 
                                     await cmd.ExecuteNonQueryAsync();
                                 }
@@ -2043,12 +2043,15 @@ namespace Net.Data
 
         }
         */
-        private async Task<ResultadoTransaccion<string>> Comprobante_Insert_transaccion(BE_Comprobante value, string tipocomprobante, string maquina, string codcomprobante, SqlConnection conn, SqlTransaction transaction)
+        private async Task<ResultadoTransaccion<BE_Comprobante>> Comprobante_Insert_transaccion(BE_Comprobante value, string tipocomprobante, string maquina, string codcomprobante, SqlConnection conn, SqlTransaction transaction)
         {
-            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+            ResultadoTransaccion<BE_Comprobante> vResultadoTransaccion = new ResultadoTransaccion<BE_Comprobante>();
 
             try
             {
+
+                //BE_ComprobanteGenerar bE_ComprobanteGenerar = new BE_ComprobanteGenerar();
+
                 using (SqlCommand cmd = new SqlCommand(SP_COMPROBANTE_INSERT, conn, transaction))
                 {
 
@@ -2077,6 +2080,7 @@ namespace Net.Data
                         cmd.Parameters.Add(new SqlParameter("@strcodcomprobante", codcomprobante));
                         cmd.Parameters.Add(new SqlParameter("@tipodecambio", value.tipodecambio));
                         cmd.Parameters.Add(new SqlParameter("@maquina", maquina));
+                        cmd.Parameters.Add(new SqlParameter("@usuario", value.usuario));
 
                         SqlParameter oParam = new SqlParameter("@codcomprobante", SqlDbType.Char, 11)
                         {
@@ -2084,13 +2088,23 @@ namespace Net.Data
                         };
                         cmd.Parameters.Add(oParam);
 
+                        SqlParameter oParamCorrelativo = new SqlParameter("@codigo", SqlDbType.Char, 8)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(oParamCorrelativo);
+
                         await cmd.ExecuteNonQueryAsync();
+
+                        value.codcomprobante = cmd.Parameters["@codcomprobante"].Value.ToString();
+                        value.flg_credito = item.tipopago.Equals("D") ? true : false;
+                        item.correlativo = cmd.Parameters["@codigo"].Value.ToString();
 
                         codcomprobante = cmd.Parameters["@codcomprobante"].Value.ToString();
                         vResultadoTransaccion.IdRegistro = 0;
                         vResultadoTransaccion.ResultadoCodigo = 0;
                         vResultadoTransaccion.ResultadoDescripcion = "SE REGISTRO CORRECTAMENTE";
-                        vResultadoTransaccion.data = codcomprobante;
+                        vResultadoTransaccion.data = value;
                     }
                 }
 
@@ -2461,6 +2475,24 @@ namespace Net.Data
                                     response.nombreestado_otorgamiento = ((reader["nombreestado_otorgamiento"]) is DBNull) ? string.Empty : reader["nombreestado_otorgamiento"].ToString().Trim();
                                     response.conteo_notas = ((reader["conteo_notas"]) is DBNull) ? string.Empty : reader["conteo_notas"].ToString().Trim();
                                     response.anular = ((reader["anular"]) is DBNull) ? string.Empty : reader["anular"].ToString().Trim();
+                                    response.mensaje = ((reader["mensaje"]) is DBNull) ? string.Empty : reader["mensaje"].ToString().Trim();
+
+                                }
+                                else if (orden.Equals(4))
+                                {
+
+                                    response.flg_electronico = ((reader["flg_electronico"]) is DBNull) ? string.Empty : reader["flg_electronico"].ToString().Trim();
+                                    response.codcomprobante = ((reader["codcomprobante"]) is DBNull) ? string.Empty : reader["codcomprobante"].ToString().Trim();
+                                    response.codcomprobantee = ((reader["codcomprobantee"]) is DBNull) ? string.Empty : reader["codcomprobantee"].ToString().Trim();
+                                    response.estadoFB = ((reader["estadoFB"]) is DBNull) ? string.Empty : reader["estadoFB"].ToString().Trim();
+                                    response.estado_cdr = ((reader["estado_cdr"]) is DBNull) ? string.Empty : reader["estado_cdr"].ToString().Trim();
+                                    response.tipo_otorgamiento = ((reader["tipo_otorgamiento"]) is DBNull) ? string.Empty : reader["tipo_otorgamiento"].ToString().Trim();
+                                    response.flg_otorgamiento = ((reader["flg_otorgamiento"]) is DBNull) ? string.Empty : reader["flg_otorgamiento"].ToString().Trim();
+                                    response.flg_enbaja = ((reader["flg_enbaja"]) is DBNull) ? string.Empty : reader["flg_enbaja"].ToString().Trim();
+                                    response.nombreestado_cdr = ((reader["nombreestado_cdr"]) is DBNull) ? string.Empty : reader["nombreestado_cdr"].ToString().Trim();
+                                    response.nombreestado_otorgamiento = ((reader["nombreestado_otorgamiento"]) is DBNull) ? string.Empty : reader["nombreestado_otorgamiento"].ToString().Trim();
+                                    response.obtener_pdf = ((reader["obtener_pdf"]) is DBNull) ? string.Empty : reader["obtener_pdf"].ToString().Trim();
+                                    //response.anular = ((reader["anular"]) is DBNull) ? string.Empty : reader["anular"].ToString().Trim();
                                     response.mensaje = ((reader["mensaje"]) is DBNull) ? string.Empty : reader["mensaje"].ToString().Trim();
 
                                 }

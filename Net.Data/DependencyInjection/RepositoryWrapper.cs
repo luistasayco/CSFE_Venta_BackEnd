@@ -430,7 +430,7 @@ namespace Net.Data
             {
                 if (_CuadreCaja == null)
                 {
-                    _CuadreCaja = new CuadreCajaRepository(_repoContext, _configuration);
+                    _CuadreCaja = new CuadreCajaRepository(_repoContext, _configuration, _clientFactory);
                 }
                 return _CuadreCaja;
             }

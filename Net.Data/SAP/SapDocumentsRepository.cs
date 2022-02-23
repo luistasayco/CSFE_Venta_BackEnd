@@ -35,7 +35,19 @@ namespace Net.Data
             _clientFactory = clientFactory;
             _connectServiceLayer = new ConnectionServiceLayer(_configuration, _clientFactory);
         }
+        public async Task<ResultadoTransaccion<SapSelectDocument>> GetListSapDocument(string U_SYP_EXTERNO)
+        {
+            ResultadoTransaccion<SapSelectDocument> vResultadoTransaccion = new ResultadoTransaccion<SapSelectDocument>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            List<SapSelectDocument> data = await _connectServiceLayer.GetAsync<SapSelectDocument>("DeliveryNotes?$filter = U_SYP_EXTERNO eq '"+ U_SYP_EXTERNO + "' &$select=DocEntry");
+
+            vResultadoTransaccion.dataList = data;
+            return vResultadoTransaccion;
+        }
         public async Task<ResultadoTransaccion<SapBaseResponse<SapDocument>>> SetCreateDocument(BE_VentasCabecera valueVenta)
         {
             ResultadoTransaccion<SapBaseResponse<SapDocument>> vResultadoTransaccion = new ResultadoTransaccion<SapBaseResponse<SapDocument>>();
@@ -265,7 +277,7 @@ namespace Net.Data
 
                 int lineaDetalleLote = 0;
 
-                var document = new SapDocumentBase
+                var document = new SapDocumentReturnBase
                 {
                     DocType = "dDocument_Items",
                     DocDate = value.fechaemision,
@@ -481,7 +493,7 @@ namespace Net.Data
 
                 int lineaDetalleLote = 0;
 
-                var document = new SapDocument
+                var document = new SapDocumentReturn
                 {
                     DocType = "dDocument_Items",
                     DocDate = value.fechaemision,
@@ -678,7 +690,7 @@ namespace Net.Data
 
                 int lineaDetalleLote = 0;
 
-                var document = new SapDocumentBase
+                var document = new SapDocumentReservaBase
                 {
                     DocType = "dDocument_Items",
                     DocDate = value.fechaemision,
@@ -688,7 +700,23 @@ namespace Net.Data
                     TaxDate = value.fechaemision,
                     Comments = value.observacion,
                     DocObjectCode = "oDeliveryNotes",
-                    DocumentLines = new List<SapDocumentLinesBase>()
+                    DocumentLines = new List<SapDocumentLinesBase>(),
+
+                    //Campos de Usuario
+                    U_SYP_EXTERNO = value.tipomovimiento + value.codventa,
+                    Reference2 = value.tipomovimiento + value.codventa,
+                    //U_SYP_MDTS = "TSI",
+                    U_SYP_MDMT = "24",
+                    U_SYP_TPOSALME = value.tipomovimiento,
+                    U_SYP_ALMACENERO = value.usuario,
+                    U_SYP_SOLICITANTE = value.usuario,
+                    U_SYP_CS_PRESOTOR = value.codpresotor,
+                    U_SYP_CS_OA = value.codatencion,
+                    U_SYP_CS_DNI_PAC = value.docidentidad,
+                    U_SYP_CS_NOM_PAC = value.nombre,
+                    U_SYP_CS_PAC_HC = value.codpaciente,
+                    U_SYP_CS_MOV_ORIGEN = value.codventadevolucion,
+                    U_SBA_ORIG = "SBA"
                 };
 
                 int BaseLine = 0;
@@ -904,7 +932,7 @@ namespace Net.Data
 
                 int lineaDetalleLote = 0;
 
-                var document = new SapDocumentBase
+                var document = new SapDocument
                 {
                     DocType = "dDocument_Items",
                     DocDate = value.fechaemision,
@@ -914,12 +942,27 @@ namespace Net.Data
                     TaxDate = value.fechaemision,
                     Comments = value.observacion,
                     DocObjectCode = "oCreditNotes",
-                    DocumentLines = new List<SapDocumentLinesBase>()
+                    DocumentLines = new List<SapDocumentLines>(),
+                    //Campos de Usuario
+                    U_SYP_EXTERNO = value.tipomovimiento + value.codventa,
+                    Reference2 = value.tipomovimiento + value.codventa,
+                    //U_SYP_MDTS = "TSI",
+                    U_SYP_MDMT = "24",
+                    U_SYP_TPOSALME = value.tipomovimiento,
+                    U_SYP_ALMACENERO = value.usuario,
+                    U_SYP_SOLICITANTE = value.usuario,
+                    U_SYP_CS_PRESOTOR = value.codpresotor,
+                    U_SYP_CS_OA = value.codatencion,
+                    U_SYP_CS_DNI_PAC = value.docidentidad,
+                    U_SYP_CS_NOM_PAC = value.nombre,
+                    U_SYP_CS_PAC_HC = value.codpaciente,
+                    U_SYP_CS_MOV_ORIGEN = value.codventadevolucion,
+                    U_SBA_ORIG = "SBA"
                 };
 
                 foreach (BE_VentasDetalle item in value.listaVentaDetalle)
                 {
-                    var linea = new SapDocumentLinesBase
+                    var linea = new SapDocumentLines
                     {
                         ItemCode = item.codproducto,
                         ItemDescription = item.nombreproducto,
@@ -932,10 +975,8 @@ namespace Net.Data
                         CostingCode2 = item.CostingCode2,
                         CostingCode3 = item.CostingCode3,
                         CostingCode4 = item.CostingCode4,
-                        BaseType = -1,
-                        //BaseEntry = item.baseentry,
-                        //BaseLine = item.baseline,
                         BatchNumbers = new List<SapBatchNumbers>(),
+                        U_SYP_EXT_LINEA = item.coddetalle,
                         DocumentLinesBinAllocations = new List<SapBinAllocations>()
                     };
 

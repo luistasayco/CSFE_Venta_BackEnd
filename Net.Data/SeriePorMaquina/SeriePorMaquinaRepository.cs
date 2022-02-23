@@ -149,6 +149,8 @@ namespace Net.Data
                         cmd.Parameters.Add(new SqlParameter("@serieboleta", value.serieboleta));
                         cmd.Parameters.Add(new SqlParameter("@serienotacredito", value.serienotacredito));
                         cmd.Parameters.Add(new SqlParameter("@serienotadebito", value.serienotadebito));
+                        cmd.Parameters.Add(new SqlParameter("@serienotacreditofactura", value.serienotacreditofactura));
+                        cmd.Parameters.Add(new SqlParameter("@serienotadebitofactura", value.serienotadebitofactura));
                         cmd.Parameters.Add(new SqlParameter("@serieguia", value.serieguia));
                         cmd.Parameters.Add(new SqlParameter("@codcentro", value.codcentro));
                         cmd.Parameters.Add(new SqlParameter("@codalmacen", value.codalmacen));
@@ -207,6 +209,8 @@ namespace Net.Data
                         cmd.Parameters.Add(new SqlParameter("@serieboleta", value.serieboleta));
                         cmd.Parameters.Add(new SqlParameter("@serienotacredito", value.serienotacredito));
                         cmd.Parameters.Add(new SqlParameter("@serienotadebito", value.serienotadebito));
+                        cmd.Parameters.Add(new SqlParameter("@serienotacreditofactura", value.serienotacreditofactura));
+                        cmd.Parameters.Add(new SqlParameter("@serienotadebitofactura", value.serienotadebitofactura));
                         cmd.Parameters.Add(new SqlParameter("@serieguia", value.serieguia));
                         cmd.Parameters.Add(new SqlParameter("@codcentro", value.codcentro));
                         cmd.Parameters.Add(new SqlParameter("@codalmacen", value.codalmacen));

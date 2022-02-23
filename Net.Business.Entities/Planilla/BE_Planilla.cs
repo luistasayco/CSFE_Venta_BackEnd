@@ -63,6 +63,62 @@ namespace Net.Business.Entities
         public string campo { get; set; }
         public int idusuario { get; set; }
         public virtual IList<BE_PlanillaDetalle> planilladetalle { get; set; }
+    }
 
+    public class BE_ReportePlanilla
+    {
+        public string area { get; set; }
+        public string usuario { get; set; }
+        public string numeroplanilla { get; set; }
+        public double tc { get; set; }
+        public string documento { get; set; }
+        public string paciente { get; set; }
+        public double ingresos { get; set; }
+        public double egresos { get; set; }
+        public string docreferencia { get; set; }
+        public string movimiento { get; set; }
+        public string fechaplanilla { get; set; }
+        public string documentoe { get; set; }
+    }
+
+    public class BE_ReportePlanillaDetalle
+    {
+        public string numeroplanilla { get; set; }
+        public string numerogrupo { get; set; }
+        public string codcomprobante { get; set; }
+        public DateTime? fechacancelacion { get; set; }
+        public string anombrede { get; set; }
+        public string tipocliente { get; set; }
+        public string nombretipocliente { get; set; }
+        public decimal monto { get; set; }
+        public decimal montoparcial { get; set; }
+        public string tipopago { get; set; }
+        public string nombreentidad { get; set; }
+        public string moneda { get; set; }
+        public DateTime? fechaplanilla { get; set; }
+        public string coduser { get; set; }
+        public string nombreusuario { get; set; }
+        public string estado { get; set; }
+        public decimal m_sumagrupo { get; set; }
+        public decimal montodolares { get; set; }
+        public string nombrecentro { get; set; }
+    }
+
+    public class BE_ReportePlanillaResumen
+    {
+        public string tipopago { get; set; }
+        public string entidad { get; set; }
+        public string moneda { get; set; }
+        public double monto { get; set; }
+        public int totallinea { get; set; }
+    }
+
+    public class BE_ReportePlanillaResumenFind
+    {
+        public string tipopago { get; set; }
+        public string entidad { get; set; }
+        public double dolares { get; set; }
+        public double soles { get; set; }
+        public int totallinea { get; set; }
     }
 }

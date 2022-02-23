@@ -86,7 +86,7 @@ namespace Net.Data
             _clientFactory = clientFactory;
             _aplicacionName = this.GetType().Name;
         }
-        public async Task<ResultadoTransaccion<BE_VentasCabecera>> GetAll(string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin)
+        public async Task<ResultadoTransaccion<BE_VentasCabecera>> GetAll(string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin, string codatencion)
         {
             ResultadoTransaccion<BE_VentasCabecera> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasCabecera>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
@@ -109,6 +109,7 @@ namespace Net.Data
                         cmd.Parameters.Add(new SqlParameter("@codventa", codventa));
                         cmd.Parameters.Add(new SqlParameter("@fecinicio", fecinicio));
                         cmd.Parameters.Add(new SqlParameter("@fecfin", fecfin));
+                        cmd.Parameters.Add(new SqlParameter("@codatencion", codatencion));
 
                         conn.Open();
 
@@ -1086,6 +1087,8 @@ namespace Net.Data
                 bool vNoCubierto = false;
                 string vFlagPaquete = "N";
                 int idborrador = 0;
+                string codpedido = string.Empty;
+                int ide_receta = 0;
 
                 if (!listVentasDetalleQuiebres.Count.Equals(0))
                 {
@@ -1240,7 +1243,8 @@ namespace Net.Data
 
                         //Asignamos el valor del id borrador si fuera de sala de operación
                         idborrador = newVentasCabecera.idborrador;
-
+                        codpedido = newVentasCabecera.codpedido;
+                        ide_receta = newVentasCabecera.ide_receta;
                         // Realizamos la conversion a XML
                         var entiDom = new BE_VentaXml();
                         var ser = new Serializador();
@@ -1333,6 +1337,72 @@ namespace Net.Data
                                 vResultadoTransaccion.ResultadoCodigo = -1;
                                 vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionReservaDelete.ResultadoDescripcion;
                                 return vResultadoTransaccion;
+                            }
+                        }
+
+                        // Eliminamos la reserva, del picking realizado Pedido
+                        if (!string.IsNullOrEmpty(codpedido))
+                        {
+                            ConsolidadoRepository consolidadoRepository = new ConsolidadoRepository(_clientFactory, context, _configuration);
+                            ResultadoTransaccion<BE_ConsolidadoPedidoPicking> resultadoTransaccionConsolidado = await consolidadoRepository.GetListConsolidadoIndividualPorPedidoPicking(codpedido);
+
+                            if (resultadoTransaccionConsolidado.ResultadoCodigo == -1)
+                            {
+                                transaction.Rollback();
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionConsolidado.ResultadoDescripcion;
+                                return vResultadoTransaccion;
+                            }
+
+                            foreach (BE_ConsolidadoPedidoPicking item in resultadoTransaccionConsolidado.dataList)
+                            {
+                                if (item.idreserva > 0)
+                                {
+                                    ResultadoTransaccion<SapBaseResponse<SapReserveStock>> resultadoTransaccionReservaDelete = await sapReserveStockRepository.SetDeleteReserve(item.idreserva);
+
+                                    if (resultadoTransaccionReservaDelete.ResultadoCodigo == -1)
+                                    {
+                                        transaction.Rollback();
+                                        vResultadoTransaccion.IdRegistro = -1;
+                                        vResultadoTransaccion.ResultadoCodigo = -1;
+                                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionReservaDelete.ResultadoDescripcion;
+                                        return vResultadoTransaccion;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Eliminamos la reserva, del picking realizado receta
+                        if (ide_receta > 0)
+                        {
+                            PickingRepository pickingRepository = new PickingRepository(_clientFactory, context, _configuration);
+                            ResultadoTransaccion<BE_Picking> resultadoTransaccionConsolidado = await pickingRepository.GetListPickingPorReceta(ide_receta);
+
+                            if (resultadoTransaccionConsolidado.ResultadoCodigo == -1)
+                            {
+                                transaction.Rollback();
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionConsolidado.ResultadoDescripcion;
+                                return vResultadoTransaccion;
+                            }
+
+                            foreach (BE_Picking item in resultadoTransaccionConsolidado.dataList)
+                            {
+                                if (item.idreserva > 0)
+                                {
+                                    ResultadoTransaccion<SapBaseResponse<SapReserveStock>> resultadoTransaccionReservaDelete = await sapReserveStockRepository.SetDeleteReserve(item.idreserva);
+
+                                    if (resultadoTransaccionReservaDelete.ResultadoCodigo == -1)
+                                    {
+                                        transaction.Rollback();
+                                        vResultadoTransaccion.IdRegistro = -1;
+                                        vResultadoTransaccion.ResultadoCodigo = -1;
+                                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionReservaDelete.ResultadoDescripcion;
+                                        return vResultadoTransaccion;
+                                    }
+                                }
                             }
                         }
 
@@ -3722,7 +3792,7 @@ namespace Net.Data
                     try
                     {
                         // Generar Aanulacion
-                        ResultadoTransaccion<bool> resultadoTransaccionAnularVenta = await AnularVenta(conn, transaction, value);
+                        ResultadoTransaccion<string> resultadoTransaccionAnularVenta = await AnularVenta(conn, transaction, value);
 
                         if (resultadoTransaccionAnularVenta.ResultadoCodigo == -1)
                         {
@@ -3748,6 +3818,48 @@ namespace Net.Data
                                 vResultadoTransaccion.ResultadoCodigo = -1;
                                 vResultadoTransaccion.ResultadoDescripcion = resultadoSapDocument.ResultadoDescripcion;
                                 return vResultadoTransaccion;
+                            }
+
+                            // Obtenemos las doc entry asociados a esta venta
+                            ResultadoTransaccion<SapSelectDocument> resultadoTransaccionSelectDocument = await sapDocuments.GetListSapDocument(string.Format("DV{0}", value.codventa));
+
+                            if (resultadoTransaccionSelectDocument.ResultadoCodigo == -1)
+                            {
+                                transaction.Rollback();
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionSelectDocument.ResultadoDescripcion;
+                                return vResultadoTransaccion;
+                            }
+
+                            if (resultadoTransaccionSelectDocument.dataList.Any())
+                            {
+                                List<SapSelectDocument> listDocEntry = (List<SapSelectDocument>)resultadoTransaccionSelectDocument.dataList;
+
+                                long ide_docentrysapAnulacion = 0;
+
+                                foreach (SapSelectDocument item in listDocEntry)
+                                {
+                                    if (!item.DocEntry.Equals(resultadoTransaccionVenta.data.ide_docentrysap))
+                                    {
+                                        ide_docentrysapAnulacion = item.DocEntry;
+                                    }
+                                }
+
+                                value.codventa = resultadoTransaccionAnularVenta.data;
+                                value.ide_docentrysap = (int)ide_docentrysapAnulacion;
+                                value.fec_docentrysap = DateTime.Now;
+
+                                ResultadoTransaccion<bool> resultadoTransaccionVentaUpd = await UpdateSAPVenta(value, conn, transaction);
+
+                                if (resultadoTransaccionVentaUpd.ResultadoCodigo == -1)
+                                {
+                                    //transaction.Rollback();
+                                    vResultadoTransaccion.IdRegistro = -1;
+                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionVentaUpd.ResultadoDescripcion;
+                                    return vResultadoTransaccion;
+                                }
                             }
                         }
 
@@ -3778,9 +3890,9 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
-        public async Task<ResultadoTransaccion<bool>> AnularVenta(SqlConnection conn, SqlTransaction transaction, BE_VentasCabecera value)
+        public async Task<ResultadoTransaccion<string>> AnularVenta(SqlConnection conn, SqlTransaction transaction, BE_VentasCabecera value)
         {
-            ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
             vResultadoTransaccion.NombreMetodo = _metodoName;
@@ -3798,6 +3910,12 @@ namespace Net.Data
                     cmdActualizarPresotor.Parameters.Add(new SqlParameter("@motivoanulacion", value.motivoanulacion));
                     cmdActualizarPresotor.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
 
+                    SqlParameter outputCodVentaAnulacionParam = new SqlParameter("@codventaanulacion", SqlDbType.Char, 8)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmdActualizarPresotor.Parameters.Add(outputCodVentaAnulacionParam);
+
                     SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
                     {
                         Direction = ParameterDirection.Output
@@ -3814,7 +3932,7 @@ namespace Net.Data
                     vResultadoTransaccion.IdRegistro = 0;
                     vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
                     vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
-                    vResultadoTransaccion.data = true;
+                    vResultadoTransaccion.data = (string)outputCodVentaAnulacionParam.Value; ;
                 }
             }
             catch (Exception ex)
@@ -3959,14 +4077,16 @@ namespace Net.Data
                         tipocambio = tipoCambio.Rate,
                         codmedico = pedido.codmedico,
                         nombremedico = pedido.nommedico,
-                        flagpaquete = "N",
+                        flagpaquete = pedido.flg_paquete,
                         codpedido = pedido.codpedido,
                         codcentro = pedido.codcentro,
-                        codtipocliente = "01",
+                        codtipocliente = "01", /*Por default Paciente*/
                         moneda = "S",
                         usuario = "admin",
                         tipomovimiento = "DV",
-                        RegIdUsuario = 1
+                        RegIdUsuario = 1,
+                        idparaquien = 1, /*Para quien => Paciente*/
+                        cardcodeparaquien = paciente.cardcode /*Para quien => Paciente*/
                     };
 
                     ResultadoTransaccion<string> resultadoTransaccionCama = await GetListaCamaPorAtencion(pedido.codatencion, pedido.codcentro);
@@ -4983,14 +5103,15 @@ namespace Net.Data
                         //await conn.OpenAsync();
                         await cmd.ExecuteNonQueryAsync();
 
-                        ventasGenerados.Add(new BE_VentasGenerado { codventa = (string)oParam.Value, codpresotor = string.Empty });
+                        var codcomprobanteNota = oParamNota.Value == null ? "" : (string)oParamNota.Value;
+
+                        ventasGenerados.Add(new BE_VentasGenerado { codventa = (string)oParam.Value, codpresotor = string.Empty, codcomprobanteNotaCredito = codcomprobanteNota });
 
                         vResultadoTransaccion.IdRegistro = 0;
                         vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
                         vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
                         vResultadoTransaccion.dataList = ventasGenerados;
 
-                        var codcomprobanteNota = oParamNota.Value == null ? "" : (string)oParamNota.Value;
                         bool flgsinstock = bool.Parse(oParamSinStock.Value.ToString());
 
                         //NOTA DE CREDITO
@@ -4998,7 +5119,7 @@ namespace Net.Data
                         {
                             #region "Envio a TCI"
 
-                            if (value.flgelectronico = true && value.codcomprobante != null && codcomprobanteNota != "")
+                            if (value.flgelectronico && value.codcomprobante != null && codcomprobanteNota != "")
                             {
                                 SerieRepository serieRepository = new SerieRepository(context, _configuration);
                                 ResultadoTransaccion<BE_SerieConfig> resultadoTransSerie = new ResultadoTransaccion<BE_SerieConfig>();

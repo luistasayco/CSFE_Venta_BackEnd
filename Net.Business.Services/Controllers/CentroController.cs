@@ -27,10 +27,10 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetListCentroContains([FromQuery] string nombre)
+        public async Task<IActionResult> GetListCentroContains([FromQuery] string nombre, string codigo)
         {
 
-            var objectGetAll = await _repository.CentroCosto.GetListCentroContains(nombre);
+            var objectGetAll = await _repository.CentroCosto.GetListCentroContains(nombre, codigo);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {

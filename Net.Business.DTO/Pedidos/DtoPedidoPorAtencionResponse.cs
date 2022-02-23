@@ -8,6 +8,7 @@ namespace Net.Business.DTO
         public DateTime fechaatencion { get; set; }
         public string estado { get; set; }
         public string listado { get; set; }
+        public string tipomovimiento { get; set; }
 
         public DtoPedidoPorAtencionResponse RetornaDtoVentaCabeceraResponse(BE_Pedido value)
         {
@@ -16,7 +17,8 @@ namespace Net.Business.DTO
                 codpedido = value.codpedido,
                 fechaatencion = value.fechaatencion,
                 estado = value.estado,
-                listado = value.listado
+                listado = value.listado,
+                tipomovimiento = value.tipomovimiento
             };
         }
     }

@@ -24,10 +24,10 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetAll([FromQuery] string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin)
+        public async Task<IActionResult> GetAll([FromQuery] string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin, string codatencion)
         {
 
-            var objectGetAll = await _repository.Venta.GetAll(codcomprobante, codventa, fecinicio, fecfin);
+            var objectGetAll = await _repository.Venta.GetAll(codcomprobante, codventa, fecinicio, fecfin, codatencion);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {

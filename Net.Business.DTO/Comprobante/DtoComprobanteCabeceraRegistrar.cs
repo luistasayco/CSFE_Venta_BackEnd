@@ -20,8 +20,6 @@ namespace Net.Business.DTO
         public string direccion { get; set; }
         public string tipdocidentidad { get; set; }
         public string numdocumentoIdentidad { get; set; }
-
-        
         public string codComprobante { get; set; }
         public int idUsuario { get; set; }
         public string codCentroCosto { get; set; }
@@ -33,17 +31,15 @@ namespace Net.Business.DTO
         public virtual List<DtoComprobanteTipoPagoRegistrar> tipoPagos { get; set; }
         public long idePagosBot { get; set; }
         public bool flgPagoUsado { get; set; }
-
         //public string serie { get; set; }
         public int gratuito { get; set; }
-
         //extra
         public bool wFlg_electronico { get; set; } //para sacar la ruta del webservices
         public decimal tipoCambioVenta { get; set; }
         public int flg_otorgar { get; set; }
         //public string tipoCodigo { get; set; }
         public int tipoCodigoBarrahash { get; set; }
-
+        public string usuario { get; set; }
         public BE_Comprobante RetornaComprobanteCabecera() {
 
             var obj = new BE_Comprobante();
@@ -55,7 +51,7 @@ namespace Net.Business.DTO
             obj.anombrede = aNombreDe;
             obj.ruc = ruc;
             obj.direccion = direccion;
-            //obj.coduser = idUsuario.ToString();
+            obj.usuario = usuario;
             obj.idusuario = idUsuario;
             obj.correo = correo;
             obj.tipdocidentidad = tipdocidentidad;

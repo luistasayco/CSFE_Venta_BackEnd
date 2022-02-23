@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Net.Business.Entities
 {
@@ -8,6 +9,7 @@ namespace Net.Business.Entities
         public decimal codrolsala { get; set; }
         public string operacion { get; set; }
         public string codatencion { get; set; }
+        public string nombrepaciente { get; set; }
         public string nombres { get; set; }
         public string codalmacen { get; set; }
         public DateTime fecharegistro { get; set; }
@@ -16,5 +18,6 @@ namespace Net.Business.Entities
         public bool flgventa { get; set; }
         public string codventa { get; set; }
         public string desalmacen { get; set; }
+        public List<BE_SalaOperacionDetalle> SalaOperacionDetalle { get; set; }
     }
 }

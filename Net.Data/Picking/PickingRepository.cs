@@ -23,6 +23,7 @@ namespace Net.Data
 
         const string DB_ESQUEMA = "";
         const string SP_GET = DB_ESQUEMA + "VEN_PickingPorFiltroGet";
+        const string SP_GET_PICKING_POR_RECETA_PRODUCTO = DB_ESQUEMA + "VEN_IndividualRecetaPickingGet";
         const string SP_GET_POR_ID = DB_ESQUEMA + "VEN_PickingPorIdGet";
         const string SP_INSERT = DB_ESQUEMA + "VEN_PickingIns";
         const string SP_UPDATE = DB_ESQUEMA + "VEN_PickingEstadoUpd";
@@ -102,6 +103,53 @@ namespace Net.Data
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@id_receta", id_receta));
                         cmd.Parameters.Add(new SqlParameter("@opcion", 2));
+
+                        var response = new List<BE_Picking>();
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_Picking>)context.ConvertTo<BE_Picking>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<BE_Picking>> GetListPickingPorRecetaProducto(int id_receta, string codproducto)
+        {
+
+            ResultadoTransaccion<BE_Picking> vResultadoTransaccion = new ResultadoTransaccion<BE_Picking>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_PICKING_POR_RECETA_PRODUCTO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@id_receta", id_receta));
+                        cmd.Parameters.Add(new SqlParameter("@codproducto", codproducto));
 
                         var response = new List<BE_Picking>();
 

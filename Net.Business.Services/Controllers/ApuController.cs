@@ -33,7 +33,7 @@ namespace Net.Business.Services.Controllers
         public async Task<IActionResult> GetListPedidosPorRangoFechas([FromQuery] DateTime fechainicio, DateTime fechafin)
         {
 
-            var objectGetAll = await _repository.Pedido.GetListPedidosPorFiltro(fechainicio, fechafin, string.Empty, string.Empty);
+            var objectGetAll = await _repository.Pedido.GetListPedidosSinPedidoPorFiltro(fechainicio, fechafin, string.Empty, string.Empty);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {
@@ -315,7 +315,7 @@ namespace Net.Business.Services.Controllers
         public async Task<IActionResult> GetListConsolidadoPorFiltro([FromQuery] DateTime fechainicio, DateTime fechafin)
         {
 
-            var objectGetAll = await _repository.Consolidado.GetListConsolidadoPorFiltro(fechainicio, fechafin);
+            var objectGetAll = await _repository.Consolidado.GetListConsolidadoCerradoPorFiltro(fechainicio, fechafin);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {

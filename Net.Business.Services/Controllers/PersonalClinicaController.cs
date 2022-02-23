@@ -39,5 +39,21 @@ namespace Net.Business.Services.Controllers
 
             return Ok(objectGetAll.dataList);
         }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetListPersonalClinicaPorCodigo([FromQuery] string codigo)
+        {
+
+            var objectGetAll = await _repository.PersonalClinica.GetListPersonalClinicaPorCodigo(codigo);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.dataList);
+        }
     }
 }

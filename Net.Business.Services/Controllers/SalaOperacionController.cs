@@ -52,6 +52,21 @@ namespace Net.Business.Services.Controllers
 
             return Ok(objectGetAll.dataList);
         }
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetSalaOperacionPorId([FromQuery] int idborrador)
+        {
+
+            var objectGetAll = await _repository.SalaOperacion.GetSalaOperacionPorId(idborrador);
+
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+
+            return Ok(objectGetAll.data);
+        }
 
         /// <summary>
         /// Crear una nueva registro
@@ -80,6 +95,40 @@ namespace Net.Business.Services.Controllers
                 }
 
                 var response = await _repository.SalaOperacion.Registrar(value.RetornaModelo());
+
+                if (response.IdRegistro < 0)
+                {
+                    return BadRequest(response);
+                }
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+            }
+
+        }
+
+        [HttpPut]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Modificar([FromBody] DtoSalaOperacionModificar value)
+        {
+            try
+            {
+                if (value == null)
+                {
+                    return BadRequest("Master object is null");
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest("Invalid model object");
+                }
+
+                var response = await _repository.SalaOperacion.Modificar(value.RetornaModelo());
 
                 if (response.IdRegistro < 0)
                 {

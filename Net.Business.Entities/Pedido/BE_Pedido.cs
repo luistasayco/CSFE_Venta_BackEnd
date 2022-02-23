@@ -38,6 +38,9 @@ namespace Net.Business.Entities
         public string tipomovimiento { get; set; }
         public string codalmacenventa { get; set; }
         public string codprestacion { get; set; }
+        public string nombretipocliente { get; set; }
+        public int indicadorpicking { get; set; }
         public string key { get => codventa == null ? string.Empty : codventa + codpedido + codatencion; }
     }
+    
 }

@@ -12,4 +12,10 @@
         public bool binactivat { get; set; }
         public string codalmacen { get; set; }
     }
+
+    public class BE_PedidoDetalle_Mensaje
+    {
+        public string codproducto { get; set; }
+        public string nombreproducto { get; set; }
+    }
 }

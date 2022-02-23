@@ -6,7 +6,7 @@ namespace Net.Data
 {
     public interface ICentroRepository
     {
-        Task<ResultadoTransaccion<BE_Centro>> GetListCentroContains(string nombre);
+        Task<ResultadoTransaccion<BE_Centro>> GetListCentroContains(string nombre, string codigo);
         Task<ResultadoTransaccion<BE_Centro>> GetCentroPorCodigo(string codcentro);
     }
 }

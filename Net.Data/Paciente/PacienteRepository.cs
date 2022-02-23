@@ -132,10 +132,24 @@ namespace Net.Data
 
                         PlanesRepository planesRepository = new PlanesRepository(context, _configuration);
 
+                        response.codplan = "00000001";
+
+                        ResultadoTransaccion<BE_Planes> planes = await planesRepository.GetbyCodigo(new BE_Planes { CodPlan = response.codplan });
+
+                        if (planes.ResultadoCodigo == -1)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = planes.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+
+                        response.porcentajeplan = planes.data.PorcentajeDescuento == null ? 0 : (decimal)planes.data.PorcentajeDescuento;
+
                         if (response.codaseguradora == "0019")
                         {
                             response.codplan = "00000006";
-                            ResultadoTransaccion<BE_Planes>  planes = await planesRepository.GetbyCodigo(new BE_Planes { CodPlan = "00000006" });
+                            planes = await planesRepository.GetbyCodigo(new BE_Planes { CodPlan = response.codplan });
 
                             if (planes.ResultadoCodigo == -1)
                             {

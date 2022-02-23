@@ -49,6 +49,7 @@ namespace Net.Business.Entities
         public string codatenciondestino { get; set; }
         public int idegctipoatencionmae { get; set; }
         public string descripcionpaquete { get; set; }
+        public string cardcode { get; set; }
 
     }
 }

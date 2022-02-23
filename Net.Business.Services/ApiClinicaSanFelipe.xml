@@ -5626,7 +5626,7 @@
             <param name="codatencion"></param>
             <returns></returns>
         </member>
-        <member name="M:Net.Business.Services.Controllers.CentroController.GetListCentroContains(System.String)">
+        <member name="M:Net.Business.Services.Controllers.CentroController.GetListCentroContains(System.String,System.String)">
             <summary>
             Lista los almacenes que tienen la palabra filtrada
             </summary>

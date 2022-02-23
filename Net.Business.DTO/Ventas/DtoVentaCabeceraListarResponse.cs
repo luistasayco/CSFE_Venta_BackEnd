@@ -33,7 +33,8 @@ namespace Net.Business.DTO
                     codcliente = value.codcliente,
                     codpedido = value.codpedido,
                     estado = value.estado,
-                    usuarioanulacion = value.usuarioanulacion
+                    usuarioanulacion = value.usuarioanulacion,
+                    fechaanulacion = value.fechaanulacion
                 }
             );
 

@@ -424,6 +424,40 @@ namespace Net.Business.Services.Controllers
                     " Se Otorgó?: " + objValida.data.nombreestado_otorgamiento);
 
                 var objExiste = _repository.VentaCaja.GetComprobanteElectroncioCodVenta(codComprobante, 0, 0, "", "", "", "", "", "", 1);
+
+                if (codComprobante.Substring(0,1) == "C")
+                {
+                    string xRucEmisor = string.Empty, xUrlWebService = string.Empty;
+
+                    var objConfList = await _repository.Tabla.GetListTablaClinicaPorFiltros("EFACT_PARAMETROSWSTCI", "", 0, 0, 7);
+
+                    foreach (var item in objConfList.dataList)
+                    {
+                        if (item.codigo.Trim().Equals("RUC")) xRucEmisor = item.nombre;
+                        if (item.codigo.Trim().Equals("WS")) xUrlWebService = item.nombre;
+                    }
+
+                    var xUrlWS = new System.ServiceModel.EndpointAddress(xUrlWebService);
+                    var binding = new System.ServiceModel.BasicHttpBinding();
+                    WSComprobanteSoapClient client = new WSComprobanteSoapClient(binding, xUrlWS);
+
+                    ENPeticion modelo = new ENPeticion();
+
+                    modelo = new ENPeticion()
+                    {
+                        IndicadorComprobante = 1,
+                        Ruc = xRucEmisor,
+                        Serie = objValida.data.codcomprobantee.Substring(0, 4),
+                        Numero = Convert.ToInt32(objValida.data.codcomprobantee.ToString().Substring(4)).ToString(),
+                        TipoComprobante = "07"
+                    };
+
+                    string xRptaCadena = string.Empty;
+                    var result = client.Obtener_PDF(modelo, ref xRptaCadena);
+
+                    if (!string.IsNullOrEmpty(xRptaCadena)) throw new ArgumentException(xRptaCadena);
+                }
+
                 if (objExiste.Result.data == null) throw new ArgumentException("No se puede obtener el Código del Comprobante Electrónico.\n Tabla comprobantes_electronicos  Cod. Comprobante PK: " + codComprobante);
 
             }
@@ -523,7 +557,6 @@ namespace Net.Business.Services.Controllers
         public async Task<FileContentResult> ComprobanteElectronicoPrint(string codComprobante)
         {
 
-
             string xRucEmisor = string.Empty, xUrlWebService = string.Empty;
 
             var objConf = await _repository.Tabla.GetListTablaClinicaPorFiltros("EFACT_PARAMETROSWSTCI", "", 0, 0, 7);
@@ -546,6 +579,47 @@ namespace Net.Business.Services.Controllers
                 Serie = codComprobante.Substring(0, 4),
                 Numero = Convert.ToInt32(codComprobante.ToString().Substring(4)).ToString(),
                 TipoComprobante = objExiste.data.tipo_comprobante
+            };
+
+            string xRptaCadena = string.Empty;
+            var result = client.Obtener_PDF(modelo, ref xRptaCadena);
+            var pdf = File(result.ArchivoPDF, "applicacion/pdf", codComprobante + ".pdf");
+            return pdf;
+
+        }
+
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> ComprobanteElectronicoNotaCreditoPrint(string codComprobante)
+        {
+
+
+            string xRucEmisor = string.Empty, xUrlWebService = string.Empty;
+
+            var objConf = await _repository.Tabla.GetListTablaClinicaPorFiltros("EFACT_PARAMETROSWSTCI", "", 0, 0, 7);
+
+            foreach (var item in objConf.dataList)
+            {
+                if (item.codigo.Trim().Equals("RUC")) xRucEmisor = item.nombre;
+                if (item.codigo.Trim().Equals("WS")) xUrlWebService = item.nombre;
+            }
+
+            var objValida = await _repository.VentaCaja.GetComprobanteElectroncioVB("001", codComprobante, "", "L", "", 4);
+
+            var xUrlWS = new System.ServiceModel.EndpointAddress(xUrlWebService);
+            var binding = new System.ServiceModel.BasicHttpBinding();
+            WSComprobanteSoapClient client = new WSComprobanteSoapClient(binding, xUrlWS);
+
+            ENPeticion modelo = new ENPeticion();
+
+            modelo = new ENPeticion()
+            {
+                IndicadorComprobante = 1,
+                Ruc = xRucEmisor,
+                Serie = objValida.data.codcomprobantee.Substring(0, 4),
+                Numero = Convert.ToInt32(objValida.data.codcomprobantee.ToString().Substring(4)).ToString(),
+                TipoComprobante = "07"
             };
 
             string xRptaCadena = string.Empty;

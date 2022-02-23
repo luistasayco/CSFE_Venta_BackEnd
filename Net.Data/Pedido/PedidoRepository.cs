@@ -8,6 +8,7 @@ using System;
 using System.Text.RegularExpressions;
 using Net.CrossCotting;
 using System.Net.Http;
+using System.Data;
 
 namespace Net.Data
 {
@@ -21,11 +22,14 @@ namespace Net.Data
         private readonly Regex regex = new Regex(@"<(\w+)>.*");
 
         const string DB_ESQUEMA = "";
+        const string SP_DELETE_MENSAJE = "VEN_DevolucionSRV_ProductosMensajeDel";
         const string SP_GET_PEDIDOS_SEGUIMIENTO_POR_FILTRO = DB_ESQUEMA + "VEN_ListaSeguimientoPedidosPorFiltrosGet";
         const string SP_GET_PEDIDOS_POR_ATENCION = DB_ESQUEMA + "VEN_ListaPedidosPorAtencionGet";
         const string SP_GET_PEDIDODETALLE_POR_PEDIDO = DB_ESQUEMA + "VEN_ListaPedidoDetallePorPedidoGet";
         const string SP_GET_PEDIDO_POR_FILTRO = DB_ESQUEMA + "VEN_ListaPedidosPorFiltrosGet";
+        const string SP_GET_PEDIDO_SIN_VENTA_POR_FILTRO = DB_ESQUEMA + "VEN_ListaPedidosSinVentaPorFiltrosGet";
         const string SP_GET_DATOS_PEDIDO_POR_PEDIDO = DB_ESQUEMA + "VEN_DatosPedidoPorPedidoGet";
+        const string SP_GET_PEDIDO_MENSAJE_POR_PEDIDO = DB_ESQUEMA + "VEN_DevolucionSRV_ProductosMensajeGet";
         const string SP_GET_LIST_PEDIDOS_VENTA_AUTOMATICA = DB_ESQUEMA + "VEN_ListaPedidoVentaAutomaticaGet";
 
         // Devoluciones
@@ -241,6 +245,57 @@ namespace Net.Data
 
         }
 
+        public async Task<ResultadoTransaccion<BE_Pedido>> GetListPedidosSinPedidoPorFiltro(DateTime fechainicio, DateTime fechafin, string codtipopedido, string codpedido)
+        {
+            ResultadoTransaccion<BE_Pedido> vResultadoTransaccion = new ResultadoTransaccion<BE_Pedido>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            fechainicio = Utilidades.GetFechaHoraInicioActual(fechainicio);
+            fechafin = Utilidades.GetFechaHoraFinActual(fechafin);
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_Pedido>();
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_PEDIDO_SIN_VENTA_POR_FILTRO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@fechainicio", fechainicio));
+                        cmd.Parameters.Add(new SqlParameter("@fechafin", fechafin));
+                        cmd.Parameters.Add(new SqlParameter("@codtipopedido", codtipopedido == null ? string.Empty : codtipopedido));
+                        cmd.Parameters.Add(new SqlParameter("@codpedido", codpedido == null ? string.Empty : codpedido));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_Pedido>)context.ConvertTo<BE_Pedido>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+
         public async Task<ResultadoTransaccion<BE_Pedido>> GetListPedidosPorFiltro(DateTime fechainicio, DateTime fechafin, string codtipopedido, string codpedido)
         {
             ResultadoTransaccion<BE_Pedido> vResultadoTransaccion = new ResultadoTransaccion<BE_Pedido>();
@@ -317,6 +372,74 @@ namespace Net.Data
                         }
 
                         conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+        public async Task<ResultadoTransaccion<BE_PedidoDetalle_Mensaje>> GetPedidoMensajePorPedido(string codpedido)
+        {
+            ResultadoTransaccion<BE_PedidoDetalle_Mensaje> vResultadoTransaccion = new ResultadoTransaccion<BE_PedidoDetalle_Mensaje>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_PedidoDetalle_Mensaje>();
+
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_PEDIDO_MENSAJE_POR_PEDIDO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@as_codpedido", codpedido));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_PedidoDetalle_Mensaje>)context.ConvertTo<BE_PedidoDetalle_Mensaje>(reader);
+                        }
+
+                        conn.Close();
+
+                        //string mensaje = string.Empty;
+                        //string mensajeFinal = string.Empty;
+
+                        //foreach (BE_PedidoDetalle_Mensaje item in response)
+                        //{
+                        //    mensaje += string.Format("{0} - {1}", item.codproducto, item.nombreproducto);
+                        //}
+
+                        //if (response.Count > 0)
+                        //{
+                        //    mensajeFinal = string.Format("La cantidad a devolver de los siguientes productos excede lo facturado: <br> {0} <br> genere la devolución de estos productos uno a uno", mensaje);
+                        //}
+
+                        // Procedemos a eliminar
+                        ResultadoTransaccion<string> resultadoTransaccionDelete = await EliminarPedidoMensajePorPedido(codpedido);
+
+                        if (resultadoTransaccionDelete.ResultadoCodigo == -1)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionDelete.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
 
                         vResultadoTransaccion.IdRegistro = 0;
                         vResultadoTransaccion.ResultadoCodigo = 0;
@@ -465,6 +588,56 @@ namespace Net.Data
 
             return vResultadoTransaccion;
 
+        }
+
+        public async Task<ResultadoTransaccion<string>> EliminarPedidoMensajePorPedido(string codpedido)
+        {
+            ResultadoTransaccion<string> vResultadoTransaccion = new ResultadoTransaccion<string>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+
+                    using (SqlCommand cmd = new SqlCommand(SP_DELETE_MENSAJE, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add(new SqlParameter("@as_codpedido", codpedido));
+
+                        SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputIdTransaccionParam);
+
+                        SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputMsjTransaccionParam);
+
+                        await conn.OpenAsync();
+                        await cmd.ExecuteNonQueryAsync();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                        vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
         }
     }
 }

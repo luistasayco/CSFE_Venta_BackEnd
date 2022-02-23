@@ -273,8 +273,8 @@ namespace Net.Data
                     {
                         BE_Stock stockProducto = ((List<BE_Stock>)resultadoTransaccionStock.dataList)[0];
 
-                        data.ProductoStock = (decimal)stockProducto.OnHandALM;
-                        data.valorVVP = (decimal)stockProducto.Price;
+                        data.ProductoStock = stockProducto.OnHandALM == null ? 0 : (decimal)stockProducto.OnHandALM;
+                        data.valorVVP = stockProducto.Price == null ? 0 : (decimal)stockProducto.Price;
                     }
 
                     ConveniosRepository conveniosRepository = new ConveniosRepository(_clientFactory, context, _configuration);
@@ -453,6 +453,42 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
+        public async Task<ResultadoTransaccion<BE_Producto>> GetProductoByCodigo(string codproducto)
+        {
+            ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                codproducto = codproducto == null ? "" : codproducto.ToUpper();
+
+                var cadena = "Items";
+                var filter = "&$filter=ItemCode eq '" + codproducto + "'";
+                var campos = "?$select=ItemCode, ItemName, U_SYP_CS_LABORATORIO, U_SYP_FAMILIA, U_SYP_CS_EABAS, U_SYP_CS_CLASIF, U_SYP_MONART, ItemsGroupCode, Properties1, ManageBatchNumbers, U_SYP_CS_PRODCI ";
+
+                cadena = cadena + campos + filter;
+
+                List<BE_Producto> listproducto = await _connectServiceLayer.GetAsync<BE_Producto>(cadena);
+
+                BE_Producto data = new BE_Producto();
+                data = listproducto[0];
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                vResultadoTransaccion.data = data;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
         public async Task<ResultadoTransaccion<BE_Producto>> GetListDetalleProductoPorPedido(string codpedido, string codalmacen, string codaseguradora, string codcia, string tipomovimiento, string codtipocliente, string codcliente, string codpaciente, int tipoatencion)
         {
             ResultadoTransaccion<BE_Producto> vResultadoTransaccion = new ResultadoTransaccion<BE_Producto>();
@@ -501,6 +537,36 @@ namespace Net.Data
 
                         } else
                         {
+                            ConsolidadoRepository consolidadoRepository = new ConsolidadoRepository(_clientFactory, context, _configuration);
+                            ResultadoTransaccion<BE_ConsolidadoPedidoPicking> resultadoTransaccionPicking = await consolidadoRepository.GetListConsolidadoIndividualPicking(codpedido, item.codproducto);
+
+                            if (resultadoTransaccionPicking.ResultadoCodigo == -1)
+                            {
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPicking.ResultadoDescripcion;
+                                return vResultadoTransaccion;
+                            }
+
+                            resultadoTransaccionProducto.data.ListStockLote = new List<BE_StockLote>();
+
+                            foreach (BE_ConsolidadoPedidoPicking itemPicking in resultadoTransaccionPicking.dataList)
+                            {
+                                var stock = new BE_StockLote
+                                {
+                                    ItemCode = item.codproducto,
+                                    ItemName = item.nombreproducto,
+                                    BatchNum = itemPicking.lote,
+                                    QuantityLote = 0,
+                                    Quantityinput = itemPicking.cantidadpicking,
+                                    ExpDate = itemPicking.fechavencimiento,
+                                    BinAbs = itemPicking.ubicacion,
+                                    BinCode = itemPicking.nombreubicacion
+                                };
+
+                                resultadoTransaccionProducto.data.ListStockLote.Add(stock);
+                            }
+
                             //if (resultadoTransaccionProducto.data.ProductoStock < (decimal)item.cantidad)
                             //{
                             //    mensajeProductosSinStock += string.Format("Producto {0} - {1} no tiene stock en el almacen: {2} <br>", item.codproducto, resultadoTransaccionProducto.data.ItemName, codalmacen);
@@ -509,6 +575,7 @@ namespace Net.Data
                             //{
                             //    resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
                             //}
+
                             resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
                             resultadoTransaccionProducto.data.CodPedido = item.codpedido;
                             resultadoTransaccionProducto.data.binActivat = item.binactivat;
@@ -595,6 +662,37 @@ namespace Net.Data
                         }
                         else
                         {
+
+                            PickingRepository pickingRepository = new PickingRepository(_clientFactory, context, _configuration);
+                            ResultadoTransaccion<BE_Picking> resultadoTransaccionPicking = await pickingRepository.GetListPickingPorRecetaProducto(idereceta, item.codproducto);
+
+                            if (resultadoTransaccionPicking.ResultadoCodigo == -1)
+                            {
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPicking.ResultadoDescripcion;
+                                return vResultadoTransaccion;
+                            }
+
+                            resultadoTransaccionProducto.data.ListStockLote = new List<BE_StockLote>();
+
+                            foreach (BE_Picking itemPicking in resultadoTransaccionPicking.dataList)
+                            {
+                                var stock = new BE_StockLote
+                                {
+                                    ItemCode = item.codproducto,
+                                    ItemName = item.nombreproducto,
+                                    BatchNum = itemPicking.lote,
+                                    QuantityLote = 0,
+                                    Quantityinput = itemPicking.cantidadpicking,
+                                    ExpDate = itemPicking.fechavencimiento,
+                                    BinAbs = itemPicking.ubicacion,
+                                    BinCode = itemPicking.nombreubicacion
+                                };
+
+                                resultadoTransaccionProducto.data.ListStockLote.Add(stock);
+                            }
+
                             resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
                             resultadoTransaccionProducto.data.binActivat = binactivat;
 
@@ -785,16 +883,18 @@ namespace Net.Data
                 nombreFamilia = nombreFamilia == null ? "" : nombreFamilia.Trim().ToUpper();
                 nombreLaboratorio = nombreLaboratorio == null ? "" : nombreLaboratorio.Trim().ToUpper();
 
-                var cadena = "Items?$select=ItemCode, ItemName,ManageBatchNumbers,Properties1 &$filter= InventoryItem eq 'tYES' and SalesItem eq 'tYES' and Valid eq 'tYES'";
+                var cadena = "Items?$select=ItemCode, ItemName,ManageBatchNumbers,Properties1 &$filter= InventoryItem eq 'tYES' and SalesItem eq 'tYES' and Valid eq 'tYES' ";
 
                 if (nombreFamilia != string.Empty)
                 {
-                    filter = " and U_SYP_FAMILIA eq '" + nombreFamilia;
+                    cadena += " and U_SYP_FAMILIA eq '" + nombreFamilia + "'";
                 }
+
                 if (nombreLaboratorio != string.Empty)
                 {
-                    filter = " and U_SYP_CS_LABORATORIO eq '" + nombreLaboratorio;
+                    cadena += " and U_SYP_CS_LABORATORIO eq '" + nombreLaboratorio + "'";
                 }
+
                 if (nombreProducto != string.Empty)
                 {
                     cadena += " and startswith(ItemName,'" + nombreProducto + "')";
@@ -859,9 +959,31 @@ namespace Net.Data
                 string Select = string.Empty;
                 string filter = string.Empty;
 
+                string codProducto = codigoBarra.Substring(0, 8).Trim();
+
+                ResultadoTransaccion< BE_Producto> resultadoTransaccionProducto = await GetProductoByCodigo(codProducto);
+
+                if (resultadoTransaccionProducto.ResultadoCodigo == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionProducto.ResultadoDescripcion;
+                    return vResultadoTransaccion;
+                }
+
+                if (resultadoTransaccionProducto.data.manbtchnum)
+                {
+                    if (codigoBarra.Length == 8)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = "Producto tiene identificador de Lote, código de barra incorrecto";
+                        return vResultadoTransaccion;
+                    }
+                }
+
                 if (codigoBarra.Length <= 8)
                 {
-                    string codProducto = codigoBarra.Substring(0, 8).Trim();
                     vista = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='',CEROS='N')/SBASTKG?";
                     Select = "$select=* ";
                     filter = $"&$filter =WhsCode eq '{codalmacen}' and ItemCode eq '{codProducto}'";
@@ -869,7 +991,7 @@ namespace Net.Data
                 else
                 {
                     //var cadena = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTKG?$filter = WhsCode eq'" + WhsCode + "' and validFor = 'Y' and InvntItem = 'Y'";
-                    string codProducto = codigoBarra.Substring(0, 8).Trim();
+                    
                     string codLote = Microsoft.VisualBasic.Strings.Right(codigoBarra, (codigoBarra.Length) - (codProducto.Length + 1)).Trim();
 
                     vista = "sml.svc/SBASTCKParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTCK?";

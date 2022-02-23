@@ -7,6 +7,6 @@ namespace Net.Data
    public interface ITerminalRepository
     {
         Task<ResultadoTransaccion<BE_Terminal>> GetTerminal();
-
+        Task<ResultadoTransaccion<BE_Terminal>> GetTerminalPorParametros(string numTerminal);
     }
 }

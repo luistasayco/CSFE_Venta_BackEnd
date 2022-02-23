@@ -40,7 +40,7 @@ namespace Net.Data
 
                 if (orden.Equals("NOMBRE"))
                 {
-                    if (buscar != null) filter = "&$filter=Name eq '" + buscar.ToUpper() + "'";
+                    if (buscar != null) filter = "&$filter=contains (Name,'" + buscar.ToUpper() + "')";
 
                 }
                 else if (orden.Equals("CODIGO"))

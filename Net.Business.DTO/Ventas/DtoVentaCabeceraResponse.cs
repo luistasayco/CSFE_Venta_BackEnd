@@ -25,6 +25,7 @@ namespace Net.Business.DTO
         public string codpedido { get; set; }
         public string estado { get; set; }
         public string usuarioanulacion { get; set; }
+        public DateTime? fechaanulacion { get; set; }
 
         public DtoVentaCabeceraResponse RetornaDtoVentaCabeceraResponse(BE_VentasCabecera value)
         {
@@ -49,7 +50,8 @@ namespace Net.Business.DTO
                 codcliente = value.codcliente,
                 codpedido = value.codpedido,
                 estado = value.estado,
-                usuarioanulacion = value.usuarioanulacion
+                usuarioanulacion = value.usuarioanulacion,
+                fechaanulacion = value.fechaanulacion
             };
         }
     }

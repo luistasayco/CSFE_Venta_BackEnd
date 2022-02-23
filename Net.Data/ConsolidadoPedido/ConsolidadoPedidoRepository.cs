@@ -709,7 +709,7 @@ namespace Net.Data
                 doc.Add(new Phrase(" "));
 
                 // Generamos el detalle
-                tbl = new PdfPTable(new float[] { 40f, 40f, 40f }) { WidthPercentage = 100 };
+                tbl = new PdfPTable(new float[] { 15f, 65f, 20f }) { WidthPercentage = 100 };
                 c1 = new PdfPCell(new Phrase("Producto", parrafoNegroNegrita));
                 c1.BorderWidth = 1;
                 c1.DisableBorderSide(Rectangle.LEFT_BORDER);

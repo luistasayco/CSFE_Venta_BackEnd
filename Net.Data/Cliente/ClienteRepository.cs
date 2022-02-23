@@ -327,6 +327,7 @@ namespace Net.Data
                         cmd.Parameters.Add(new SqlParameter("@cod_tipopersona", item.cod_tipopersona));
                         cmd.Parameters.Add(new SqlParameter("@observaciones", item.observaciones));
                         cmd.Parameters.Add(new SqlParameter("@codcivil", item.codcivil));
+                        cmd.Parameters.Add(new SqlParameter("@nombre", item.nombre));
 
                         cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", item.RegIdUsuario));
 

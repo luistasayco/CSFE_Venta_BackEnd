@@ -12,6 +12,8 @@ namespace Net.Business.DTO
         public string serieguia { get; set; }
         public string codcentro { get; set; }
         public string codalmacen { get; set; }
+        public string serienotacreditofactura { get; set; }
+        public string serienotadebitofactura { get; set; }
 
         public BE_SeriePorMaquina RetornaSeriePorMaquina()
         {
@@ -25,7 +27,9 @@ namespace Net.Business.DTO
                 serieguia = this.serieguia,
                 codcentro = this.codcentro,
                 codalmacen = this.codalmacen,
-                RegIdUsuario = this.RegIdUsuario
+                RegIdUsuario = this.RegIdUsuario,
+                serienotacreditofactura = this.serienotacreditofactura,
+                serienotadebitofactura = this.serienotadebitofactura
             };
         }
     }

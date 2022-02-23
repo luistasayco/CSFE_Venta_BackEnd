@@ -38,5 +38,18 @@ namespace Net.Business.Services.Controllers
 
         }
 
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetTerminalPorParametros(string numTerminal)
+        {
+            var objectGetAll = await _repository.Terminal.GetTerminalPorParametros(numTerminal);
+            if (objectGetAll.ResultadoCodigo == -1)
+            {
+                return BadRequest(objectGetAll);
+            }
+            return Ok(objectGetAll.dataList);
+
+        }
     }
 }

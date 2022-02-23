@@ -20,6 +20,7 @@ namespace Net.Business.DTO
         public string documento { get; set; }
         public string strFechaCancelacion { get; set; }
         public decimal tipoCambio { get; set; }
+        public int regupdateidusuario { get; set; }
     }
 
     public class DtoPlanillaTipoPagoRequest
@@ -45,7 +46,8 @@ namespace Net.Business.DTO
                     monto = item.montoDolar > 0 ? item.montoDolar:item.montoSoles,
                     documento = item.documento.Trim(),
                     fechacancelacion = Convert.ToDateTime(item.strFechaCancelacion),
-                    tipodecambio = item.tipoCambio
+                    tipodecambio = item.tipoCambio,
+                    regupdateidusuario = item.regupdateidusuario
                 };
 
                 lista.Add(objeto);

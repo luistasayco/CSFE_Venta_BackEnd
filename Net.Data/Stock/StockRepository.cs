@@ -39,6 +39,11 @@ namespace Net.Data
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
                 var ceros = constock ? "N" : "Y";
 
+                if (codalmacen.Equals("*"))
+                {
+                    ceros = "Y";
+                }
+
                 var codalmacenFind = codalmacen == "*" ? string.Empty : codalmacen;
 
                 var modelo = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='" + codalmacenFind + "',CEROS='" + ceros + "')/SBASTKG";
@@ -57,12 +62,16 @@ namespace Net.Data
 
                 var filterConStock = string.Empty;
 
-                if (ceros.Equals("N"))
+                if (!codalmacen.Equals("*"))
                 {
-                    filterConStock = " and OnHandALM gt 0";
-                } else
-                {
-                    filterConStock = " and OnHandALM eq 0";
+                    if (ceros.Equals("N"))
+                    {
+                        filterConStock = " and OnHandALM gt 0";
+                    }
+                    else
+                    {
+                        filterConStock = " and OnHandALM eq 0";
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(codproducto))
@@ -75,14 +84,21 @@ namespace Net.Data
                     filter = filter + " and contains (ItemName,'" + nombre + "')";
                 }
 
-                if (constock)
+                if (!codalmacen.Equals("*"))
                 {
-                    modelo = modelo + campos + filter + filterConStock + orderby;
-                }
-                else
+                    if (constock)
+                    {
+                        modelo = modelo + campos + filter + filterConStock + orderby;
+                    }
+                    else
+                    {
+                        modelo = modelo + campos + filter + filterConStock + orderby;
+                    }
+                } else
                 {
-                    modelo = modelo + campos + filter + filterConStock + orderby;
+                    modelo = modelo + campos + filter + orderby;
                 }
+                    
 
                 List<BE_Stock> data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
 
@@ -90,25 +106,44 @@ namespace Net.Data
 
                 if (data.Count > 0)
                 {
-                    if (constock)
+                    if (!codalmacen.Equals("*"))
                     {
-                        foreach (var item in data)
+                        if (constock)
                         {
-                            var reserva = item.ReserverdALM == null ? 0 : item.ReserverdALM;
-                            var diferencia = item.OnHandALM - reserva;
-
-                            item.Price = item.Price == null ? 0 : item.Price;
-
-                            if (diferencia > 0)
+                            foreach (var item in data)
                             {
-                                item.OnHandALM = item.OnHandALM - reserva;
+                                var reserva = item.ReserverdALM == null ? 0 : item.ReserverdALM;
+                                var diferencia = item.OnHandALM - reserva;
+
+                                item.Price = item.Price == null ? 0 : item.Price;
+
+                                if (diferencia > 0)
+                                {
+                                    item.OnHandALM = item.OnHandALM - reserva;
+                                    dataFilter.Add(item);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            dataFilter = data;
+                        }
+                    }
+                    else
+                    {
+                        foreach (BE_Stock item in data)
+                        {
+                            var isCountExiste = dataFilter.FindAll(xFila => xFila.ItemCode == item.ItemCode).Count;
+
+                            if(isCountExiste == 0 )
+                            {
+                                item.OnHandALM = item.OnHand;
+
                                 dataFilter.Add(item);
                             }
                         }
-                    } else
-                    {
-                        dataFilter = data;
                     }
+                        
                 }
                 else
                 {
