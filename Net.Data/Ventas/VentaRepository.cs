@@ -45,7 +45,8 @@ namespace Net.Data
         // SIN STOCK
         const string SP_UPDATE_CABECERA_SIN_STOCK = DB_ESQUEMA + "VEN_VentaSinStockUpd";
         const string SP_UPDATE_CABECERA_SAP = DB_ESQUEMA + "VEN_VentaSAPUpd";
-
+        const string SP_UPDATE_CABECERA_NOTA_SAP = DB_ESQUEMA + "VEN_NotaCreditoSAPUpd";
+        const string SP_POST_CUADRECAJA_NOTA_SAP_UPDATE = DB_ESQUEMA + "VEN_CuadreCajaNotaCreditoSapUpd";
         // Validaciones de la venta
         //const string SP_GET_TIPOPRODUCTOPRESTACIONES = DB_ESQUEMA + "VEN_TipoproductoPrestacionesPorFiltroGet";
         //const string SP_GET_GNCXVENTA = DB_ESQUEMA + "VEN_GncxVentaPorVentaGet";
@@ -1355,6 +1356,17 @@ namespace Net.Data
                                 return vResultadoTransaccion;
                             }
 
+                            ResultadoTransaccion<BE_ConsolidadoPedidoPicking> resultadoTransaccionConsolidadoEstado = await consolidadoRepository.ModificarEstadoWebPedido(conn, transaction, codpedido, "2", (int)value.RegIdUsuario);
+
+                            if (resultadoTransaccionConsolidadoEstado.ResultadoCodigo == -1)
+                            {
+                                transaction.Rollback();
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionConsolidadoEstado.ResultadoDescripcion;
+                                return vResultadoTransaccion;
+                            }
+
                             foreach (BE_ConsolidadoPedidoPicking item in resultadoTransaccionConsolidado.dataList)
                             {
                                 if (item.idreserva > 0)
@@ -1370,7 +1382,7 @@ namespace Net.Data
                                         return vResultadoTransaccion;
                                     }
                                 }
-                            }
+                            } 
                         }
 
                         // Eliminamos la reserva, del picking realizado receta
@@ -1385,6 +1397,17 @@ namespace Net.Data
                                 vResultadoTransaccion.IdRegistro = -1;
                                 vResultadoTransaccion.ResultadoCodigo = -1;
                                 vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionConsolidado.ResultadoDescripcion;
+                                return vResultadoTransaccion;
+                            }
+
+                            ResultadoTransaccion<BE_Picking> resultadoTransaccionEstado = await pickingRepository.ModificarEstadoReceta(new BE_Picking { codpedido = string.Empty, id_receta = ide_receta, estado = 2, codusuarioapu = "", RegIdUsuario = (int)value.RegIdUsuario });
+
+                            if (resultadoTransaccionEstado.ResultadoCodigo == -1)
+                            {
+                                transaction.Rollback();
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionEstado.ResultadoDescripcion;
                                 return vResultadoTransaccion;
                             }
 
@@ -4959,6 +4982,54 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
+        public async Task<ResultadoTransaccion<bool>> UpdateSAPNota(string codnota, int doc_entry, int RegIdUsuario, SqlConnection conn, SqlTransaction transaction)
+        {
+            ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(SP_UPDATE_CABECERA_NOTA_SAP, conn, transaction))
+                {
+                    cmd.Parameters.Clear();
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                    cmd.Parameters.Add(new SqlParameter("@codnota", codnota));
+                    cmd.Parameters.Add(new SqlParameter("@doc_entry", doc_entry));
+                    cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", RegIdUsuario));
+
+                    SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmd.Parameters.Add(outputIdTransaccionParam);
+
+                    SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmd.Parameters.Add(outputMsjTransaccionParam);
+                    //await conn.OpenAsync();
+                    await cmd.ExecuteNonQueryAsync();
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                    vResultadoTransaccion.data = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
         public async Task<ResultadoTransaccion<bool>> UpdateSinStockVenta(BE_VentaXml value)
         {
             ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
@@ -5184,7 +5255,7 @@ namespace Net.Data
                                     transaction.Rollback();
                                     vResultadoTransaccion.IdRegistro = -1;
                                     vResultadoTransaccion.ResultadoCodigo = -1;
-                                    vResultadoTransaccion.ResultadoDescripcion = "Solicite asignar se se imprimirá Codigo de Barras o Codigo Hash.";
+                                    vResultadoTransaccion.ResultadoDescripcion = "Solicite asignar se imprimirá Codigo de Barras o Codigo Hash.";
                                     return vResultadoTransaccion;
                                 }
 
@@ -6024,7 +6095,7 @@ namespace Net.Data
                     resultadoTransaccionVenta.data.fec_docentrysap = DateTime.Now;
                     resultadoTransaccionVenta.data.RegIdUsuario = RegIdUsuario;
 
-                    ResultadoTransaccion<bool> resultadoTransaccionVentaUpd = await UpdateSAPVenta(resultadoTransaccionVenta.data, conn, transaction);
+                    ResultadoTransaccion<bool> resultadoTransaccionVentaUpd = await UpdateSAPNota(codcomprobante, resultadoSapDocument.data.DocEntry , RegIdUsuario, conn, transaction);
 
                     if (resultadoTransaccionVentaUpd.ResultadoCodigo == -1)
                     {
@@ -6042,6 +6113,27 @@ namespace Net.Data
                         vResultadoTransaccion.IdRegistro = -1;
                         vResultadoTransaccion.ResultadoCodigo = -1;
                         vResultadoTransaccion.ResultadoDescripcion = resultadoSapDocumentNotaPago.ResultadoDescripcion;
+                        return vResultadoTransaccion;
+                    }
+
+                    if (resultadoSapDocumentNotaPago.data.DocEntry != 0)
+                    {
+                        using (SqlCommand cmd = new SqlCommand(SP_POST_CUADRECAJA_NOTA_SAP_UPDATE, conn, transaction))
+                        {
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.Add(new SqlParameter("@documento", codcomprobante));
+                            cmd.Parameters.Add(new SqlParameter("@doc_entry", resultadoSapDocument.data.DocEntry));
+                            cmd.Parameters.Add(new SqlParameter("@ide_trans", resultadoSapDocumentNotaPago.data.DocEntry));
+                            cmd.Parameters.Add(new SqlParameter("@fec_enviosap", DateTime.Now));
+
+                            await cmd.ExecuteNonQueryAsync();
+                        }
+                    }
+                    else
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = "ERROR AL ENVIAR EL PAGO A SAP.";
                         return vResultadoTransaccion;
                     }
                 }

@@ -611,7 +611,7 @@ namespace Net.Data
 
                                var  objVista = new { 
                                     fecha1 = ((reader["fecha1"]) is DBNull) ? string.Empty : reader["fecha1"].ToString(), 
-                                    fecha2 = ((reader["fecha1"]) is DBNull) ? string.Empty : reader["fecha1"].ToString(),
+                                    fecha2 = ((reader["fecha2"]) is DBNull) ? string.Empty : reader["fecha2"].ToString(),
                                     montolimite = (reader["montolimite"] is DBNull) ? 0 : (decimal)reader["montolimite"],
                                     montoconsumo = (reader["montoconsumo"] is DBNull) ? 0 : (decimal)reader["montoconsumo"],
                                     vender = ((reader["vender"]) is DBNull) ? string.Empty : reader["vender"].ToString(),
@@ -726,7 +726,7 @@ namespace Net.Data
                             {
                                 modal = new BE_ConsumoPersonal();
                                 modal.fecha1 = ((reader["fecha1"]) is DBNull) ? string.Empty : reader["fecha1"].ToString();
-                                modal.fecha2 = ((reader["fecha1"]) is DBNull) ? string.Empty : reader["fecha1"].ToString();
+                                modal.fecha2 = ((reader["fecha2"]) is DBNull) ? string.Empty : reader["fecha2"].ToString();
                                 modal.montolimite = (reader["montolimite"] is DBNull) ? 0 : (decimal)reader["montolimite"];
                                 modal.montoconsumo = (reader["montoconsumo"] is DBNull) ? 0 : (decimal)reader["montoconsumo"];
                                 modal.vender = ((reader["vender"]) is DBNull) ? string.Empty : reader["vender"].ToString();

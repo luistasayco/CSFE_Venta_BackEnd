@@ -17,6 +17,8 @@ namespace Net.Business.DTO
         [DataMember, XmlAttribute]
         public int Opcion { get; set; }
         [DataMember, XmlAttribute]
+        public string Usuario { get; set; }
+        [DataMember, XmlAttribute]
         public int IdConsolidado { get; set; }
         [DataMember]
         [XmlElement(ElementName = "ListaConsolidadoPedidos", Type = typeof(List<BE_ConsolidadoPedidoDetalle>))]

@@ -31,12 +31,12 @@ namespace Net.Business.DTO
         public string codventa { get; set; }
         public string codmotivo { get; set; }
         public string codnotae { get; set; }
-        public int flg_electronico { get; set; }
-        public int flg_gratuito { get; set; }
+        public bool flg_electronico { get; set; }
+        public bool flg_gratuito { get; set; }
         public string moneda { get; set; }
-        public decimal tipodecambio { get; set; }
-        public decimal montodolares { get; set; }
-        public decimal montoimpuestodolares { get; set; }
+        public double tipodecambio { get; set; }
+        public double montodolares { get; set; }
+        public double montoimpuestodolares { get; set; }
         public string cardcode { get; set; }
         public int regcreateidusuario { get; set; }
         public DateTime regcreate { get; set; }
@@ -88,5 +88,26 @@ namespace Net.Business.DTO
                 flgeliminado = value.flgeliminado
             };
         }
+    }
+
+    public class DtoCancelarNotaCredito
+    {
+        public string codnota { get; set; }
+        public string usuario { get; set; }
+    }
+
+    public class DtoEliminarNotaCredito
+    {
+        public string codnota { get; set; }
+        public string usuario { get; set; }
+        public int idusuario { get; set; }
+    }
+
+    public class DtoDarBajaNotaCredito
+    {
+        public string codnota { get; set; }
+        public string usuario { get; set; }
+        public string observacion { get; set; }
+        public int idusuario { get; set; }
     }
 }

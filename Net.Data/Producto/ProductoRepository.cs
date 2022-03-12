@@ -664,7 +664,7 @@ namespace Net.Data
                         {
 
                             PickingRepository pickingRepository = new PickingRepository(_clientFactory, context, _configuration);
-                            ResultadoTransaccion<BE_Picking> resultadoTransaccionPicking = await pickingRepository.GetListPickingPorRecetaProducto(idereceta, item.codproducto);
+                            ResultadoTransaccion<BE_Picking> resultadoTransaccionPicking = await pickingRepository.GetListPickingPorRecetaProductoAlmacen(idereceta, item.codproducto, codalmacen);
 
                             if (resultadoTransaccionPicking.ResultadoCodigo == -1)
                             {

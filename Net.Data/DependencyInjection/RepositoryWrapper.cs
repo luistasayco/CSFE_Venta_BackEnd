@@ -65,6 +65,7 @@ namespace Net.Data
         private ITransaccionPagosRepository _TransaccionPagos;
         private IConceptoRepository _Concepto;
         private ITipoConceptoRepository _TipoConcepto;
+        private IVentasNotaRepository _VentasNota;
         public RepositoryWrapper(IConnectionSQL repoContext, IConfiguration configuration, IHttpClientFactory clientFactory)
         {
             _repoContext = repoContext;
@@ -683,6 +684,18 @@ namespace Net.Data
                     _TipoConcepto = new TipoConceptoRepository(_repoContext, _configuration);
                 }
                 return _TipoConcepto;
+            }
+        }
+
+        public IVentasNotaRepository VentasNota
+        {
+            get
+            {
+                if (_VentasNota == null)
+                {
+                    _VentasNota = new VentasNotaRepository(_repoContext, _configuration, _clientFactory);
+                }
+                return _VentasNota;
             }
         }
     }

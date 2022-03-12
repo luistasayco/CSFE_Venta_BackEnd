@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Net.Business.DTO;
 using Net.Data;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,16 +57,19 @@ namespace Net.Business.Services.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CheckListRegistroMovimientoUpdatet([FromBody] DtoCheckListRegistroMovimientoUpdate value)
+        public async Task<IActionResult> CheckListRegistroMovimientoUpdatet([FromBody] DtoCheckListRegistroMovimientoUpdate data)
         {
             try
             {
-                if (value == null)
+
+                //List<DtoCheckListRegistroMovimientoUpdate> value = JsonConvert.DeserializeObject<List<DtoCheckListRegistroMovimientoUpdate>>(data);
+
+                if (string.IsNullOrEmpty(data.data))
                 {
                     return BadRequest(ModelState);
                 }
 
-                var response = await _repository.CheckListRegistroMovimiento.CheckListRegistroMovimientoUpdatet(value.RetornaCheckListRegistroMovimientoUpdate());
+                var response = await _repository.CheckListRegistroMovimiento.CheckListRegistroMovimientoUpdatet(data.data, data.comentario);
 
                 if (response.ResultadoCodigo == -1)
                 {
@@ -131,9 +135,9 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetCkeckListRegistroMovimientoEnviarCorreo([FromQuery] string cod_atencion, int ide_tarea, int orden)
+        public async Task<IActionResult> GetCkeckListRegistroMovimientoEnviarCorreo([FromQuery] string cod_atencion, int ide_tarea)
         {
-            var objectGetAll = await _repository.CheckListRegistroMovimiento.GetCkeckListRegistroMovimientoEnviarCorreo(cod_atencion, ide_tarea, orden);
+            var objectGetAll = await _repository.CheckListRegistroMovimiento.GetCkeckListRegistroMovimientoEnviarCorreo(cod_atencion, ide_tarea);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {
@@ -148,9 +152,9 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetCheckListRegistroMovimientoVerificar([FromQuery] string cod_atencion, int ide_tarea, int orden)
+        public async Task<IActionResult> GetCheckListRegistroMovimientoVerificar([FromQuery] string cod_atencion, int ide_tarea)
         {
-            var objectGetAll = await _repository.CheckListRegistroMovimiento.GetCheckListRegistroMovimientoVerificar(cod_atencion, ide_tarea, orden);
+            var objectGetAll = await _repository.CheckListRegistroMovimiento.GetCheckListRegistroMovimientoVerificar(cod_atencion, ide_tarea);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {
@@ -210,9 +214,9 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetHospitalDetalle([FromQuery] string buscar, int key, int numerolineas, int tipoatencion, int filtrolocal)
+        public async Task<IActionResult> GetHospitalDetalle([FromQuery] string buscar, int key, int numerolineas, int orden, string tipoatencion, string filtrolocal)
         {
-            var objectGetAll = await _repository.CheckListRegistroMovimiento.GetHospitalDetalle(buscar, key, numerolineas, tipoatencion, filtrolocal);
+            var objectGetAll = await _repository.CheckListRegistroMovimiento.GetHospitalDetalle(buscar, key, numerolineas, orden, tipoatencion, filtrolocal);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {
@@ -220,6 +224,19 @@ namespace Net.Business.Services.Controllers
             }
 
             return Ok(objectGetAll.dataList);
+        }
+
+        [HttpGet("{codatencion}", Name = "GenerarCkeckListReportePrint")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> GenerarCkeckListReportePrint(string codatencion)
+        {
+            var objectGetById = await _repository.CheckListRegistroMovimiento.GenerarCkeckListReportePrint(codatencion);
+
+            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", codatencion + ".pdf");
+
+            return pdf;
         }
     }
 }

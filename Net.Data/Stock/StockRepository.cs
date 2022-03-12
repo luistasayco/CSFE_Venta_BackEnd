@@ -320,7 +320,7 @@ namespace Net.Data
                 var ceros = constock ? "N" : "Y";
 
                 var modelo = "sml.svc/SBAVSFNParameters(CODITEM='" + codproducto + "',CODALM='" + codalmacen + "',CEROS='" + ceros + "', CODUBI=0)/SBAVSFN";
-                var campos = "?$select= ItemCode, ItemName, BatchNum, QuantityLote, IsCommitedLote, OnOrderLote , ExpDate, BinAbs, BinCode, OnHandQty";
+                var campos = "?$select= ItemCode, ItemName, BatchNum, QuantityLote, IsCommitedLote, OnOrderLote , ExpDate, BinAbs, BinCode, OnHandQty, ReserverdQty, ReservedLote";
                 var filter = "&$filter = WhsCode eq '" + codalmacen + "' and ItemCode eq '" + codproducto + "'  and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
                 var filterConStock = " and OnHandQty gt 0 ";
                 var orderby = " &$orderby = ExpDate";

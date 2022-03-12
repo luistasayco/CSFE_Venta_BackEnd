@@ -7,7 +7,6 @@ namespace Net.Business.DTO
 {
     public class DtoCheckListRegistroMovimientoAnular
     {
-        public int ide_actividad { get; set; }
         public string cod_atencion { get; set; }
         public int ide_tarea { get; set; }
 

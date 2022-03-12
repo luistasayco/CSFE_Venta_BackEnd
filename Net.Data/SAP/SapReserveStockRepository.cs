@@ -145,7 +145,7 @@ namespace Net.Data
                 var modelo = "U_SBA_AJSTINV";
                 var campos = "?$select=* ";
 
-                var filter = "&$filter = U_IDEXTERNO eq '"+ u_idexterno + "' ";
+                var filter = "&$filter = U_IDEXTERNO eq '" + u_idexterno + "' ";
 
                 modelo = modelo + campos + filter;
 

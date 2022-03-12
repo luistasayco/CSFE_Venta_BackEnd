@@ -21,6 +21,7 @@ namespace Net.Data
 
         const string DB_ESQUEMA = "";
         const string SP_GET_RECETAS_POR_FILTRO = DB_ESQUEMA + "VEN_ListaRecetasPorFiltrosGet";
+        const string SP_GET_RECETAS_POR_FILTRO_APU = DB_ESQUEMA + "VEN_ListaRecetasAPUPorFiltrosGet";
         const string SP_GET_RECETADETALLE_POR_RECETA = DB_ESQUEMA + "VEN_ListaRecetaDetallePorRecetaGet";
 
         const string SP_GET_RECETA_OBSERVACION_POR_RECETA = DB_ESQUEMA + "VEN_RecetaObservacionGet";
@@ -52,6 +53,58 @@ namespace Net.Data
                 {
                     var response = new List<BE_Receta>();
                     using (SqlCommand cmd = new SqlCommand(SP_GET_RECETAS_POR_FILTRO, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@fechainicio", fechainicio));
+                        cmd.Parameters.Add(new SqlParameter("@fechafin", fechafin));
+                        cmd.Parameters.Add(new SqlParameter("@codtipoconsultamedica", codtipoconsultamedica == null ? string.Empty : codtipoconsultamedica));
+                        cmd.Parameters.Add(new SqlParameter("@ide_receta", ide_receta));
+                        cmd.Parameters.Add(new SqlParameter("@nombrespaciente", nombrespaciente == null ? string.Empty : nombrespaciente));
+                        cmd.Parameters.Add(new SqlParameter("@sbaestadoreceta", sbaestadoreceta == null ? string.Empty : sbaestadoreceta));
+
+                        conn.Open();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_Receta>)context.ConvertTo<BE_Receta>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+        public async Task<ResultadoTransaccion<BE_Receta>> GetListRecetasAPUPorFiltro(DateTime fechainicio, DateTime fechafin, string codtipoconsultamedica, int ide_receta, string nombrespaciente, string sbaestadoreceta)
+        {
+            ResultadoTransaccion<BE_Receta> vResultadoTransaccion = new ResultadoTransaccion<BE_Receta>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            fechainicio = Utilidades.GetFechaHoraInicioActual(fechainicio);
+            fechafin = Utilidades.GetFechaHoraFinActual(fechafin);
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    var response = new List<BE_Receta>();
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_RECETAS_POR_FILTRO_APU, conn))
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@fechainicio", fechainicio));

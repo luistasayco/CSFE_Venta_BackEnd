@@ -94,7 +94,7 @@ namespace Net.Business.Services.Controllers
         public async Task<IActionResult> GetListRecetasPorRangoFechas([FromQuery] DateTime fechainicio, DateTime fechafin)
         {
 
-            var objectGetAll = await _repository.Receta.GetListRecetasPorFiltro(fechainicio, fechafin, string.Empty, 0, string.Empty, string.Empty);
+            var objectGetAll = await _repository.Receta.GetListRecetasAPUPorFiltro(fechainicio, fechafin, string.Empty, 0, string.Empty, string.Empty);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {

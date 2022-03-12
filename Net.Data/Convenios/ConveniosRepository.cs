@@ -98,7 +98,9 @@ namespace Net.Data
 
                     if (((List<BE_ListaPrecio>)resultadoTransaccionListaPrecio.dataList).Count > 0)
                     {
-                        response[0].monto = double.Parse(((List<BE_ListaPrecio>)resultadoTransaccionListaPrecio.dataList)[0].Price.ToString());
+                        BE_ListaPrecio bE_ListaPrecio = ((List<BE_ListaPrecio>)resultadoTransaccionListaPrecio.dataList)[0];
+
+                        response[0].monto = bE_ListaPrecio.Price == null ? 0 : double.Parse(bE_ListaPrecio.Price.ToString());
                     } else
                     {
                         response[0].monto = 0;

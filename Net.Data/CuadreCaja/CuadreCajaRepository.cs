@@ -123,7 +123,8 @@ namespace Net.Data
                                     documentoe = (reader["documentoe"] is DBNull) ? string.Empty : (string)reader["documentoe"],
                                     nombres = (reader["nombres"] is DBNull) ? string.Empty : (string)reader["nombres"],
                                     docmonto = (reader["docmonto"] is DBNull) ? 0 : Convert.ToDecimal(reader["docmonto"]),
-                                    movimiento = (reader["movimiento"] is DBNull) ? string.Empty : (string)reader["movimiento"]
+                                    movimiento = (reader["movimiento"] is DBNull) ? string.Empty : (string)reader["movimiento"],
+                                    montoingreso = (reader["montoingreso"] is DBNull) ? 0 : Convert.ToDecimal(reader["montoingreso"])
                                 };
                                 response.Add(responseEnty);
                                 //response = (List<BE_CuadreCaja>)context.ConvertTo<BE_CuadreCaja>(reader);

@@ -39,6 +39,7 @@ namespace Net.Data
         const string SP_INSERT_CONSOLIDADO_PICKING = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingIns";
         const string SP_UPDATE_CONSOLIDADO_PICKING = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingUpd";
         const string SP_UPDATE_CONSOLIDADO_PICKING_ESTADO = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingEstadoUpd";
+        const string SP_UPDATE_CONSOLIDADO_PICKING_ESTADO_WEB = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingEstadoWebUpd";
         const string SP_DELETE_CONSOLIDADO_PICKING = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingDel";
         const string SP_GET_CONSOLIDADO_SOLICITUD = DB_ESQUEMA + "REQ_ConsolidadoSolicitudGet";
         const string SP_UPDATE_ID_RESERVA = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingIdReservaUpd";
@@ -539,7 +540,7 @@ namespace Net.Data
                                 Name = string.Format("APU-RESERVA-CONSO-{0}", item.codusuarioapu),
                                 U_ITEMCODE = item.codproducto,
                                 U_BINABSENTRY = item.ubicacion == null ? 0 : (int)item.ubicacion,
-                                U_QUANTITY = item.cantidad,
+                                U_QUANTITY = item.cantidadpicking,
                                 U_IDEXTERNO = string.Format("APU-{0}", item.codusuarioapu),
                                 U_BATCHNUM = item.lote,
                                 U_WHSCODE = item.codalmacen
@@ -823,6 +824,54 @@ namespace Net.Data
                     vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
                 }
             }
+
+            return vResultadoTransaccion;
+
+        }
+        public async Task<ResultadoTransaccion<BE_ConsolidadoPedidoPicking>> ModificarEstadoWebPedido(SqlConnection conn, SqlTransaction transaction, string codpedido, string estado, int idusuario)
+        {
+            ResultadoTransaccion<BE_ConsolidadoPedidoPicking> vResultadoTransaccion = new ResultadoTransaccion<BE_ConsolidadoPedidoPicking>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_UPDATE_CONSOLIDADO_PICKING_ESTADO_WEB, conn, transaction))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add(new SqlParameter("@codpedido", codpedido));
+                        cmd.Parameters.Add(new SqlParameter("@estado", estado));
+                        cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", idusuario));
+
+                        SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputIdTransaccionParam);
+
+                        SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputMsjTransaccionParam);
+
+                        //await conn.OpenAsync();
+                        await cmd.ExecuteNonQueryAsync();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                        vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                }
 
             return vResultadoTransaccion;
 

@@ -57,5 +57,6 @@
         ITransaccionPagosRepository TransaccionPagos { get; }
         IConceptoRepository Concepto { get; }
         ITipoConceptoRepository TipoConcepto { get; }
+        IVentasNotaRepository VentasNota { get; }
     }
 }

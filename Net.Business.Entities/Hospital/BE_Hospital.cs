@@ -33,7 +33,7 @@ namespace Net.Business.Entities
         //public string familiar { get; set; }
         [DBParameter(SqlDbType.Char, 10, ActionType.Everything)]
         public string planpoliza { get; set; }
-        public string polizaplan { get => string.Format("{0}-{1}", codpoliza.Trim(), planpoliza.Trim()); }
+        public string polizaplan { get => string.Format("{0}-{1}", string.IsNullOrEmpty(codpoliza) ? string.Empty : codpoliza.Trim(), string.IsNullOrEmpty(planpoliza) ? string.Empty: planpoliza.Trim()); }
         //[DBParameter(SqlDbType.Char, 1, ActionType.Everything)]
         //public string piso { get; set; }
         //[DBParameter(SqlDbType.Char, 1, ActionType.Everything)]

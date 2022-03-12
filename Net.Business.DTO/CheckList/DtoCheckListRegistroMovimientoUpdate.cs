@@ -7,18 +7,17 @@ namespace Net.Business.DTO
 {
     public class DtoCheckListRegistroMovimientoUpdate
     {
-        public int ide_actividad { get; set; }
-        public string cod_atencion { get; set; }
-        public int ide_tarea { get; set; }
+        public string data { get; set; }
+        public string comentario { get; set; }
 
-        public BE_CheckListRegistroMovimiento RetornaCheckListRegistroMovimientoUpdate()
-        {
-            return new BE_CheckListRegistroMovimiento
-            {
-                ide_actividad = this.ide_actividad,
-                cod_atencion = this.cod_atencion,
-                ide_tarea = this.ide_tarea
-            };
-        }
+        //public BE_CheckListRegistroMovimiento RetornaCheckListRegistroMovimientoUpdate()
+        //{
+        //    return new BE_CheckListRegistroMovimiento
+        //    {
+        //        ide_actividad = this.ide_actividad,
+        //        cod_atencion = this.cod_atencion,
+        //        ide_tarea = this.ide_tarea
+        //    };
+        //}
     }
 }

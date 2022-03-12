@@ -14,7 +14,7 @@ namespace Net.Business.DTO
         public DateTime fec_registro { get; set; }
         public string dsc_nombre { get; set; }
         public string flg_estado { get; set; }
-        public int flg_revisado { get; set; }
+        public bool flg_revisado { get; set; }
 
         public BE_CheckListRegistroMovimiento RetornaCheckListRegistroMovimientoInsert()
         {

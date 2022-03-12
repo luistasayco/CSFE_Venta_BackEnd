@@ -40,7 +40,7 @@ namespace Net.Business.Entities
         public string codprestacion { get; set; }
         public string nombretipocliente { get; set; }
         public int indicadorpicking { get; set; }
-        public string key { get => codventa == null ? string.Empty : codventa + codpedido + codatencion; }
+        public string key { get => codventa == null ? codpedido + codatencion : codventa + codpedido + codatencion; }
     }
     
 }

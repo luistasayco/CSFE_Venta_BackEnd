@@ -50,6 +50,7 @@ namespace Net.Business.Entities
         public int idegctipoatencionmae { get; set; }
         public string descripcionpaquete { get; set; }
         public string cardcode { get; set; }
+        public DateTime? fechaaltamedica { get; set; }
 
     }
 }

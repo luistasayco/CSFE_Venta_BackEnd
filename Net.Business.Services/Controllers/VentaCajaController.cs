@@ -263,12 +263,16 @@ namespace Net.Business.Services.Controllers
                     vender = objLConsumo.data.vender;
                     var montoconsumo = objLConsumo.data.montoconsumo;
                     var montolimite = objLConsumo.data.montolimite;
-                    var fecha1 = objLConsumo.data.fecha1;
-                    var fecha2 = objLConsumo.data.fecha2;
+
+                    var fecha1Custom = objLConsumo.data.fecha1;
+                    var fecha2Custom = objLConsumo.data.fecha2;
+
+                    var fecha1 = string.Format("{0}/{1}/{2}", fecha1Custom.Substring(3, 2), fecha1Custom.Substring(0,2),  fecha1Custom.Substring(6, 4));
+                    var fecha2 = string.Format("{0}/{1}/{2}", fecha2Custom.Substring(3, 2), fecha2Custom.Substring(0, 2),  fecha2Custom.Substring(6, 4));
 
                     if (vender == "N")
                     {
-                        var resul = new { exito = false, mensaje = $"El Consumo al CREDITO es mayor al límite_de_consumo <br><br>en el período del ${fecha1} al ${fecha2} <br>Monto Consumo (no incluye esta venta {montoconsumo} <br> Monto Limite de Consumo : ${montolimite}):" };
+                        var resul = new { exito = false, mensaje = $"El Consumo al CREDITO es mayor al límite_de_consumo <br><br>en el período del {fecha1} al {fecha2} <br>Monto Consumo (no incluye esta venta): S/.{montoconsumo} <br> Monto Limite de Consumo : S/.{montolimite}):" };
                         return Ok(resul);
                     }
                     else
@@ -282,7 +286,7 @@ namespace Net.Business.Services.Controllers
                         }
                         else
                         {
-                            var resul = new { exito = false, mensaje = $"El Consumo al CREDITO es mayor al límite_de_consumo <br> en el período del {fecha1} al ${fecha2} <br> Monto Consumo (incluye esta venta): ${montoconsumo} <br> Monto Limite de Consumo : ${montolimite}" };
+                            var resul = new { exito = false, mensaje = $"El Consumo al CREDITO es mayor al límite_de_consumo <br> en el período del {fecha1} al {fecha2} <br> Monto Consumo (no incluye esta venta): S/.{montoconsumo} <br> Monto Limite de Consumo : S/.{montolimite}" };
                             return Ok(resul);
                         }
 
