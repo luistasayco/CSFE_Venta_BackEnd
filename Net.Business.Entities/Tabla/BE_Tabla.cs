@@ -15,5 +15,7 @@ namespace Net.Business.Entities
         public double valor { get; set; }
         [DBParameter(SqlDbType.Char, 1, ActionType.Everything)]
         public string estado { get; set; }
+        [DBParameter(SqlDbType.VarChar, 20, ActionType.Everything)]
+        public string valor2 { get; set; }
     }
 }

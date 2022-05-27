@@ -16,4 +16,20 @@ namespace Net.Business.DTO
             };
         }
     }
+
+    public class DtoRecetaEstadoModificar : EntityBase
+    {
+        public int ide_receta { get; set; }
+        public string estadovd { get; set; }
+
+        public BE_RecetaEstadoModificar RetornaModelo()
+        {
+            return new BE_RecetaEstadoModificar
+            {
+                ide_receta = ide_receta,
+                estadovd = estadovd,
+                RegIdUsuario = this.RegIdUsuario
+            };
+        }
+    }
 }

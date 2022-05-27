@@ -64,7 +64,6 @@ namespace Net.Business.Entities
         public decimal porcentajeimpuesto { get; set; }
         public decimal porcentajecoaseguro { get; set; }
         public string flg_gratuito { get; set; }
-
         public string d_orden { get; set; }
         public string d_unidad { get; set; }
         public string d_codproducto { get; set; }
@@ -116,6 +115,7 @@ namespace Net.Business.Entities
         public string CodProductoSUNAT { get; set; }
         public string cuadre { get; set; }
         public string cardcode { get; set; }
+        public string cardcodeparaquien { get; set; }
         public string codalmacen { get; set; }
         public int baseentry { get; set; }
         public int baseline { get; set; }
@@ -132,7 +132,47 @@ namespace Net.Business.Entities
         public string strXml { get; set; }
         public string nomtipocliente { get; set; }
         public string CuentaEfectivoPago { get; set; }
+        public string codventadevolucion { get; set; }
         public string tipodocidentidad_sunat { get; set; }
-
+        // Campos de usuario en SAP
+        public string NumAtCard { get; set; }
+        public decimal DocRate { get; set; }
+        public string U_SYP_CS_SEDE { get; set; }
+        public string U_SYP_CS_DNI_PAC { get; set; }
+        public string U_SYP_CS_NOM_PAC { get; set; }
+        public string U_SYP_CS_RUC_ASEG { get; set; }
+        public string U_SYP_CS_NOM_ASEG { get; set; }
+        public string U_SYP_MDTD { get; set; }
+        public string U_SYP_MDTO { get; set; }
+        public string U_SBA_TIPONC { get; set; }
+        public string FederalTaxID { get; set; }
+        public string U_SYP_FECHA_REF { get; set; }
+        public string U_SYP_MDCO { get; set; }
+        public string U_SYP_MDSO { get; set; }
+        public string U_SYP_MDSD { get; set; }
+        public string U_SYP_MDCD { get; set; }
+        public string U_SYP_STATUS { get; set; }
+        public string U_SYP_MDMT { get; set; }
+        public string Comments { get; set; }
+        public string JournalMemo { get; set; }
+        public string U_SYP_CS_USUARIO { get; set; }
+        public string Rounding { get; set; }
+        public string RoundDif { get; set; }
+        public decimal d_ventaunitario_sinigv_g { get; set; }
+        public string ControlAccount { get; set; }
+        public string U_SYP_CS_OA_CAB { get; set; }
+        public string U_SYP_CS_PAC_HC { get; set; }
+        public string U_SYP_CS_FINI_ATEN { get; set; }
+        public string U_SYP_CS_FFIN_ATEN { get; set; }
+        public string TaxCode { get; set; }
+        public string codpresotor { get; set; }
+        // DETALLE:
+        public string TaxOnly { get; set; }
+        public string Project { get; set; }
+        public string U_SYP_CS_OA { get; set; }
+        public string U_SYP_CS_DNI_MED { get; set; }
+        public string U_SYP_CS_NOM_MED { get; set; }
+        public string U_SYP_CS_RUC_MED { get; set; }
+        
     }
 }

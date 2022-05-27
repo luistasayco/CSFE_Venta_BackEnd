@@ -16,6 +16,7 @@ namespace Net.Business.Entities
         public int? ubicacion { get; set; }
         public string codusuarioapu { get; set; }
         public string nombreubicacion { get; set; }
+        public string nombreproducto { get; set; }
         public int estado { get; set; }
         public int idreserva { get; set; }
     }

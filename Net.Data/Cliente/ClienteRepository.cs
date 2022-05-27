@@ -24,6 +24,7 @@ namespace Net.Data
         const string SP_GET_LISTA_CLIENTE_LOGISTICA_POR_FILTRO = DB_ESQUEMA + "VEN_ListaClienteLogisticaPorFiltro";
         const string SP_GET_LISTA_CLIENTE_LOGISTICA_POR_CLIENTE = DB_ESQUEMA + "VEN_ListaClienteLogisticaPorCliente";
         const string SP_GET_LISTA_CLIENTE_POR_CODIGO = DB_ESQUEMA + "VEN_ClientePorCodCliente";
+        const string SP_GET_LISTA_DATOS_PADRON_SUNAT = DB_ESQUEMA + "VEN_ClienteDatosPadronSunatGet";
         const string SP_INSERT = DB_ESQUEMA + "VEN_ClienteIns";
 
         const string SP_UPDATE = DB_ESQUEMA + "VEN_ClienteUpd";
@@ -113,6 +114,53 @@ namespace Net.Data
                         using (var reader = await cmd.ExecuteReaderAsync())
                         {
                             response = (List<BE_Cliente>)context.ConvertTo<BE_Cliente>(reader);
+                        }
+
+                        conn.Close();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                        vResultadoTransaccion.dataList = response;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
+        public async Task<ResultadoTransaccion<BE_DatosSunat>> GetListClienteDatosSunatPorRUC(string ruc)
+        {
+            ResultadoTransaccion<BE_DatosSunat> vResultadoTransaccion = new ResultadoTransaccion<BE_DatosSunat>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+
+                    using (SqlCommand cmd = new SqlCommand(SP_GET_LISTA_DATOS_PADRON_SUNAT, conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@ruc", ruc));
+
+                        conn.Open();
+
+                        var response = new List<BE_DatosSunat>();
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            response = (List<BE_DatosSunat>)context.ConvertTo<BE_DatosSunat>(reader);
                         }
 
                         conn.Close();
@@ -286,6 +334,37 @@ namespace Net.Data
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
 
+            if (item.cod_tipopersona.Trim() == "TPJ")
+            {
+                ResultadoTransaccion<BE_DatosSunat> resultadoTransaccionDatosSunat = await GetListClienteDatosSunatPorRUC(item.ruc);
+
+                if (resultadoTransaccionDatosSunat.ResultadoCodigo == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionDatosSunat.ResultadoDescripcion;
+                    return vResultadoTransaccion;
+                }
+
+                var data = (List<BE_DatosSunat>)resultadoTransaccionDatosSunat.dataList;
+
+                if (data.Count == 0)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = "No existe ruc en base de datos de sunat...";
+                    return vResultadoTransaccion;
+                } else
+                {
+                    BE_DatosSunat bE_DatosSunat = ((List<BE_DatosSunat>)resultadoTransaccionDatosSunat.dataList)[0];
+
+                    item.nombre = bE_DatosSunat.razon_social;
+                    item.cod_ubigeo = string.IsNullOrEmpty(bE_DatosSunat.ubigeo) ? string.Empty : "PE" + bE_DatosSunat.ubigeo;
+                    item.direccion = string.IsNullOrEmpty(bE_DatosSunat.direccion1) ? string.Empty : bE_DatosSunat.direccion1;
+
+                }
+                
+            }
 
             using (SqlConnection conn = new SqlConnection(_cnx))
             {
@@ -476,19 +555,19 @@ namespace Net.Data
                         var businessPartners = new BusinessPartners
                         {
                             CardCode = item.cardcode.Trim(),
-                            CardName = item.nombre.Trim(),
+                            CardName = string.IsNullOrEmpty(item.nombre) ? string.Empty : item.nombre.Trim(),
                             CardType = "cCustomer",
                             GroupCode = 100,
-                            MailAddress = item.direccion.Trim(),
+                            MailAddress = string.IsNullOrEmpty(item.direccion) ? string.Empty : item.direccion.Trim(),
                             MailZipCode = item.cod_ubigeo.Substring(2),
-                            Phone1 = item.telefono.Trim(),
-                            FederalTaxID = item.ruc.Trim(),
-                            EmailAddress = item.correo.Trim(),
-                            FreeText = item.observaciones.Trim(),
-                            U_SYP_BPAP = item.dsc_appaterno.Trim(),
-                            U_SYP_BPAM = item.dsc_apmaterno.Trim(),
-                            U_SYP_BPNO = item.dsc_primernombre.Trim(),
-                            U_SYP_BPN2 = item.dsc_segundonombre.Trim(),
+                            Phone1 = string.IsNullOrEmpty(item.telefono) ? string.Empty : item.telefono.Trim(),
+                            FederalTaxID = string.IsNullOrEmpty(item.ruc) ? string.Empty : item.ruc.Trim(),
+                            EmailAddress = string.IsNullOrEmpty(item.correo) ? string.Empty : item.correo.Trim(),
+                            FreeText = string.IsNullOrEmpty(item.observaciones) ? string.Empty : item.observaciones.Trim(),
+                            U_SYP_BPAP = string.IsNullOrEmpty(item.dsc_appaterno) ? string.Empty : item.dsc_appaterno.Trim(),
+                            U_SYP_BPAM = string.IsNullOrEmpty(item.dsc_apmaterno) ? string.Empty : item.dsc_apmaterno.Trim(),
+                            U_SYP_BPNO = string.IsNullOrEmpty(item.dsc_primernombre) ? string.Empty : item.dsc_primernombre.Trim(),
+                            U_SYP_BPN2 = string.IsNullOrEmpty(item.dsc_segundonombre) ? string.Empty : item.dsc_segundonombre.Trim(),
                             U_SYP_BPTP = item.cod_tipopersona.Trim(),
                             U_SYP_BPTD = item.cod_tipopersona.Equals("TPJ") ? "6" : "1",
                             BPAddresses = new List<Addresses>()

@@ -17,4 +17,10 @@ namespace Net.Business.Entities
         public string usuarioanulacion { get; set; }
         public DateTime? fechaanulacion { get; set; }
     }
+
+    public class BE_RecetaEstadoModificar : EntityBase
+    {
+        public int ide_receta { get; set; }
+        public string estadovd { get; set; }
+    }
 }

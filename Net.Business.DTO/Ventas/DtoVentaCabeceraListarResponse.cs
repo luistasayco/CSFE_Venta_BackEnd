@@ -34,7 +34,8 @@ namespace Net.Business.DTO
                     codpedido = value.codpedido,
                     estado = value.estado,
                     usuarioanulacion = value.usuarioanulacion,
-                    fechaanulacion = value.fechaanulacion
+                    fechaanulacion = value.fechaanulacion,
+                    flgsinstock = value.flgsinstock
                 }
             );
 

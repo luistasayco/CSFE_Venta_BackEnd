@@ -188,7 +188,7 @@ namespace Net.Data
             {
                 if (_Comprobante == null)
                 {
-                    _Comprobante = new ComprobanteRepository(_repoContext, _configuration);
+                    _Comprobante = new ComprobanteRepository(_repoContext, _configuration, _clientFactory);
                 }
                 return _Comprobante;
             }

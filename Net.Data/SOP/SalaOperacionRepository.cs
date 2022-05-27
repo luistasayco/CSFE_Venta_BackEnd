@@ -710,12 +710,26 @@ namespace Net.Data
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
 
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(_cnx))
-                {
+            // Eliminamos la reserva, si es de sala de operación
+            SapReserveStockRepository sapReserveStockRepository = new SapReserveStockRepository(_clientFactory, _configuration, context);
+            string u_idexterno = string.Format("SOP-{0}", value.idborrador);
+            ResultadoTransaccion<SapReserveStock> resultadoTransaccionReserva = await sapReserveStockRepository.GetListReservaPorIdExterno(u_idexterno);
 
-                    using (SqlCommand cmd = new SqlCommand(SP_DELETE, conn))
+            if (resultadoTransaccionReserva.ResultadoCodigo == -1)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionReserva.ResultadoDescripcion;
+                return vResultadoTransaccion;
+            }
+
+            using (SqlConnection conn = new SqlConnection(_cnx))
+            {
+                conn.Open();
+                SqlTransaction transaction = conn.BeginTransaction();
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_DELETE, conn, transaction))
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
 
@@ -734,22 +748,42 @@ namespace Net.Data
                         };
                         cmd.Parameters.Add(outputMsjTransaccionParam);
 
-                        await conn.OpenAsync();
+                        //await conn.OpenAsync();
                         await cmd.ExecuteNonQueryAsync();
 
                         vResultadoTransaccion.IdRegistro = value.idborrador;
                         vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
                         vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
                     }
-                }
-            }
-            catch (Exception ex)
-            {
-                vResultadoTransaccion.IdRegistro = -1;
-                vResultadoTransaccion.ResultadoCodigo = -1;
-                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
-            }
 
+                    foreach (SapReserveStock item in resultadoTransaccionReserva.dataList)
+                    {
+                        ResultadoTransaccion<SapBaseResponse<SapReserveStock>> resultadoTransaccionReservaDelete = await sapReserveStockRepository.SetDeleteReserve(item.Code);
+
+                        if (resultadoTransaccionReservaDelete.ResultadoCodigo == -1)
+                        {
+                            transaction.Rollback();
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionReservaDelete.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+                    }
+
+                    transaction.Commit();
+                    transaction.Dispose();
+
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                }
+
+                conn.Close();
+            }
             return vResultadoTransaccion;
         }
         public async Task<ResultadoTransaccion<BE_SalaOperacion>> Estado(FE_SalaOperacionId value)

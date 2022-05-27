@@ -19,9 +19,10 @@ namespace Net.Business.Entities
         public string U_SYP_BPN2 { get; set; }
         public string U_SYP_BPTP { get; set; }
         public string U_SYP_BPTD { get; set; }
+        public string CardCodeCsfe { get; set; }
     }
 
-    public class BE_ClienteLogistica: EntityBase
+    public class BE_ClienteLogistica : EntityBase
     {
         public string codcliente { get; set; }
         public string codpaciente { get; set; }
@@ -32,7 +33,7 @@ namespace Net.Business.Entities
         public string telefono { get; set; }
         public string codcivil { get; set; }
         public string nomcivil { get; set; }
-        public DateTime fechanacimiento { get; set; }
+        public DateTime? fechanacimiento { get; set; }
         public string ruc { get; set; }
         public string observaciones { get; set; }
         public string estado { get; set; }
@@ -51,5 +52,15 @@ namespace Net.Business.Entities
         public string tipdocidentidad { get; set; }
         public string nomtipdocidentidad { get; set; }
         public string cardcode { get; set; }
+    }
+
+    public class BE_DatosSunat
+    {
+        public string razon_social { get; set; }
+        public string estado { get; set; }
+        public string ubigeo { get; set; }
+        public string Distrito { get; set; }
+        public string direccion1 { get; set; }
+        public string direccion2 { get; set; }
     }
 }

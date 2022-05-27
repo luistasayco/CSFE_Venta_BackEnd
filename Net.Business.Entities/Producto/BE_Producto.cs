@@ -114,7 +114,7 @@ namespace Net.Business.Entities
         public decimal ProductoStock { get; set; }
         public string U_SYP_CS_PRODCI { get; set; }
         public bool binActivat { get; set; }
-
+        public bool pickingreceta { get; set; }
         public List<BE_Stock> ListStockAlmacen { get; set; }
 
         public List<BE_StockLote> ListStockLote { get; set; }

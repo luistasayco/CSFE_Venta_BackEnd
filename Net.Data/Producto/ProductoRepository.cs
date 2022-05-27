@@ -517,8 +517,8 @@ namespace Net.Data
 
                     List<BE_PedidoDetalle> listPedidoDetalle = (List<BE_PedidoDetalle>)resultadoTransaccionDetallePedido.dataList;
 
-
                     string mensajeProductosSinStock = string.Empty;
+                    decimal cantidadPicking = 0;
 
                     foreach (BE_PedidoDetalle item in listPedidoDetalle)
                     {
@@ -537,52 +537,95 @@ namespace Net.Data
 
                         } else
                         {
-                            ConsolidadoRepository consolidadoRepository = new ConsolidadoRepository(_clientFactory, context, _configuration);
-                            ResultadoTransaccion<BE_ConsolidadoPedidoPicking> resultadoTransaccionPicking = await consolidadoRepository.GetListConsolidadoIndividualPicking(codpedido, item.codproducto);
 
-                            if (resultadoTransaccionPicking.ResultadoCodigo == -1)
+                            ResultadoTransaccion<BE_Pedido> resultadoTransaccionDatosPedido = await pedidoRepository.GetDatosPedidoPorPedido(codpedido);
+
+                            if (resultadoTransaccionDatosPedido.ResultadoCodigo == -1)
                             {
                                 vResultadoTransaccion.IdRegistro = -1;
                                 vResultadoTransaccion.ResultadoCodigo = -1;
-                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPicking.ResultadoDescripcion;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionDatosPedido.ResultadoDescripcion;
                                 return vResultadoTransaccion;
                             }
 
+                            BE_Pedido bE_PedidoDatos = ((List< BE_Pedido>)resultadoTransaccionDatosPedido.dataList)[0];
                             resultadoTransaccionProducto.data.ListStockLote = new List<BE_StockLote>();
 
-                            foreach (BE_ConsolidadoPedidoPicking itemPicking in resultadoTransaccionPicking.dataList)
+                            if (bE_PedidoDatos.indicadorpicking == 2)
                             {
-                                var stock = new BE_StockLote
+                                ConsolidadoRepository consolidadoRepository = new ConsolidadoRepository(_clientFactory, context, _configuration);
+                                ResultadoTransaccion<BE_ConsolidadoPedidoPicking> resultadoTransaccionPicking = await consolidadoRepository.GetListConsolidadoIndividualPicking(codpedido, item.codproducto);
+
+                                cantidadPicking = 0;
+
+                                if (resultadoTransaccionPicking.ResultadoCodigo == -1)
                                 {
-                                    ItemCode = item.codproducto,
-                                    ItemName = item.nombreproducto,
-                                    BatchNum = itemPicking.lote,
-                                    QuantityLote = 0,
-                                    Quantityinput = itemPicking.cantidadpicking,
-                                    ExpDate = itemPicking.fechavencimiento,
-                                    BinAbs = itemPicking.ubicacion,
-                                    BinCode = itemPicking.nombreubicacion
-                                };
+                                    vResultadoTransaccion.IdRegistro = -1;
+                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPicking.ResultadoDescripcion;
+                                    return vResultadoTransaccion;
+                                }
 
-                                resultadoTransaccionProducto.data.ListStockLote.Add(stock);
+                                resultadoTransaccionProducto.data.ListStockLote = new List<BE_StockLote>();
+
+                                if (resultadoTransaccionPicking.dataList.Any())
+                                {
+
+                                    foreach (BE_ConsolidadoPedidoPicking itemPicking in resultadoTransaccionPicking.dataList)
+                                    {
+                                        var stock = new BE_StockLote
+                                        {
+                                            ItemCode = item.codproducto,
+                                            ItemName = item.nombreproducto,
+                                            BatchNum = itemPicking.lote,
+                                            QuantityLote = 0,
+                                            Quantityinput = itemPicking.cantidadpicking,
+                                            ExpDate = itemPicking.fechavencimiento,
+                                            BinAbs = itemPicking.ubicacion,
+                                            BinCode = itemPicking.nombreubicacion
+                                        };
+
+                                        cantidadPicking += itemPicking.cantidadpicking;
+
+                                        resultadoTransaccionProducto.data.ListStockLote.Add(stock);
+                                    }
+
+                                    resultadoTransaccionProducto.data.CantidadPedido = cantidadPicking;
+
+                                    resultadoTransaccionProducto.data.CodPedido = item.codpedido;
+                                    resultadoTransaccionProducto.data.binActivat = item.binactivat;
+
+                                    listProductos.Add(resultadoTransaccionProducto.data);
+
+                                    if ((decimal)item.cantidad != cantidadPicking)
+                                    {
+                                        mensajeProductosSinStock += string.Format("Producto {0} - {1}, Cantidad de pedido {2} y Cantidad picking {3} <br>", item.codproducto, resultadoTransaccionProducto.data.ItemName, item.cantidad, cantidadPicking);
+                                    }
+
+                                } else
+                                {
+                                    mensajeProductosSinStock += string.Format("Producto {0} - {1} no se ha realizado picking en el almacen: {2} <br>", item.codproducto, resultadoTransaccionProducto.data.ItemName, codalmacen);
+                                    resultadoTransaccionProducto.data.CantidadPedido = resultadoTransaccionProducto.data.ProductoStock;
+                                }
+                            } else
+                            {
+                                if (resultadoTransaccionProducto.data.ProductoStock < (decimal)item.cantidad)
+                                {
+                                    mensajeProductosSinStock += string.Format("Producto {0} - {1} no tiene stock en el almacen: {2} <br>", item.codproducto, resultadoTransaccionProducto.data.ItemName, codalmacen);
+                                    resultadoTransaccionProducto.data.CantidadPedido = resultadoTransaccionProducto.data.ProductoStock;
+                                }
+                                else
+                                {
+                                    resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
+                                }
+
+                                resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
+                                resultadoTransaccionProducto.data.CodPedido = item.codpedido;
+                                resultadoTransaccionProducto.data.binActivat = item.binactivat;
+
+                                listProductos.Add(resultadoTransaccionProducto.data);
                             }
-
-                            //if (resultadoTransaccionProducto.data.ProductoStock < (decimal)item.cantidad)
-                            //{
-                            //    mensajeProductosSinStock += string.Format("Producto {0} - {1} no tiene stock en el almacen: {2} <br>", item.codproducto, resultadoTransaccionProducto.data.ItemName, codalmacen);
-                            //    resultadoTransaccionProducto.data.CantidadPedido = resultadoTransaccionProducto.data.ProductoStock;
-                            //} else
-                            //{
-                            //    resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
-                            //}
-
-                            resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
-                            resultadoTransaccionProducto.data.CodPedido = item.codpedido;
-                            resultadoTransaccionProducto.data.binActivat = item.binactivat;
-
-                            listProductos.Add(resultadoTransaccionProducto.data);
                         }
-
                     }
 
                     vResultadoTransaccion.IdRegistro = 0;
@@ -641,8 +684,22 @@ namespace Net.Data
                 if (resultadoTransaccionDetalleReceta.dataList.Any())
                 {
 
-                    List<BE_RecetaDetalle> lisDetalleReceta = (List<BE_RecetaDetalle>)resultadoTransaccionDetalleReceta.dataList;
+                    PickingRepository pickingRepository = new PickingRepository(_clientFactory, context, _configuration);
+                    ResultadoTransaccion<BE_Picking> resultadoTransaccionPickingReceta = await pickingRepository.GetListPickingPorReceta(idereceta);
+                    if (resultadoTransaccionPickingReceta.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPickingReceta.ResultadoDescripcion;
+                        return vResultadoTransaccion;
+                    }
 
+                    List<BE_Picking> listPicking = (List<BE_Picking>)resultadoTransaccionPickingReceta.dataList;
+
+                    int countPicking = listPicking.FindAll(xFila => xFila.estado == 1).Count;
+
+                    List<BE_RecetaDetalle> lisDetalleReceta = (List<BE_RecetaDetalle>)resultadoTransaccionDetalleReceta.dataList;
+                    decimal cantidadPicking = 0;
 
                     foreach (BE_RecetaDetalle item in lisDetalleReceta)
                     {
@@ -663,42 +720,54 @@ namespace Net.Data
                         else
                         {
 
-                            PickingRepository pickingRepository = new PickingRepository(_clientFactory, context, _configuration);
-                            ResultadoTransaccion<BE_Picking> resultadoTransaccionPicking = await pickingRepository.GetListPickingPorRecetaProductoAlmacen(idereceta, item.codproducto, codalmacen);
-
-                            if (resultadoTransaccionPicking.ResultadoCodigo == -1)
-                            {
-                                vResultadoTransaccion.IdRegistro = -1;
-                                vResultadoTransaccion.ResultadoCodigo = -1;
-                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPicking.ResultadoDescripcion;
-                                return vResultadoTransaccion;
-                            }
-
                             resultadoTransaccionProducto.data.ListStockLote = new List<BE_StockLote>();
 
-                            foreach (BE_Picking itemPicking in resultadoTransaccionPicking.dataList)
+                            if (countPicking > 0)
                             {
-                                var stock = new BE_StockLote
+                                resultadoTransaccionProducto.data.pickingreceta = true;
+
+                                ResultadoTransaccion<BE_Picking> resultadoTransaccionPicking = await pickingRepository.GetListPickingPorRecetaProductoAlmacen(idereceta, item.codproducto, codalmacen);
+
+                                if (resultadoTransaccionPicking.ResultadoCodigo == -1)
                                 {
-                                    ItemCode = item.codproducto,
-                                    ItemName = item.nombreproducto,
-                                    BatchNum = itemPicking.lote,
-                                    QuantityLote = 0,
-                                    Quantityinput = itemPicking.cantidadpicking,
-                                    ExpDate = itemPicking.fechavencimiento,
-                                    BinAbs = itemPicking.ubicacion,
-                                    BinCode = itemPicking.nombreubicacion
-                                };
+                                    vResultadoTransaccion.IdRegistro = -1;
+                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionPicking.ResultadoDescripcion;
+                                    return vResultadoTransaccion;
+                                }
+                                cantidadPicking = 0;
+                                // Si existe picking
+                                if (resultadoTransaccionPicking.dataList.Any())
+                                {
+                                    foreach (BE_Picking itemPicking in resultadoTransaccionPicking.dataList)
+                                    {
+                                        var stock = new BE_StockLote
+                                        {
+                                            ItemCode = item.codproducto,
+                                            ItemName = item.nombreproducto,
+                                            BatchNum = itemPicking.lote,
+                                            QuantityLote = 0,
+                                            Quantityinput = itemPicking.cantidadpicking,
+                                            ExpDate = itemPicking.fechavencimiento,
+                                            BinAbs = itemPicking.ubicacion,
+                                            BinCode = itemPicking.nombreubicacion
+                                        };
+                                        cantidadPicking += itemPicking.cantidadpicking;
+                                        resultadoTransaccionProducto.data.ListStockLote.Add(stock);
+                                    }
 
-                                resultadoTransaccionProducto.data.ListStockLote.Add(stock);
+                                    resultadoTransaccionProducto.data.CantidadPedido = cantidadPicking;
+                                    resultadoTransaccionProducto.data.binActivat = binactivat;
+                                    listProductos.Add(resultadoTransaccionProducto.data);
+                                }
+                            } else
+                            {
+                                resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
+                                resultadoTransaccionProducto.data.binActivat = binactivat;
+                                resultadoTransaccionProducto.data.pickingreceta = false;
+                                listProductos.Add(resultadoTransaccionProducto.data);
                             }
-
-                            resultadoTransaccionProducto.data.CantidadPedido = (decimal)item.cantidad;
-                            resultadoTransaccionProducto.data.binActivat = binactivat;
-
-                            listProductos.Add(resultadoTransaccionProducto.data);
                         }
-
                     }
 
                     vResultadoTransaccion.IdRegistro = 0;
@@ -982,26 +1051,40 @@ namespace Net.Data
                     }
                 }
 
+                StockRepository stockRepository = new StockRepository(_clientFactory, _configuration);
+                List<BE_Stock> listproducto = new List<BE_Stock>();
+
                 if (codigoBarra.Length <= 8)
                 {
-                    vista = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='',CEROS='N')/SBASTKG?";
-                    Select = "$select=* ";
-                    filter = $"&$filter =WhsCode eq '{codalmacen}' and ItemCode eq '{codProducto}'";
+
+                    ResultadoTransaccion<BE_Stock> resultadoTransaccionStockProducto = await stockRepository.GetListStockPorProductoAlmacen(codalmacen, codProducto, true);
+
+                    if (resultadoTransaccionStockProducto.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionStockProducto.ResultadoDescripcion;
+                        return vResultadoTransaccion;
+                    }
+
+                    listproducto = (List<BE_Stock>)resultadoTransaccionStockProducto.dataList;
                 }
                 else
                 {
-                    //var cadena = "sml.svc/SBASTKGParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTKG?$filter = WhsCode eq'" + WhsCode + "' and validFor = 'Y' and InvntItem = 'Y'";
-                    
                     string codLote = Microsoft.VisualBasic.Strings.Right(codigoBarra, (codigoBarra.Length) - (codProducto.Length + 1)).Trim();
 
-                    vista = "sml.svc/SBASTCKParameters(CODITEM='',CODALM='',CEROS='Y')/SBASTCK?";
-                    Select = "$select=* ";
-                    filter = $"&$filter =WhsCode eq '{codalmacen}' and ItemCode eq '{codProducto}' and BatchNum eq '{codLote}'  ";
+                    ResultadoTransaccion<BE_Stock> resultadoTransaccionStockProductoLote = await stockRepository.GetListStockLotePorFiltro(codalmacen, codProducto, codLote, true);
+
+                    if (resultadoTransaccionStockProductoLote.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionStockProductoLote.ResultadoDescripcion;
+                        return vResultadoTransaccion;
+                    }
+
+                    listproducto = (List<BE_Stock>)resultadoTransaccionStockProductoLote.dataList;
                 }
-
-                query = string.Concat(vista, Select, filter);
-
-                List<BE_Stock> listproducto = await _connectServiceLayer.GetBaseAsync<BE_Stock>(query, 20);
 
                 if (listproducto.Count < 0)
                 {

@@ -12,6 +12,8 @@ namespace Net.Business.DTO
         public string amount { get; set; }
         public string currency_code { get; set; }
         public string data_adicional { get; set; }
+        public string id_autorizacion { get; set; }
+        public string message { get; set; }
         public string codventa { get; set; }
         public int regcreateusuario { get; set; }
 
@@ -27,6 +29,21 @@ namespace Net.Business.DTO
             return data;
         }
 
+        public BE_ProcesarTransaccionPagoIzipayRequest RetornarPagosIzipayDatos()
+        {
+            var data = new BE_ProcesarTransaccionPagoIzipayRequest()
+            {
+                ecr_aplicacion = aplicacion,
+                ecr_transaccion = transaccion,
+                ecr_amount = amount,
+                ecr_currency_code = currency_code,
+                ecr_data_adicional = data_adicional,
+                id_autorizacion = id_autorizacion,
+                message = message
+            };
+            return data;
+        }
+
         public BE_ProcesarTransaccionAnularRequest RetornarAnularDatos()
         {
 
@@ -36,7 +53,9 @@ namespace Net.Business.DTO
                 ecr_transaccion = transaccion,
                 ecr_amount = amount,
                 ecr_currency_code = currency_code,
-                ecr_data_adicional = data_adicional
+                ecr_data_adicional = data_adicional,
+                id_autorizacion = id_autorizacion,
+                message = message
             };
 
             return data;

@@ -92,7 +92,7 @@ namespace Net.Data
             return vResultadoTransaccion;
         }
 
-        public async Task<ResultadoTransaccion<BE_VentasNota>> GetNotaCabeceraPorFiltro(string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin, string codnota, string anombredequien)
+        public async Task<ResultadoTransaccion<BE_VentasNota>> GetNotaCabeceraPorFiltro(string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin, string codnota, string anombredequien, string codtipocliente)
         {
             ResultadoTransaccion<BE_VentasNota> vResultadoTransaccion = new ResultadoTransaccion<BE_VentasNota>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
@@ -116,6 +116,7 @@ namespace Net.Data
                         cmd.Parameters.Add(new SqlParameter("@fecfin", fecfin));
                         cmd.Parameters.Add(new SqlParameter("@codnota", codnota));
                         cmd.Parameters.Add(new SqlParameter("@anombredequien", anombredequien));
+                        cmd.Parameters.Add(new SqlParameter("@codtipocliente", codtipocliente));
 
                         var response = new List<BE_VentasNota>();
 
@@ -202,7 +203,7 @@ namespace Net.Data
 
                 vResultadoTransaccion.ResultadoDescripcion = "Se realizo correctamente";
 
-                ComprobanteRepository comprobanteRepository = new ComprobanteRepository(context, _configuration);
+                ComprobanteRepository comprobanteRepository = new ComprobanteRepository(context, _configuration, _clientFactory);
 
                 ResultadoTransaccion<BE_CuadreCaja> resultadoTransaccionCuadreCaja = await comprobanteRepository.GetListaCuadreCaja(codnota);
 

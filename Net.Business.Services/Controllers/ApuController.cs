@@ -433,6 +433,40 @@ namespace Net.Business.Services.Controllers
 
         }
 
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ModificarConsolidadoPickingMasivo([FromBody] DtoConsolidadoPedidoPickingRegistrarMasivo value)
+        {
+            try
+            {
+                if (value == null)
+                {
+                    return BadRequest("Master object is null");
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest("Invalid model object");
+                }
+
+                var response = await _repository.Consolidado.ModificarConsolidadoPickingMasivo(value.RetornaConsolidadoPedidoPickingMasivo());
+
+                if (response.ResultadoCodigo == -1)
+                {
+                    return BadRequest(response);
+                }
+
+                return CreatedAtRoute("GetConsolidadoPedidoPickingPorId", new { id = response.IdRegistro }, response.data);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+            }
+
+        }
+
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

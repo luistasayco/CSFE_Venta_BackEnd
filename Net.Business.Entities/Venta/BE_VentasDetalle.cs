@@ -154,6 +154,22 @@ namespace Net.Business.Entities
         public int baselinedevolucion { get; set; }
         [DataMember, XmlIgnore]
         public string nombrelaboratorio { get; set; }
+        [DataMember, XmlIgnore]
+        public string TaxCode { get; set; }
+        [DataMember, XmlIgnore]
+        public string TaxOnly { get; set; }
+        [DataMember, XmlIgnore]
+        public string Project { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_OA { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_DNI_MED { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_NOM_MED { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_RUC_MED { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_PROYECTO { get; set; }
     }
 
     [DataContract]

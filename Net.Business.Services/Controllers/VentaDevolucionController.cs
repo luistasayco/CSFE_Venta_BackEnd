@@ -49,10 +49,10 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetNotaCabeceraPorFiltro([FromQuery] string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin, string codnota, string anombredequien)
+        public async Task<IActionResult> GetNotaCabeceraPorFiltro([FromQuery] string codcomprobante, string codventa, DateTime fecinicio, DateTime fecfin, string codnota, string anombredequien, string codtipocliente)
         {
 
-            var objectGetAll = await _repository.VentasNota.GetNotaCabeceraPorFiltro(codcomprobante, codventa, fecinicio, fecfin, codnota, anombredequien);
+            var objectGetAll = await _repository.VentasNota.GetNotaCabeceraPorFiltro(codcomprobante, codventa, fecinicio, fecfin, codnota, anombredequien, codtipocliente);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {

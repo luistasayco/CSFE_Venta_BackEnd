@@ -40,7 +40,7 @@ namespace Net.Data
             _cnx = configuration.GetConnectionString("cnnSqlLogistica");
         }
 
-        public async Task<ResultadoTransaccion<BE_ValeDelivery>> GetListValeDeliveryPorCodAtencion(string codatencion)
+        public async Task<ResultadoTransaccion<BE_ValeDelivery>> GetListValeDeliveryPorCodAtencion(string codatencion, string codventa)
         {
             ResultadoTransaccion<BE_ValeDelivery> vResultadoTransaccion = new ResultadoTransaccion<BE_ValeDelivery>();
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
@@ -56,6 +56,7 @@ namespace Net.Data
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@codatencion", codatencion));
+                        cmd.Parameters.Add(new SqlParameter("@codventa", codventa));
 
                         conn.Open();
 
@@ -186,6 +187,8 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
+
+        
 
         public async Task<ResultadoTransaccion<BE_ValeDelivery>> GetListValeDeliveryPorRangoFecha(DateTime fechaInicio, DateTime fechaFinal)
         {
@@ -362,7 +365,7 @@ namespace Net.Data
                     tbl.AddCell(c1);
                     c1 = new PdfPCell(new Phrase(item.codatencion, parrafoNegro));
                     tbl.AddCell(c1);
-                    c1 = new PdfPCell(new Phrase((item.fecharegistro == null ? null : DateTime.Parse(item.fecharegistro.ToString()).ToString("dd/MM/yyyy")), parrafoNegro));
+                    c1 = new PdfPCell(new Phrase((item.fechaventa == null ? null : DateTime.Parse(item.fechaventa.ToString()).ToString("dd/MM/yyyy")), parrafoNegro));
                     tbl.AddCell(c1);
                     c1 = new PdfPCell(new Phrase(item.nombrepaciente, parrafoNegro));
                     tbl.AddCell(c1);
@@ -430,26 +433,31 @@ namespace Net.Data
 
                         using (var reader = await cmd.ExecuteReaderAsync())
                         {
-                            while (await reader.ReadAsync())
-                            {
-                                DateTime? fecha = null;
-
-                                if ((reader["fecharegistro"]) is DBNull) fecha = DateTime.Parse(reader["fecharegistro"].ToString());
-
-
-                                var valeDelivery = new BE_ValeDelivery()
-                                {
-                                    fechaventa = fecha,
-                                    atendido = ((reader["atendido"]) is DBNull) ? 0 : int.Parse(reader["atendido"].ToString()),
-                                    noDeseaReceta = ((reader["noDeseaReceta"]) is DBNull) ? 0 : int.Parse(reader["noDeseaReceta"].ToString()),
-                                    noSePudoContactar = ((reader["noSePudoContactar"]) is DBNull) ? 0 : int.Parse(reader["noSePudoContactar"].ToString()),
-                                    pendiente = ((reader["pendiente"]) is DBNull) ? 0 : int.Parse(reader["pendiente"].ToString()),
-                                    recogidoCSF = ((reader["recogidoCSF"]) is DBNull) ? 0 : int.Parse(reader["recogidoCSF"].ToString())
-                                };
-
-                                response.Add(valeDelivery);
-                            }
+                            response = (List<BE_ValeDelivery>)context.ConvertTo<BE_ValeDelivery>(reader);
                         }
+
+                        //using (var reader = await cmd.ExecuteReaderAsync())
+                        //{
+                        //    while (await reader.ReadAsync())
+                        //    {
+                        //        DateTime? fecha = null;
+
+                        //        //if ((reader["fecharegistro"]) is DBNull) fecha = DateTime.Parse(reader["fecharegistro"].ToString());
+
+
+                        //        var valeDelivery = new BE_ValeDelivery()
+                        //        {
+                        //            fechaventa = ((reader["fechaventa"]) is DBNull) ? fecha : DateTime.Parse(reader["fechaventa"].ToString()),
+                        //            atendido = ((reader["atendido"]) is DBNull) ? 0 : int.Parse(reader["atendido"].ToString()),
+                        //            noDeseaReceta = ((reader["noDeseaReceta"]) is DBNull) ? 0 : int.Parse(reader["noDeseaReceta"].ToString()),
+                        //            noSePudoContactar = ((reader["noSePudoContactar"]) is DBNull) ? 0 : int.Parse(reader["noSePudoContactar"].ToString()),
+                        //            pendiente = ((reader["pendiente"]) is DBNull) ? 0 : int.Parse(reader["pendiente"].ToString()),
+                        //            recogidoCSF = ((reader["recogidoCSF"]) is DBNull) ? 0 : int.Parse(reader["recogidoCSF"].ToString())
+                        //        };
+
+                        //        response.Add(valeDelivery);
+                        //    }
+                        //}
 
                         conn.Close();
 

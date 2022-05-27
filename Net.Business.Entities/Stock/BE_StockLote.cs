@@ -51,5 +51,8 @@ namespace Net.Business.Entities
 
         public decimal? ReservedLote { get; set; }
         public decimal? ReserverdQty { get; set; }
+
+        public decimal? AvaliableLote { get; set; }
+        public decimal? AvaliableQty { get; set; }
     }
 }

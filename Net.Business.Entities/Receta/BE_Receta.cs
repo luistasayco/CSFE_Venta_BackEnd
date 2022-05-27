@@ -14,6 +14,8 @@ namespace Net.Business.Entities
         public string telefono { get; set; }
         public string telefono2 { get; set; }
         public string est_consulta_medica { get; set; }
+        public string estadovd { get; set; }
+        public string nombreestadovd { get; set; }
         public bool flg_atendido_online { get; set; }
         public string key { get => ide_receta.ToString() + ide_historia.ToString() + cod_atencion; }
     }

@@ -83,10 +83,17 @@ namespace Net.Data
                 var hash = sha512.ComputeHash(bytes);
                 var stringBuilder = new StringBuilder();
 
-                for (int i = 0; i < hash.Length - 1; i++)
+                //for (int i = 0; i < hash.Length - 1; i++)
+                //{
+                //    stringBuilder.Append(hash[i].ToString("X2"));
+                //}
+
+
+                for (int i = 0, loopTo = hash.Length - 1; i <= loopTo; i++)
                 {
                     stringBuilder.Append(hash[i].ToString("X2"));
                 }
+
                 return stringBuilder.ToString();
             }
 

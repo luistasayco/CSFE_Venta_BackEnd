@@ -23,7 +23,7 @@ namespace Net.Data
         const string SP_GET_RECETAS_POR_FILTRO = DB_ESQUEMA + "VEN_ListaRecetasPorFiltrosGet";
         const string SP_GET_RECETAS_POR_FILTRO_APU = DB_ESQUEMA + "VEN_ListaRecetasAPUPorFiltrosGet";
         const string SP_GET_RECETADETALLE_POR_RECETA = DB_ESQUEMA + "VEN_ListaRecetaDetallePorRecetaGet";
-
+        const string SP_UPDATE_VALEDELIVERY_ESTADO = DB_ESQUEMA + "VEN_ValeDeliveryUpdEst";
         const string SP_GET_RECETA_OBSERVACION_POR_RECETA = DB_ESQUEMA + "VEN_RecetaObservacionGet";
 
         const string SP_INSERT_RECETA_OBSERVACION = DB_ESQUEMA + "VEN_RecetaObservacionIns";
@@ -454,6 +454,56 @@ namespace Net.Data
                 vResultadoTransaccion.IdRegistro = -1;
                 vResultadoTransaccion.ResultadoCodigo = -1;
                 vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<BE_RecetaEstadoModificar>> ModificarRecetasEstado(BE_RecetaEstadoModificar value)
+        {
+            ResultadoTransaccion<BE_RecetaEstadoModificar> vResultadoTransaccion = new ResultadoTransaccion<BE_RecetaEstadoModificar>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            using (SqlConnection conn = new SqlConnection(_cnx))
+            {
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand(SP_UPDATE_VALEDELIVERY_ESTADO, conn))
+                    {
+                        cmd.Parameters.Clear();
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add(new SqlParameter("@ide_receta", value.ide_receta));
+                        cmd.Parameters.Add(new SqlParameter("@estadovd", value.estadovd));
+                        cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
+                        SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputIdTransaccionParam);
+
+                        SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                        {
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(outputMsjTransaccionParam);
+                        await conn.OpenAsync();
+                        await cmd.ExecuteNonQueryAsync();
+
+                        vResultadoTransaccion.IdRegistro = 0;
+                        vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                        vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                }
             }
 
             return vResultadoTransaccion;

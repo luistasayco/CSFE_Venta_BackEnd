@@ -260,7 +260,7 @@ namespace Net.Data
             try
             {
                 // Obtenemos los registros de pago
-                ComprobanteRepository comprobanteRepository = new ComprobanteRepository(context, _configuration);
+                ComprobanteRepository comprobanteRepository = new ComprobanteRepository(context, _configuration, _clientFactory);
                 ResultadoTransaccion<BE_CuadreCaja> vResultadoTransaccionCaja = await comprobanteRepository.GetListaCuadreCaja(value[0].documento.ToString());
 
                 if (vResultadoTransaccionCaja.ResultadoCodigo == -1)
@@ -335,33 +335,36 @@ namespace Net.Data
                             }
                         }
 
+                        #region Eliminar pagos de comprobante
                         // Eliminar pagos de comprobante
-                        foreach (BE_CuadreCaja item in vResultadoTransaccionCaja.dataList)
-                        {
-                            ResultadoTransaccion<SapBaseResponse<SapDocument>> resultadoTransaccionCancelPago = await SetCancelIncomingPayments(item.ide_trans);
+                        // Se retira los pagos a pedido de clinica, se acordo el dia viernes 08/04
+                        //foreach (BE_CuadreCaja item in vResultadoTransaccionCaja.dataList)
+                        //{
+                        //    ResultadoTransaccion<SapBaseResponse<SapDocument>> resultadoTransaccionCancelPago = await SetCancelIncomingPayments(item.ide_trans);
 
-                            if (resultadoTransaccionCancelPago.ResultadoCodigo == -1)
-                            {
-                                transaction.Rollback();
-                                vResultadoTransaccion.IdRegistro = -1;
-                                vResultadoTransaccion.ResultadoCodigo = -1;
-                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionCancelPago.ResultadoDescripcion;
-                                return vResultadoTransaccion;
-                            }
-                        }
+                        //    if (resultadoTransaccionCancelPago.ResultadoCodigo == -1)
+                        //    {
+                        //        transaction.Rollback();
+                        //        vResultadoTransaccion.IdRegistro = -1;
+                        //        vResultadoTransaccion.ResultadoCodigo = -1;
+                        //        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionCancelPago.ResultadoDescripcion;
+                        //        return vResultadoTransaccion;
+                        //    }
+                        //}
 
                         // Insertamos pagos y comprobantes
+                        // Se retira los pagos a pedido de clinica, se acordo el dia viernes 08/04
+                        //ResultadoTransaccion<string> resultadoTransaccionCreatePago = await SetCreateIncomingPayments(documento, listCuadreCajaOld[0].doc_entry, value, conn, transaction);
 
-                        ResultadoTransaccion<string> resultadoTransaccionCreatePago = await SetCreateIncomingPayments(documento, listCuadreCajaOld[0].doc_entry, value, conn, transaction);
-
-                        if (resultadoTransaccionCreatePago.ResultadoCodigo == -1)
-                        {
-                            transaction.Rollback();
-                            vResultadoTransaccion.IdRegistro = -1;
-                            vResultadoTransaccion.ResultadoCodigo = -1;
-                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionCreatePago.ResultadoDescripcion;
-                            return vResultadoTransaccion;
-                        }
+                        //if (resultadoTransaccionCreatePago.ResultadoCodigo == -1)
+                        //{
+                        //    transaction.Rollback();
+                        //    vResultadoTransaccion.IdRegistro = -1;
+                        //    vResultadoTransaccion.ResultadoCodigo = -1;
+                        //    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionCreatePago.ResultadoDescripcion;
+                        //    return vResultadoTransaccion;
+                        //}
+                        #endregion
 
                         transaction.Commit();
                         transaction.Dispose();

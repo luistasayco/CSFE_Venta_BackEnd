@@ -267,5 +267,55 @@ namespace Net.Business.Entities
         public string docidentidadcomprobante { get; set; }
         [DataMember, XmlIgnore]
         public string nombretipdocidentidadcomprobante { get; set; }
+
+        // Campos de usuario para SAP
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_DNI_PAC { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_NOM_PAC { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_RUC_ASEG { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_NOM_ASEG { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_MDTD { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_MDSD { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_MDCD { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_STATUS { get; set; }
+        [DataMember, XmlIgnore]
+        public string NumAtCard { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_MDTO { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_MDSO { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_MDCO { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_FECHA_REF { get; set; }
+        [DataMember, XmlIgnore]
+        public string FederalTaxID { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_MDMT { get; set; }
+        [DataMember, XmlIgnore]
+        public string Comments { get; set; }
+        [DataMember, XmlIgnore]
+        public string JournalMemo { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_USUARIO { get; set; }
+        [DataMember, XmlIgnore]
+        public string ControlAccount { get; set; }
+            [DataMember, XmlIgnore]
+            public string U_SYP_CS_OA_CAB { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_PAC_HC { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_FINI_ATEN { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SYP_CS_FFIN_ATEN { get; set; }
+        [DataMember, XmlIgnore]
+        public string U_SBA_TIPONC { get; set; }
     }
 }

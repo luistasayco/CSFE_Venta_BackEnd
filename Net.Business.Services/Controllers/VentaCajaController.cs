@@ -538,6 +538,10 @@ namespace Net.Business.Services.Controllers
                             }
 
                         }
+                        else
+                        {
+                            return BadRequest(result.descripcionrespuesta);
+                        }
                     }
                     else
                     {
@@ -1171,7 +1175,7 @@ namespace Net.Business.Services.Controllers
 
             // Izipay => 01 = Compra
             value.transaccion = "01";
-            var resp = await _repository.TransaccionPagos.ProcesarTransaccion(value.RetornarPagosDatos(), value.codventa, value.regcreateusuario);
+            var resp = await _repository.TransaccionPagos.ProcesarTransaccion(value.RetornarPagosIzipayDatos(), value.codventa, value.regcreateusuario);
             if (resp.IdRegistro == -1) return BadRequest(resp);
             return Ok(resp);
         }

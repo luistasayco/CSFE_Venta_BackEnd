@@ -531,28 +531,54 @@ namespace Net.Business.Services.Controllers
             }
         }
 
-        [HttpGet("{numeroplanilla}", Name = "GenerarReportePlanillaPrint")]
+        [HttpGet(Name = "GenerarReportePlanillaPrint")]
         [ProducesResponseType(200)]
         [ProducesResponseType(404)]
         [ProducesDefaultResponseType]
-        public async Task<FileContentResult> GenerarReportePlanillaPrint(string numeroplanilla)
+        public async Task<FileContentResult> GenerarReportePlanillaPrint([FromQuery]  DateTime? fechaInicio, DateTime? fechaFin, int idusuario, string codcentro, string numeroplanilla, decimal dolares)
         {
-            var objectGetById = await _repository.Planilla.GenerarReportePlanillaPrint(numeroplanilla);
+            var objectGetById = await _repository.Planilla.GenerarReportePlanillaPrint(fechaInicio, fechaFin, idusuario, codcentro, numeroplanilla, dolares);
 
-            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", numeroplanilla + ".pdf");
+            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", "ReportePlanilla.pdf");
 
             return pdf;
         }
 
-        [HttpGet("{numeroplanilla}", Name = "GenerarReporteDetallePlanillaPrint")]
+        [HttpGet(Name = "GenerarExcelPlanillaPrint")]
         [ProducesResponseType(200)]
         [ProducesResponseType(404)]
         [ProducesDefaultResponseType]
-        public async Task<FileContentResult> GenerarReporteDetallePlanillaPrint(string numeroplanilla)
+        public async Task<FileContentResult> GenerarExcelPlanillaPrint([FromQuery] DateTime? fechaInicio, DateTime? fechaFin, int idusuario, string codcentro, string numeroplanilla, decimal dolares)
         {
-            var objectGetById = await _repository.Planilla.GenerarReporteDetallePlanillaPrint(numeroplanilla);
+            var objectGetById = await _repository.Planilla.GenerarExcelPlanillaPrint(fechaInicio, fechaFin, idusuario, codcentro, numeroplanilla, dolares);
 
-            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", numeroplanilla + ".pdf");
+            var pdf = File(objectGetById.data.GetBuffer(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            return pdf;
+        }
+
+        [HttpGet(Name = "GenerarReporteDetallePlanillaPrint")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> GenerarReporteDetallePlanillaPrint([FromQuery]  DateTime? fechaInicio, DateTime? fechaFin, int idusuario, string codcentro, string numeroplanilla, string orden)
+        {
+            var objectGetById = await _repository.Planilla.GenerarReporteDetallePlanillaPrint(fechaInicio, fechaFin, idusuario, codcentro, numeroplanilla, orden);
+
+            var pdf = File(objectGetById.data.GetBuffer(), "applicacion/pdf", "ReporteDetallePlanilla.pdf");
+
+            return pdf;
+        }
+
+        [HttpGet(Name = "GenerarExcelDetallePlanillaPrint")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesDefaultResponseType]
+        public async Task<FileContentResult> GenerarExcelDetallePlanillaPrint([FromQuery] DateTime? fechaInicio, DateTime? fechaFin, int idusuario, string codcentro, string numeroplanilla, string orden)
+        {
+            var objectGetById = await _repository.Planilla.GenerarExcelDetallePlanillaPrint(fechaInicio, fechaFin, idusuario, codcentro, numeroplanilla, orden);
+
+            var pdf = File(objectGetById.data.GetBuffer(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
             return pdf;
         }

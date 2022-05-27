@@ -41,7 +41,8 @@ namespace Net.Data
         const string SP_GET_CABECERA_VENTA_PENDIENTE_POR_FILTRO = DB_ESQUEMA + "VEN_ListaVentasCabeceraPendientesPorFiltrosGet";
         const string SP_GET_VENTAS_CHEQUEA_1MES_ANTES = DB_ESQUEMA + "VEN_VentasChequea1MesAntesGet";
         const string SP_GET_VALIDA_EXISTE_VENTA_ANULACION = DB_ESQUEMA + "VEN_VentaValidaExisteAnulacionGet";
-
+        const string SP_GET_PROJECT_POR_FILTRO = DB_ESQUEMA + "VEN_ListaProyectosPorFiltrosGet";
+        const string SP_COMPROBANTE_ELECTRONICO_UPDATE = DB_ESQUEMA + "VEN_ComprobantesElectronicos_Update"; //clinica
         // SIN STOCK
         const string SP_UPDATE_CABECERA_SIN_STOCK = DB_ESQUEMA + "VEN_VentaSinStockUpd";
         const string SP_UPDATE_CABECERA_SAP = DB_ESQUEMA + "VEN_VentaSAPUpd";
@@ -219,6 +220,43 @@ namespace Net.Data
                         vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
                         vResultadoTransaccion.dataList = response;
                     }
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+        public async Task<ResultadoTransaccion<SapProject>> GetListProjectPorFiltro(string codventa, string codpresotor, SqlConnection conn, SqlTransaction transaction)
+        {
+            ResultadoTransaccion<SapProject> vResultadoTransaccion = new ResultadoTransaccion<SapProject>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                var response = new List<SapProject>();
+                using (SqlCommand cmd = new SqlCommand(SP_GET_PROJECT_POR_FILTRO, conn, transaction))
+                {
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                    cmd.Parameters.Add(new SqlParameter("@codventa", codventa));
+                    cmd.Parameters.Add(new SqlParameter("@codpresotor", codpresotor));
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        response = (List<SapProject>)context.ConvertTo<SapProject>(reader);
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", response.Count);
+                    vResultadoTransaccion.dataList = response;
                 }
             }
             catch (Exception ex)
@@ -1271,7 +1309,6 @@ namespace Net.Data
                     conn.Open();
                     SqlTransaction transaction = conn.BeginTransaction();
 
-
                     try
                     {
                         // Insertaremos las ventas generadas
@@ -1293,10 +1330,13 @@ namespace Net.Data
                             listVentasGenerados.Add(new BE_VentasGenerado { codventa = resultadoTransaccionVentasGenerado.data.codventa, codpresotor = resultadoTransaccionVentasGenerado.data.codpresotor });
 
                             value.codventa = resultadoTransaccionVentasGenerado.data.codventa;
+                            value.codpresotor = resultadoTransaccionVentasGenerado.data.codpresotor;
 
                             #region "Envio a SAP"
                             if (!value.flgsinstock)
                             {
+                                #region Envia la Entrega
+
                                 ResultadoTransaccion<bool> resultadoTransaccionVenta = await EnviarVentaSAP(conn, transaction, value.codventa, (int)value.RegIdUsuario);
 
                                 if (resultadoTransaccionVenta.IdRegistro == -1)
@@ -1307,13 +1347,27 @@ namespace Net.Data
                                     vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionVenta.ResultadoDescripcion;
                                     return vResultadoTransaccion;
                                 }
+
+                                #endregion
+
+                            } else
+                            {
+                                ResultadoTransaccion<bool> resultadoTransaccionProject = await EnviarProjectSAP(conn, transaction, value.codventa, value.codpresotor, (int)value.RegIdUsuario);
+
+                                if (resultadoTransaccionProject.IdRegistro == -1)
+                                {
+                                    vResultadoTransaccion.IdRegistro = -1;
+                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionProject.ResultadoDescripcion;
+                                    return vResultadoTransaccion;
+                                }
                             }
-                           
+
                             #endregion
 
                         }
 
-                        // Eliminamos la reserva, si es de sala de operación
+                        #region Eliminamos la reserva, si es de sala de operación
                         SapReserveStockRepository sapReserveStockRepository = new SapReserveStockRepository(_clientFactory, _configuration, context);
                         string u_idexterno = string.Format("SOP-{0}", idborrador);
                         ResultadoTransaccion<SapReserveStock> resultadoTransaccionReserva = await sapReserveStockRepository.GetListReservaPorIdExterno(u_idexterno);
@@ -1340,8 +1394,9 @@ namespace Net.Data
                                 return vResultadoTransaccion;
                             }
                         }
+                        #endregion
 
-                        // Eliminamos la reserva, del picking realizado Pedido
+                        #region Eliminamos la reserva, del picking realizado Pedido
                         if (!string.IsNullOrEmpty(codpedido))
                         {
                             ConsolidadoRepository consolidadoRepository = new ConsolidadoRepository(_clientFactory, context, _configuration);
@@ -1384,8 +1439,9 @@ namespace Net.Data
                                 }
                             } 
                         }
+                        #endregion
 
-                        // Eliminamos la reserva, del picking realizado receta
+                        #region  Eliminamos la reserva, del picking realizado receta
                         if (ide_receta > 0)
                         {
                             PickingRepository pickingRepository = new PickingRepository(_clientFactory, context, _configuration);
@@ -1428,6 +1484,7 @@ namespace Net.Data
                                 }
                             }
                         }
+                        #endregion
 
                         vResultadoTransaccion.IdRegistro = 0;
                         vResultadoTransaccion.ResultadoCodigo = 0;
@@ -1473,20 +1530,27 @@ namespace Net.Data
 
                 if (resultadoTransaccionVenta.IdRegistro == -1)
                 {
-                    //transaction.Rollback();
                     vResultadoTransaccion.IdRegistro = -1;
                     vResultadoTransaccion.ResultadoCodigo = -1;
-                    vResultadoTransaccion.ResultadoDescripcion = "ERROR AL OBTENER VENTA";
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionVenta.ResultadoDescripcion;
+                    return vResultadoTransaccion;
+                }
+
+                ResultadoTransaccion<bool> resultadoTransaccionProject = await EnviarProjectSAP(conn, transaction, codventa, resultadoTransaccionVenta.data.codpresotor, RegIdUsuario);
+
+                if (resultadoTransaccionProject.IdRegistro == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionProject.ResultadoDescripcion;
                     return vResultadoTransaccion;
                 }
 
                 SapDocumentsRepository sapDocuments = new SapDocumentsRepository(_clientFactory, _configuration, context);
-
                 ResultadoTransaccion<SapBaseResponse<SapDocument>> resultadoSapDocument = await sapDocuments.SetCreateDocument(resultadoTransaccionVenta.data);
 
                 if (resultadoSapDocument.ResultadoCodigo == -1)
                 {
-                    //transaction.Rollback();
                     vResultadoTransaccion.IdRegistro = -1;
                     vResultadoTransaccion.ResultadoCodigo = -1;
                     vResultadoTransaccion.ResultadoDescripcion = resultadoSapDocument.ResultadoDescripcion;
@@ -1515,6 +1579,67 @@ namespace Net.Data
             catch (Exception ex)
             {
                 //transaction.Rollback();
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+
+        public async Task<ResultadoTransaccion<bool>> EnviarProjectSAP(SqlConnection conn, SqlTransaction transaction, string codventa, string codpresotor, int RegIdUsuario)
+        {
+            ResultadoTransaccion<bool> vResultadoTransaccion = new ResultadoTransaccion<bool>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+
+                ResultadoTransaccion<SapProject> resultadoTransaccionProject = await GetListProjectPorFiltro(codventa, codpresotor, conn, transaction);
+
+                if (resultadoTransaccionProject.IdRegistro == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionProject.ResultadoDescripcion;
+                    return vResultadoTransaccion;
+                }
+
+                SapDocumentsRepository sapDocuments = new SapDocumentsRepository(_clientFactory, _configuration, context);
+
+                
+
+                foreach (SapProject itemProject in resultadoTransaccionProject.dataList)
+                {
+
+                    ResultadoTransaccion<SapProject> resultadoTransaccionListProject = await sapDocuments.GetProject(itemProject);
+                    if (resultadoTransaccionListProject.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionListProject.ResultadoDescripcion;
+                        return vResultadoTransaccion;
+                    }
+
+                    if (((List<SapProject>)resultadoTransaccionListProject.dataList).Count == 0)
+                    {
+                        ResultadoTransaccion<SapBaseResponse<SapDocument>> resultadoSapProject = await sapDocuments.SetCreateProject(itemProject);
+
+                        if (resultadoSapProject.ResultadoCodigo == -1)
+                        {
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoSapProject.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
                 vResultadoTransaccion.IdRegistro = -1;
                 vResultadoTransaccion.ResultadoCodigo = -1;
                 vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
@@ -4097,6 +4222,7 @@ namespace Net.Data
                         cama = paciente.cama,
                         deducible = paciente.deducible,
                         observacion = paciente.observacionespaciente,
+                        porcentajecoaseguro = (decimal)paciente.coaseguro,
                         tipocambio = tipoCambio.Rate,
                         codmedico = pedido.codmedico,
                         nombremedico = pedido.nommedico,
@@ -5353,23 +5479,26 @@ namespace Net.Data
 
                                     if (wStatus == "true")
                                     {
-                                        vResultado1 = await CPERepository.ModificarComprobanteElectronico("fecha_registro_rpta", "", "", value.codcomprobante);
-                                        vResultado1 = await CPERepository.ModificarComprobanteElectronico("tipo_otorgamiento", wFlg_otorgar.ToString(), "", value.codcomprobante);
-                                        vResultado1 = await CPERepository.ModificarComprobanteElectronico("xml_registro", "", strXml.Trim(), value.codcomprobante);
+                                        vResultado1 = await CPERepository.ModificarComprobanteElectronico_transac("fecha_registro_rpta", "", "", codcomprobanteNota, conn, transaction);
+                                        vResultado1 = await CPERepository.ModificarComprobanteElectronico_transac("tipo_otorgamiento", wFlg_otorgar.ToString(), "", codcomprobanteNota, conn, transaction);
+                                        vResultado1 = await CPERepository.ModificarComprobanteElectronico_transac("xml_registro", "", strXml.Trim(), codcomprobanteNota, conn, transaction);
 
                                         wStatus = comprobanteElectronicaTCIXml.Leer_ResponseXML(wResponseXML, "<RegistrarResult>", "</RegistrarResult>");
                                         wCadenaRpta = comprobanteElectronicaTCIXml.Leer_ResponseXML(wResponseXML, "<Cadena>", "</Cadena>");
 
                                         string observado = wStatus + "; " + (wCadenaRpta.Trim() == "" ? "" : wCadenaRpta.Trim().Substring(0, 3980)); // wCadenaRpta.Trim().Substring(0, 3980);
 
-                                        vResultado1 = await CPERepository.ModificarComprobanteElectronico("observacion_registro", observado, "", value.codcomprobante);
-                                        wCodigoHash = comprobanteElectronicaTCIXml.Leer_ResponseXML(wResponseXML, "<CodigoHash>", "</CodigoHash>");
+                                        vResultado1 = await CPERepository.ModificarComprobanteElectronico_transac("observacion_registro", observado, "", codcomprobanteNota, conn, transaction);
+                                        //wCodigoHash = comprobanteElectronicaTCIXml.Leer_ResponseXML(wResponseXML, "<CodigoHash>", "</CodigoHash>");
                                         wCodigoBarra = comprobanteElectronicaTCIXml.Leer_ResponseXML(wResponseXML, "<CodigoBarras>", "</CodigoBarras>");
-                                        vResultado1 = await CPERepository.ModificarComprobanteElectronico("codigohash", wCodigoHash, "", value.codcomprobante);
+                                        vResultado1 = await CPERepository.ModificarComprobanteElectronico_transac("codigohash", wCodigoHash, "", codcomprobanteNota, conn, transaction);
 
                                         //zEfact.ConvertirCodigoBarraJPG txtCodComprobante.Text, wCodigoBarra, zFarmacia2
                                         // 'Convertimos el texto en un Array de byte()
+
                                         byte[] xObtenerByte = Convert.FromBase64String(wCodigoBarra);
+                                        var resultCodBarra = ComprobanteElectronico_Update_transac("codigobarra", "", "", xObtenerByte, codcomprobanteNota, conn, transaction);
+                                        if (resultCodBarra == false) throw new ArgumentException("Error ComprobanteElectronico_Update_transac codigobarra");
                                         //var resultCodBarra = ComprobanteElectronico_Update("codigobarra", "", "", xObtenerByte, codcomprobante);
                                     }
                                     else
@@ -6105,37 +6234,38 @@ namespace Net.Data
                         return vResultadoTransaccion;
                     }
 
+                    #region Pago Nota de Credito
+                    //ResultadoTransaccion<SapBaseResponse<SapDocument>> resultadoSapDocumentNotaPago = await sapDocuments.SetReturnsDocumentNotaPago(resultadoTransaccionVenta.data);
 
-                    ResultadoTransaccion<SapBaseResponse<SapDocument>> resultadoSapDocumentNotaPago = await sapDocuments.SetReturnsDocumentNotaPago(resultadoTransaccionVenta.data);
+                    //if (resultadoSapDocumentNotaPago.ResultadoCodigo == -1)
+                    //{
+                    //    vResultadoTransaccion.IdRegistro = -1;
+                    //    vResultadoTransaccion.ResultadoCodigo = -1;
+                    //    vResultadoTransaccion.ResultadoDescripcion = resultadoSapDocumentNotaPago.ResultadoDescripcion;
+                    //    return vResultadoTransaccion;
+                    //}
 
-                    if (resultadoSapDocumentNotaPago.ResultadoCodigo == -1)
-                    {
-                        vResultadoTransaccion.IdRegistro = -1;
-                        vResultadoTransaccion.ResultadoCodigo = -1;
-                        vResultadoTransaccion.ResultadoDescripcion = resultadoSapDocumentNotaPago.ResultadoDescripcion;
-                        return vResultadoTransaccion;
-                    }
+                    //if (resultadoSapDocumentNotaPago.data.DocEntry != 0)
+                    //{
+                    //    using (SqlCommand cmd = new SqlCommand(SP_POST_CUADRECAJA_NOTA_SAP_UPDATE, conn, transaction))
+                    //    {
+                    //        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                    //        cmd.Parameters.Add(new SqlParameter("@documento", codcomprobante));
+                    //        cmd.Parameters.Add(new SqlParameter("@doc_entry", resultadoSapDocument.data.DocEntry));
+                    //        cmd.Parameters.Add(new SqlParameter("@ide_trans", resultadoSapDocumentNotaPago.data.DocEntry));
+                    //        cmd.Parameters.Add(new SqlParameter("@fec_enviosap", DateTime.Now));
 
-                    if (resultadoSapDocumentNotaPago.data.DocEntry != 0)
-                    {
-                        using (SqlCommand cmd = new SqlCommand(SP_POST_CUADRECAJA_NOTA_SAP_UPDATE, conn, transaction))
-                        {
-                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                            cmd.Parameters.Add(new SqlParameter("@documento", codcomprobante));
-                            cmd.Parameters.Add(new SqlParameter("@doc_entry", resultadoSapDocument.data.DocEntry));
-                            cmd.Parameters.Add(new SqlParameter("@ide_trans", resultadoSapDocumentNotaPago.data.DocEntry));
-                            cmd.Parameters.Add(new SqlParameter("@fec_enviosap", DateTime.Now));
-
-                            await cmd.ExecuteNonQueryAsync();
-                        }
-                    }
-                    else
-                    {
-                        vResultadoTransaccion.IdRegistro = -1;
-                        vResultadoTransaccion.ResultadoCodigo = -1;
-                        vResultadoTransaccion.ResultadoDescripcion = "ERROR AL ENVIAR EL PAGO A SAP.";
-                        return vResultadoTransaccion;
-                    }
+                    //        await cmd.ExecuteNonQueryAsync();
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    vResultadoTransaccion.IdRegistro = -1;
+                    //    vResultadoTransaccion.ResultadoCodigo = -1;
+                    //    vResultadoTransaccion.ResultadoDescripcion = "ERROR AL ENVIAR EL PAGO A SAP.";
+                    //    return vResultadoTransaccion;
+                    //}
+                    #endregion
                 }
             }
             catch (Exception ex)
@@ -6167,6 +6297,7 @@ namespace Net.Data
                 var responseVenta = new BE_VentasCabecera()
                 {
                     codventa = responseNotaElectronica[0].codventa,
+                    codcomprobante = responseNotaElectronica[0].codcomprobante,
                     fechaemision = responseNotaElectronica[0].fechaemision,
                     cardcode = responseNotaElectronica[0].cardcode.Trim(),
                     moneda = responseNotaElectronica[0].c_simbolomoneda.Trim(),
@@ -6174,7 +6305,34 @@ namespace Net.Data
                     porcentajeimpuesto = responseNotaElectronica[0].porcentajeimpuesto,
                     montototal = responseNotaElectronica[0].d_total_conigv,
                     CuentaEfectivoPago = responseNotaElectronica[0].CuentaEfectivoPago,
-
+                    cardcodeparaquien = responseNotaElectronica[0].cardcodeparaquien.Trim(),
+                    codpresotor = responseNotaElectronica[0].codpresotor,
+                    codventadevolucion = responseNotaElectronica[0].codventadevolucion,
+                    flg_gratuito = responseNotaElectronica[0].flg_gratuito == "1" ? true : false,
+                    U_SYP_CS_DNI_PAC = responseNotaElectronica[0].U_SYP_CS_DNI_PAC,
+                    U_SYP_CS_NOM_PAC = responseNotaElectronica[0].U_SYP_CS_NOM_PAC,
+                    U_SYP_CS_RUC_ASEG = responseNotaElectronica[0].U_SYP_CS_RUC_ASEG,
+                    U_SYP_CS_NOM_ASEG = responseNotaElectronica[0].U_SYP_CS_NOM_ASEG,
+                    U_SYP_MDTD = responseNotaElectronica[0].U_SYP_MDTD,
+                    U_SYP_MDSD = responseNotaElectronica[0].U_SYP_MDSD,
+                    U_SYP_MDCD = responseNotaElectronica[0].U_SYP_MDCD,
+                    U_SYP_STATUS = responseNotaElectronica[0].U_SYP_STATUS,
+                    NumAtCard = responseNotaElectronica[0].NumAtCard,
+                    U_SYP_MDTO = responseNotaElectronica[0].U_SYP_MDTO,
+                    U_SYP_MDSO = responseNotaElectronica[0].U_SYP_MDSO,
+                    U_SYP_MDCO = responseNotaElectronica[0].U_SYP_MDCO,
+                    U_SYP_FECHA_REF = responseNotaElectronica[0].U_SYP_FECHA_REF,
+                    FederalTaxID = responseNotaElectronica[0].FederalTaxID,
+                    U_SYP_MDMT = responseNotaElectronica[0].U_SYP_MDMT,
+                    Comments = responseNotaElectronica[0].Comments,
+                    JournalMemo = responseNotaElectronica[0].JournalMemo,
+                    U_SYP_CS_USUARIO = responseNotaElectronica[0].U_SYP_CS_USUARIO,
+                    ControlAccount = responseNotaElectronica[0].ControlAccount,
+                    U_SYP_CS_OA_CAB = responseNotaElectronica[0].U_SYP_CS_OA_CAB,
+                    U_SYP_CS_PAC_HC = responseNotaElectronica[0].U_SYP_CS_PAC_HC,
+                    U_SYP_CS_FINI_ATEN = responseNotaElectronica[0].U_SYP_CS_FINI_ATEN,
+                    U_SYP_CS_FFIN_ATEN = responseNotaElectronica[0].U_SYP_CS_FFIN_ATEN,
+                    U_SBA_TIPONC = responseNotaElectronica[0].U_SBA_TIPONC
                 };
 
                 var responseDetalle = new List<BE_VentasDetalle>();
@@ -6186,7 +6344,7 @@ namespace Net.Data
                         coddetalle = item.d_orden,
                         codproducto = item.d_codproducto.Trim(),
                         cantsunat = item.d_cant_sunat,
-                        preciounidad = item.d_ventaunitario_sinigv,
+                        preciounidad = responseNotaElectronica[0].flg_gratuito == "1" ? item.d_ventaunitario_sinigv_g : item.d_ventaunitario_sinigv,
                         destributo = item.des_tributo,
                         codalmacen = item.codalmacen,
                         //baseentry = item.baseentry,
@@ -6197,7 +6355,14 @@ namespace Net.Data
                         CostingCode3 = item.CostingCode3,
                         CostingCode4 = item.CostingCode4,
                         manBtchNum = item.manbtchnum,
-                        binactivat = item.binactivat
+                        binactivat = item.binactivat,
+                        TaxCode = item.TaxCode,
+                        TaxOnly = item.TaxOnly,
+                        Project = item.Project,
+                        U_SYP_CS_OA = item.U_SYP_CS_OA,
+                        U_SYP_CS_DNI_MED = item.U_SYP_CS_DNI_MED,
+                        U_SYP_CS_NOM_MED = item.U_SYP_CS_NOM_MED,
+                        U_SYP_CS_RUC_MED = item.U_SYP_CS_RUC_MED
                     };
                     responseDetalle.Add(linea);
                 }
@@ -6287,6 +6452,40 @@ namespace Net.Data
             }
 
             return 0;
+
+        }
+
+        private Boolean ComprobanteElectronico_Update_transac(string campo, string nuevovalor, string xml, byte[] codigobarrajpg, string codigo, SqlConnection conn, SqlTransaction transaction)
+        {
+
+            try
+            {
+
+                using (SqlCommand cmd = new SqlCommand(SP_COMPROBANTE_ELECTRONICO_UPDATE, conn, transaction))
+                {
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                    cmd.Parameters.Add(new SqlParameter("@campo", campo));
+                    cmd.Parameters.Add(new SqlParameter("@nuevovalor", nuevovalor));
+                    cmd.Parameters.Add(new SqlParameter("@xml", xml));
+                    cmd.Parameters.Add(new SqlParameter("@codigobarrajpg", codigobarrajpg));
+                    cmd.Parameters.Add(new SqlParameter("@codigo", codigo));
+
+                    var resultado = cmd.ExecuteNonQuery();
+                    if (resultado >= -1)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
 
         }
     }

@@ -286,22 +286,22 @@ namespace Net.Data
 
         }
 
-        public async Task<ResultadoTransaccion<object>> ProcesarTransaccion(BE_ProcesarTransaccionPagoRequest value, string codventa, int regcreateusuario)
+        public async Task<ResultadoTransaccion<object>> ProcesarTransaccion(BE_ProcesarTransaccionPagoIzipayRequest value, string codventa, int regcreateusuario)
         {
 
             var vResultadoTransaccion = new ResultadoTransaccion<object>();
 
-            string strToken = string.Empty;
-            var objLogin = this.LoginTransaccion();
-            if (objLogin.Result.data.resultado != "00")
-            {
-                vResultadoTransaccion.IdRegistro = 0;
-                vResultadoTransaccion.ResultadoCodigo = regcreateusuario;
-                vResultadoTransaccion.ResultadoDescripcion = "Izipay. " + objLogin.Result.data.mensaje;
-                return vResultadoTransaccion;
-            }
+            //string strToken = string.Empty;
+            //var objLogin = this.LoginTransaccion();
+            //if (objLogin.Result.data.resultado != "00")
+            //{
+            //    vResultadoTransaccion.IdRegistro = 0;
+            //    vResultadoTransaccion.ResultadoCodigo = regcreateusuario;
+            //    vResultadoTransaccion.ResultadoDescripcion = "Izipay. " + objLogin.Result.data.mensaje;
+            //    return vResultadoTransaccion;
+            //}
 
-            strToken = objLogin.Result.data.token;
+            //strToken = objLogin.Result.data.token;
 
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
@@ -338,89 +338,92 @@ namespace Net.Data
 
                     objTransaccionPago.idtransaccionpagos = InsertTransac.IdRegistro;
 
-                    var client = _clientFactory.CreateClient();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", strToken);
+                    //var client = _clientFactory.CreateClient();
+                    //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", strToken);
 
-                    string json = JsonConvert.SerializeObject(value, Formatting.Indented);
+                    //string json = JsonConvert.SerializeObject(value, Formatting.Indented);
 
-                    StringContent httpContent = new StringContent(json, Encoding.UTF8, "application/json");
-                    var response = await client.PostAsync(url, httpContent);
-                    if (!response.IsSuccessStatusCode)
+                    //StringContent httpContent = new StringContent(json, Encoding.UTF8, "application/json");
+                    //var response = await client.PostAsync(url, httpContent);
+                    //if (!response.IsSuccessStatusCode)
+                    //{
+                    //    resultado = JsonConvert.DeserializeObject<BE_ProcesarTransaccionResponse>(response.Content.ReadAsStringAsync().Result);
+                    //    vResultadoTransaccion.IdRegistro = -1;
+                    //    vResultadoTransaccion.ResultadoCodigo = -1;
+                    //    vResultadoTransaccion.ResultadoDescripcion = response.Content.ReadAsStringAsync().Result;
+                    //}
+                    //else
+                    //{
+                        //resultado = JsonConvert.DeserializeObject<BE_ProcesarTransaccionResponse>(response.Content.ReadAsStringAsync().Result);
+                        //vResultadoTransaccion.IdRegistro = 0;
+                        //vResultadoTransaccion.ResultadoCodigo = 0;
+
+                    if (value.id_autorizacion != null)
                     {
-                        resultado = JsonConvert.DeserializeObject<BE_ProcesarTransaccionResponse>(response.Content.ReadAsStringAsync().Result);
-                        vResultadoTransaccion.IdRegistro = -1;
-                        vResultadoTransaccion.ResultadoCodigo = -1;
-                        vResultadoTransaccion.ResultadoDescripcion = response.Content.ReadAsStringAsync().Result;
-                    }
-                    else
-                    {
-                        resultado = JsonConvert.DeserializeObject<BE_ProcesarTransaccionResponse>(response.Content.ReadAsStringAsync().Result);
-                        vResultadoTransaccion.IdRegistro = 0;
-                        vResultadoTransaccion.ResultadoCodigo = 0;
+                        vResultadoTransaccion.ResultadoDescripcion = "<strong>PAGO IZIPAY EXITOSO.</strong><br>" + value.ecr_data_adicional;
 
-                        if (resultado.id_autorizacion != null)
+                        string text = value.ecr_data_adicional;
+
+                        var resultTER = text.IndexOf("ATERM:");
+                        var numTER = text.Substring(resultTER + 6, 8);
+
+                        var resultREF = text.IndexOf("REF:");
+                        var numRef = text.Substring(resultREF + 4, 4);
+
+                        var resultOpe = text.IndexOf("ID:");
+                        var numOpe = text.Substring(resultOpe + 3, 16);
+
+                        var resulTAR = text.IndexOf("ATARJ:");
+                        var numTarjeta = text.Substring(resulTAR + 11, 4);
+
+                        var resulTIPO = text.IndexOf("TIPO:");
+                        var tipotarjeta = text.Substring(resulTIPO + 5, 4);
+
+                        var objResp = new { aterm = numTER, numref = numRef, numOpe= numOpe, tipoTarjeta = tipotarjeta, numTarjeta = numTarjeta, message = value.message };
+                        vResultadoTransaccion.data = objResp;
+
+                        try
                         {
-                            vResultadoTransaccion.ResultadoDescripcion = "<strong>PAGO IZIPAY EXITOSO.</strong><br>" + resultado.print_data;
-
-                            string text = resultado.print_data;
-
-                            var resultTER = text.IndexOf("ATERM:");
-                            var numTER = text.Substring(resultTER + 6, 8);
-
-                            var resultREF = text.IndexOf("REF:");
-                            var numRef = text.Substring(resultREF + 4, 4);
-
-                            var resulTAR = text.IndexOf("ATARJ:");
-                            var numTarjeta = text.Substring(resulTAR + 11, 4);
-
-                            var resulTIPO = text.IndexOf("TIPO:");
-                            var tipotarjeta = text.Substring(resulTIPO + 5, 4);
-
-                            var objResp = new { aterm = numTER, numref = numRef, tipoTarjeta = tipotarjeta, numTarjeta = numTarjeta, message = resultado.message };
-                            vResultadoTransaccion.data = objResp;
-
-                            try
+                            var objTransaccionPagoUpd = new BE_TransaccionPagos()
                             {
-                                var objTransaccionPagoUpd = new BE_TransaccionPagos()
-                                {
-                                    idtransaccionpagos = objTransaccionPago.idtransaccionpagos,
-                                    codventa = codventa,
-                                    idtransaccion = resultado.id_autorizacion,
-                                    codterminal = numTER,
-                                    codreferencial = numRef,
-                                    tipotarjeta = tipotarjeta,
-                                    numeroTarjeta = numTarjeta,
-                                    trama = text,
-                                    regupdateusuario = regcreateusuario,
-                                };
+                                idtransaccionpagos = objTransaccionPago.idtransaccionpagos,
+                                codventa = codventa,
+                                idtransaccion = value.id_autorizacion,
+                                codterminal = numTER,
+                                codreferencial = numRef,
+                                tipotarjeta = tipotarjeta,
+                                numeroTarjeta = numTarjeta,
+                                trama = text,
+                                regupdateusuario = regcreateusuario,
+                            };
 
-                                ResultadoTransaccion<object> InsertTransacUpd = await ActualizarPagoTransaccion(objTransaccionPagoUpd, conn, transaction);
-                                if (InsertTransacUpd.ResultadoCodigo == -1)
-                                {
-                                    // ignoramos, porque ya realizo el pago el izipay
-                                    ////vResultadoTransaccion = InsertTransacUpd;
-                                    ////transaction.Rollback();
-                                }
-                            }
-                            catch (Exception)
+                            ResultadoTransaccion<object> InsertTransacUpd = await ActualizarPagoTransaccion(objTransaccionPagoUpd, conn, transaction);
+                            if (InsertTransacUpd.ResultadoCodigo == -1)
                             {
                                 // ignoramos, porque ya realizo el pago el izipay
+                                ////vResultadoTransaccion = InsertTransacUpd;
+                                ////transaction.Rollback();
                             }
-
-                            transaction.Commit();
-
                         }
-                        else
+                        catch (Exception)
                         {
-
-                            //validacion
-                            vResultadoTransaccion.ResultadoCodigo = 1;
-                            vResultadoTransaccion.ResultadoDescripcion = "<strong>IZIPAY.</strong><br>" + resultado.message;
-                            var objResp = new { aterm = (string)null, numref = (string)null, numTarjeta = (string)null, message = (string)null };
-                            vResultadoTransaccion.data = objResp;
-                            transaction.Rollback();
-
+                            // ignoramos, porque ya realizo el pago el izipay
                         }
+
+                        transaction.Commit();
+
+                        //}
+                        //else
+                        //{
+
+                        //    //validacion
+                        //    vResultadoTransaccion.ResultadoCodigo = 1;
+                        //    vResultadoTransaccion.ResultadoDescripcion = "<strong>IZIPAY.</strong><br>" + resultado.message;
+                        //    var objResp = new { aterm = (string)null, numref = (string)null, numTarjeta = (string)null, message = (string)null };
+                        //    vResultadoTransaccion.data = objResp;
+                        //    transaction.Rollback();
+
+                        //}
                     }
 
                 }//using 
@@ -442,24 +445,24 @@ namespace Net.Data
 
             var vResultadoTransaccion = new ResultadoTransaccion<object>();
 
-            string strToken = string.Empty;
-            var objLogin = this.LoginTransaccion();
-            if (objLogin.Result.data.resultado != "00")
-            {
-                vResultadoTransaccion.IdRegistro = 0;
-                vResultadoTransaccion.ResultadoCodigo = 1;
-                vResultadoTransaccion.ResultadoDescripcion = "Izipay. " + objLogin.Result.data.mensaje;
-                return vResultadoTransaccion;
-            }
+            //string strToken = string.Empty;
+            //var objLogin = this.LoginTransaccion();
+            //if (objLogin.Result.data.resultado != "00")
+            //{
+            //    vResultadoTransaccion.IdRegistro = 0;
+            //    vResultadoTransaccion.ResultadoCodigo = 1;
+            //    vResultadoTransaccion.ResultadoDescripcion = "Izipay. " + objLogin.Result.data.mensaje;
+            //    return vResultadoTransaccion;
+            //}
 
-            strToken = objLogin.Result.data.token;
+            //strToken = objLogin.Result.data.token;
 
             _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
 
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
-            string url = _IzipayUrlTransaccion;
-            BE_ProcesarTransaccionResponse resultado;
+            //string url = _IzipayUrlTransaccion;
+            //BE_ProcesarTransaccionResponse resultado;
 
             try
             {
@@ -487,89 +490,89 @@ namespace Net.Data
 
                     objTransaccionPago.idtransaccionpagos = InsertTransac.IdRegistro;
 
-                    var client = _clientFactory.CreateClient();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", strToken);
+                    //var client = _clientFactory.CreateClient();
+                    //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", strToken);
 
-                    string json = JsonConvert.SerializeObject(value, Formatting.Indented);
+                    //string json = JsonConvert.SerializeObject(value, Formatting.Indented);
 
-                    StringContent httpContent = new StringContent(json, Encoding.UTF8, "application/json");
-                    var response = await client.PostAsync(url, httpContent);
-                    if (!response.IsSuccessStatusCode)
+                    //StringContent httpContent = new StringContent(json, Encoding.UTF8, "application/json");
+                    //var response = await client.PostAsync(url, httpContent);
+                    //if (!response.IsSuccessStatusCode)
+                    //{
+                    //    resultado = JsonConvert.DeserializeObject<BE_ProcesarTransaccionResponse>(response.Content.ReadAsStringAsync().Result);
+                    //    vResultadoTransaccion.IdRegistro = -1;
+                    //    vResultadoTransaccion.ResultadoCodigo = -1;
+                    //    vResultadoTransaccion.ResultadoDescripcion = response.ReasonPhrase;
+                    //    transaction.Rollback();
+                    //}
+                    //else
+                    //{
+                    //    resultado = JsonConvert.DeserializeObject<BE_ProcesarTransaccionResponse>(response.Content.ReadAsStringAsync().Result);
+                    //    vResultadoTransaccion.IdRegistro = 0;
+                    //    vResultadoTransaccion.ResultadoCodigo = 0;
+
+                    if (value.id_autorizacion != null)
                     {
-                        resultado = JsonConvert.DeserializeObject<BE_ProcesarTransaccionResponse>(response.Content.ReadAsStringAsync().Result);
-                        vResultadoTransaccion.IdRegistro = -1;
-                        vResultadoTransaccion.ResultadoCodigo = -1;
-                        vResultadoTransaccion.ResultadoDescripcion = response.ReasonPhrase;
-                        transaction.Rollback();
-                    }
-                    else
-                    {
-                        resultado = JsonConvert.DeserializeObject<BE_ProcesarTransaccionResponse>(response.Content.ReadAsStringAsync().Result);
-                        vResultadoTransaccion.IdRegistro = 0;
-                        vResultadoTransaccion.ResultadoCodigo = 0;
 
-                        if (resultado.id_autorizacion != null)
+                        string text = value.ecr_data_adicional;
+
+                        var resultTER = text.IndexOf("ATERM:");
+                        var numTER = text.Substring(resultTER + 6, 9);
+
+                        var resultREF = text.IndexOf("REF:");
+                        var numRef = text.Substring(resultREF + 4, 4);
+
+                        var resulTAR = text.IndexOf("ATARJ:");
+                        var numTarjeta = text.Substring(resulTAR + 18, 4);
+
+                        var resulTIPO = text.IndexOf("TIPO:");
+                        var tipotarjeta = text.Substring(resulTIPO + 5, 4);
+
+                        var objResp = new { aterm = numTER, numref = numRef, numTarjeta = string.Empty, message = string.Empty };
+                        vResultadoTransaccion.data = objResp;
+
+                        vResultadoTransaccion.ResultadoDescripcion = $"<strong>IZIPAY ANULACION DE PAGO REF:{value.message}  EXITOSO.</strong><br>" + value.ecr_data_adicional;
+
+                        try
                         {
-
-                            string text = resultado.print_data;
-
-                            var resultTER = text.IndexOf("ATERM:");
-                            var numTER = text.Substring(resultTER + 6, 9);
-
-                            var resultREF = text.IndexOf("REF:");
-                            var numRef = text.Substring(resultREF + 4, 4);
-
-                            var resulTAR = text.IndexOf("ATARJ:");
-                            var numTarjeta = text.Substring(resulTAR + 18, 4);
-
-                            var resulTIPO = text.IndexOf("TIPO:");
-                            var tipotarjeta = text.Substring(resulTIPO + 5, 4);
-
-                            var objResp = new { aterm = numTER, numref = numRef, numTarjeta = string.Empty, message = string.Empty };
-                            vResultadoTransaccion.data = objResp;
-
-                            vResultadoTransaccion.ResultadoDescripcion = $"<strong>IZIPAY ANULACION DE PAGO REF:{resultado.message}  EXITOSO.</strong><br>" + resultado.print_data;
-
-                            try
+                            var objTransaccionPagoUpd = new BE_TransaccionPagos()
                             {
-                                var objTransaccionPagoUpd = new BE_TransaccionPagos()
-                                {
-                                    idtransaccionpagos = objTransaccionPago.idtransaccionpagos,
-                                    codventa = codventa,
-                                    idtransaccion = resultado.id_autorizacion,
-                                    codterminal = numTER,
-                                    codreferencial = numRef,
-                                    tipotarjeta = tipotarjeta,
-                                    numeroTarjeta = numTarjeta,
-                                    trama = text,
-                                    regupdateusuario = regcreateusuario,
-                                };
+                                idtransaccionpagos = objTransaccionPago.idtransaccionpagos,
+                                codventa = codventa,
+                                idtransaccion = value.id_autorizacion,
+                                codterminal = numTER,
+                                codreferencial = numRef,
+                                tipotarjeta = tipotarjeta,
+                                numeroTarjeta = numTarjeta,
+                                trama = text,
+                                regupdateusuario = regcreateusuario,
+                            };
 
-                                ResultadoTransaccion<object> InsertTransacUpd = await ActualizarPagoTransaccion(objTransaccionPagoUpd, conn, transaction);
-                                if (InsertTransacUpd.ResultadoCodigo == -1)
-                                {
-                                    // ignoramos, porque ya realizo el pago el izipay
-                                    ////vResultadoTransaccion = InsertTransacUpd;
-                                    ////transaction.Rollback();
-                                }
-                            }
-                            catch (Exception)
+                            ResultadoTransaccion<object> InsertTransacUpd = await ActualizarPagoTransaccion(objTransaccionPagoUpd, conn, transaction);
+                            if (InsertTransacUpd.ResultadoCodigo == -1)
                             {
                                 // ignoramos, porque ya realizo el pago el izipay
+                                ////vResultadoTransaccion = InsertTransacUpd;
+                                ////transaction.Rollback();
                             }
-
-                            transaction.Commit();
-
                         }
-                        else
+                        catch (Exception)
                         {
-                            //validacion
-                            vResultadoTransaccion.ResultadoCodigo = 1;
-                            vResultadoTransaccion.ResultadoDescripcion = "<strong>IZIPAY.</strong><br>" + resultado.message;
-                            var objResp = new { aterm = (string)null, numref = (string)null, numTarjeta = (string)null, message = (string)null };
-                            vResultadoTransaccion.data = objResp;
-                            transaction.Rollback();
+                            // ignoramos, porque ya realizo el pago el izipay
                         }
+
+                        transaction.Commit();
+
+                        //}
+                        //else
+                        //{
+                        //    //validacion
+                        //    vResultadoTransaccion.ResultadoCodigo = 1;
+                        //    vResultadoTransaccion.ResultadoDescripcion = "<strong>IZIPAY.</strong><br>" + resultado.message;
+                        //    var objResp = new { aterm = (string)null, numref = (string)null, numTarjeta = (string)null, message = (string)null };
+                        //    vResultadoTransaccion.data = objResp;
+                        //    transaction.Rollback();
+                        //}
                     }
                 }//using
 

@@ -12,7 +12,7 @@ namespace Net.Business.DTO
         public string codprovincia { get; set; }
         public string telefono { get; set; }
         public string codcivil { get; set; }
-        public DateTime fechanacimiento { get; set; }
+        public DateTime? fechanacimiento { get; set; }
         public string ruc { get; set; }
         public string observaciones { get; set; }
         public string estado { get; set; }

@@ -82,7 +82,7 @@ namespace Net.Data
                 expiration = new BE_SYNAPSIS_Expiration
                 {
                     type = "DATE",
-                    date = DateTime.Today.ToString()
+                    date = DateTime.Now.AddDays(7).ToString("yyyy-MM-ddTHH:mm:ss.fff-0500")
                 },
                 autogenerate = new BE_SYNAPSIS_Autogenerate
                 {
@@ -93,6 +93,7 @@ namespace Net.Data
             var objRequestOrderApi = new BE_SYNAPSIS_RequestOrderApi { order = order, settings = setting };
 
             string jsonBody = JsonConvert.SerializeObject(objRequestOrderApi);
+
             string valueToSign = Convert.ToString(order.number) + Convert.ToString(order.currency.code) + Convert.ToString(order.amount);
             string signedElement = valueToSign;
 

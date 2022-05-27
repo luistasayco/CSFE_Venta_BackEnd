@@ -112,5 +112,35 @@ namespace Net.Business.Services.Controllers
             }
 
         }
+
+        [HttpPut]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ModificarRecetasEstado([FromBody] DtoRecetaEstadoModificar value)
+        {
+            try
+            {
+                if (value == null)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var response = await _repository.Receta.ModificarRecetasEstado(value.RetornaModelo());
+
+                if (response.ResultadoCodigo == -1)
+                {
+                    return BadRequest(response);
+                }
+                else
+                {
+                    return Ok(response.dataList);
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Hubo un error en la solicitud : { ex.Message.ToString() }");
+            }
+
+        }
     }
 }

@@ -37,6 +37,8 @@ namespace Net.Data
             {
                 nombre = nombre == null ? "" : nombre.ToUpper();
                 codproducto = codproducto == null ? "" : codproducto.ToUpper();
+                //N => Solo con Stock
+                //S => Sin Stock => Stock 0
                 var ceros = constock ? "N" : "Y";
 
                 if (codalmacen.Equals("*"))
@@ -66,10 +68,12 @@ namespace Net.Data
                 {
                     if (ceros.Equals("N"))
                     {
+                        //filterConStock = " and OnHandALM gt 0";
                         filterConStock = " and OnHandALM gt 0";
                     }
                     else
                     {
+                        //filterConStock = " and OnHandALM eq 0";
                         filterConStock = " and OnHandALM eq 0";
                     }
                 }
@@ -115,11 +119,14 @@ namespace Net.Data
                                 var reserva = item.ReserverdALM == null ? 0 : item.ReserverdALM;
                                 var diferencia = item.OnHandALM - reserva;
 
+                                //var avaliableALM = item.AvaliableALM == null ? 0 : item.AvaliableALM;
+
                                 item.Price = item.Price == null ? 0 : item.Price;
 
                                 if (diferencia > 0)
                                 {
-                                    item.OnHandALM = item.OnHandALM - reserva;
+                                    item.OnHandALM = diferencia;
+                                    //item.OnHandALM = avaliableALM;
                                     dataFilter.Add(item);
                                 }
                             }
@@ -137,7 +144,7 @@ namespace Net.Data
 
                             if(isCountExiste == 0 )
                             {
-                                item.OnHandALM = item.OnHand;
+                                item.OnHandALM = item.OnHand == null ? 0 : item.OnHand;
 
                                 dataFilter.Add(item);
                             }
@@ -204,9 +211,11 @@ namespace Net.Data
                         {
                             var reserva = item.ReserverdALM == null ? 0 : item.ReserverdALM;
                             var diferencia = item.OnHandALM - reserva;
+                            item.Price = item.Price == null ? 0 : item.Price;
+
                             if (diferencia > 0)
                             {
-                                item.OnHandALM = item.OnHandALM - reserva;
+                                item.OnHandALM = diferencia;
                                 dataFilter.Add(item);
                             }
                         }
@@ -249,9 +258,10 @@ namespace Net.Data
                 var ceros = constock ? "N" : "Y";
 
                 var modelo = "sml.svc/SBASTCKParameters(CODITEM='" + codproducto + "',CODALM='" + codalmacen + "',CEROS='"+ ceros + "')/SBASTCK";
-                var campos = "?$select= ItemCode, ItemName, BatchNum, QuantityLote, IsCommitedLote, OnOrderLote , ExpDate";
+                var campos = "?$select= ItemCode, ItemName, BatchNum, QuantityLote, IsCommitedLote, OnOrderLote , ExpDate, AvaliableLote";
                 var filter = "&$filter = WhsCode eq '" + codalmacen + "' and ItemCode eq '" + codproducto + "'  and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
                 var filterConStock = " and QuantityLote gt 0 ";
+                var filterSinStock = " and QuantityLote eq 0 ";
                 var orderby = " &$orderby = ExpDate";
 
                 if (constock)
@@ -260,7 +270,7 @@ namespace Net.Data
                 }
                 else
                 {
-                    modelo = modelo + campos + filter + orderby;
+                    modelo = modelo + campos + filter + filterSinStock + orderby;
                 }
 
                 List<BE_StockLote> data = await _connectServiceLayer.GetAsync<BE_StockLote>(modelo);
@@ -273,16 +283,92 @@ namespace Net.Data
                     {
                         foreach (var item in data)
                         {
-                            var reserva = item.ReservedLote == null ? 0 : item.ReservedLote;
-                            var diferenciaLote = item.QuantityLote - reserva;
 
-                            if (diferenciaLote > 0)
+                            var reserva = item.ReservedLote == null ? 0 : item.ReservedLote;
+                            var diferencia = item.QuantityLote - reserva;
+                            //var avaliableLote = item.AvaliableLote == null ? 0 : item.AvaliableLote;
+
+                            if (diferencia > 0)
                             {
-                                item.QuantityLote = diferenciaLote;
+                                item.QuantityLote = diferencia;
                                 dataFilter.Add(item);
                             }
                         }
                     } else
+                    {
+                        dataFilter = data;
+                    }
+                }
+                else
+                {
+                    dataFilter = data;
+                }
+
+                vResultadoTransaccion.IdRegistro = 0;
+                vResultadoTransaccion.ResultadoCodigo = 0;
+                vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", data.Count);
+                vResultadoTransaccion.dataList = dataFilter;
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
+        public async Task<ResultadoTransaccion<BE_Stock>> GetListStockLotePorFiltro(string codalmacen, string codproducto, string lote, bool constock)
+        {
+            ResultadoTransaccion<BE_Stock> vResultadoTransaccion = new ResultadoTransaccion<BE_Stock>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+            try
+            {
+                codproducto = codproducto == null ? "" : codproducto.ToUpper();
+
+                var ceros = constock ? "N" : "Y";
+
+                var modelo = "sml.svc/SBASTCKParameters(CODITEM='" + codproducto + "',CODALM='" + codalmacen + "',CEROS='" + ceros + "')/SBASTCK";
+                var campos = "?$select= ItemCode, ItemName, BatchNum, QuantityLote, IsCommitedLote, OnOrderLote , ExpDate, AvaliableLote, ManBtchNum";
+                var filter = "&$filter = WhsCode eq '" + codalmacen + "' and ItemCode eq '" + codproducto + "' and BatchNum eq '" + lote + "'  and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
+                var filterConStock = " and QuantityLote gt 0 ";
+                var filterSinStock = " and QuantityLote eq 0 ";
+                var orderby = " &$orderby = ExpDate";
+
+                if (constock)
+                {
+                    modelo = modelo + campos + filter + filterConStock + orderby;
+                }
+                else
+                {
+                    modelo = modelo + campos + filter + filterSinStock + orderby;
+                }
+
+                List<BE_Stock> data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
+
+                List<BE_Stock> dataFilter = new List<BE_Stock>();
+
+                if (data.Count > 0)
+                {
+                    if (constock)
+                    {
+                        foreach (var item in data)
+                        {
+                            var reserva = item.ReservedLote == null ? 0 : item.ReservedLote;
+                            var diferencia = item.QuantityLote - reserva;
+                            //var avaliableLote = item.AvaliableLote == null ? 0 : item.AvaliableLote;
+
+                            if (diferencia > 0)
+                            {
+                                item.QuantityLote = (decimal)diferencia;
+                                dataFilter.Add(item);
+                            }
+                        }
+                    }
+                    else
                     {
                         dataFilter = data;
                     }
@@ -320,9 +406,10 @@ namespace Net.Data
                 var ceros = constock ? "N" : "Y";
 
                 var modelo = "sml.svc/SBAVSFNParameters(CODITEM='" + codproducto + "',CODALM='" + codalmacen + "',CEROS='" + ceros + "', CODUBI=0)/SBAVSFN";
-                var campos = "?$select= ItemCode, ItemName, BatchNum, QuantityLote, IsCommitedLote, OnOrderLote , ExpDate, BinAbs, BinCode, OnHandQty, ReserverdQty, ReservedLote";
+                var campos = "?$select= ItemCode, ItemName, BatchNum, QuantityLote, IsCommitedLote, OnOrderLote , ExpDate, BinAbs, BinCode, OnHandQty, ReserverdQty, ReservedLote, AvaliableQty, AvaliableLote";
                 var filter = "&$filter = WhsCode eq '" + codalmacen + "' and ItemCode eq '" + codproducto + "'  and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
                 var filterConStock = " and OnHandQty gt 0 ";
+                var filterSinStock = " and OnHandQty eq 0 ";
                 var orderby = " &$orderby = ExpDate";
 
                 if (constock)
@@ -331,7 +418,7 @@ namespace Net.Data
                 }
                 else
                 {
-                    modelo = modelo + campos + filter + orderby;
+                    modelo = modelo + campos + filter + filterSinStock + orderby;
                 }
 
                 List<BE_StockLote> data = await _connectServiceLayer.GetAsync<BE_StockLote>(modelo);
@@ -344,14 +431,15 @@ namespace Net.Data
                     {
                         foreach (var item in data)
                         {
-                            var reserva = item.ReserverdQty == null ? 0 : item.ReserverdQty;
+                            var reserverdQty = item.ReserverdQty == null ? 0 : item.ReserverdQty;
+                            var reservedLote = item.ReserverdQty == null ? 0 : item.ReserverdQty;
 
-                            var diferenciaUbicacion = item.OnHandQty - reserva;
-                            var diferenciaLote = item.OnHandQty - reserva;
+                            var diferenciaQty = item.OnHandQty - reserverdQty;
+                            var diferenciaLote = item.OnHandQty - reservedLote;
 
-                            if (diferenciaUbicacion > 0)
+                            if (diferenciaQty > 0)
                             {
-                                item.OnHandQty = diferenciaUbicacion;
+                                item.OnHandQty = diferenciaQty;
                                 item.QuantityLote = diferenciaLote;
                                 dataFilter.Add(item);
                             }
@@ -396,6 +484,7 @@ namespace Net.Data
                 var campos = "?$select=* ";
                 var filter = "&$filter = ItemCode eq '" + codproducto.Trim() + "' and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
                 var filterConStock = "and OnHandALM gt 0";
+                var filterSinStock = "and OnHandALM eq 0";
 
                 if (constock)
                 {
@@ -403,7 +492,7 @@ namespace Net.Data
                 }
                 else
                 {
-                    modelo = modelo + campos + filter;
+                    modelo = modelo + campos + filter + filterSinStock;
                 }
 
                 List<BE_Stock> data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
@@ -418,9 +507,10 @@ namespace Net.Data
                         {
                             var reserva = item.ReserverdALM == null ? 0 : item.ReserverdALM;
                             var diferencia = item.OnHandALM - reserva;
+
                             if (diferencia > 0)
                             {
-                                item.OnHandALM = item.OnHandALM - reserva;
+                                item.OnHandALM = diferencia;
                                 dataFilter.Add(item);
                             }
                         }
@@ -496,6 +586,7 @@ namespace Net.Data
                             var campos = "?$select=* ";
                             var filter = "&$filter = " + filterProDci + " and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
                             var filterConStock = "and OnHandALM gt 0";
+                            var filterSinStock = "and OnHandALM eq 0";
 
                             if (constock)
                             {
@@ -503,7 +594,7 @@ namespace Net.Data
                             }
                             else
                             {
-                                modelo = modelo + campos + filter;
+                                modelo = modelo + campos + filter + filterSinStock;
                             }
 
                             data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
@@ -516,9 +607,10 @@ namespace Net.Data
                                     {
                                         var reserva = item.ReserverdALM == null ? 0 : item.ReserverdALM;
                                         var diferencia = item.OnHandALM - reserva;
+
                                         if (diferencia > 0)
                                         {
-                                            item.OnHandALM = item.OnHandALM - reserva;
+                                            item.OnHandALM = diferencia;
                                             dataFilter.Add(item);
                                         }
                                     }
@@ -587,6 +679,7 @@ namespace Net.Data
                     var campos = "?$select=* ";
                     var filter = "&$filter = " + filterProDci + " and SellItem eq 'Y' and InvntItem eq 'Y' and validFor eq 'Y' ";
                     var filterConStock = "and OnHandALM gt 0";
+                    var filterSinStock = "and OnHandALM eq 0";
 
                     if (constock)
                     {
@@ -594,7 +687,7 @@ namespace Net.Data
                     }
                     else
                     {
-                        modelo = modelo + campos + filter;
+                        modelo = modelo + campos + filter + filterSinStock;
                     }
 
                     data = await _connectServiceLayer.GetAsync<BE_Stock>(modelo);
@@ -607,9 +700,10 @@ namespace Net.Data
                             {
                                 var reserva = item.ReserverdALM == null ? 0 : item.ReserverdALM;
                                 var diferencia = item.OnHandALM - reserva;
+
                                 if (diferencia > 0)
                                 {
-                                    item.OnHandALM = item.OnHandALM - reserva;
+                                    item.OnHandALM = diferencia;
                                     dataFilter.Add(item);
                                 }
                             }

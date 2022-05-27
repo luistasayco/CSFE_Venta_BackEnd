@@ -41,6 +41,7 @@ namespace Net.Data
         const string SP_UPDATE_CONSOLIDADO_PICKING_ESTADO = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingEstadoUpd";
         const string SP_UPDATE_CONSOLIDADO_PICKING_ESTADO_WEB = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingEstadoWebUpd";
         const string SP_DELETE_CONSOLIDADO_PICKING = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingDel";
+        const string SP_DELETE_CONSOLIDADO_PRODUCTO_PICKING = DB_ESQUEMA + "VEN_ConsolidadosProductoPedidoPickingDel";
         const string SP_GET_CONSOLIDADO_SOLICITUD = DB_ESQUEMA + "REQ_ConsolidadoSolicitudGet";
         const string SP_UPDATE_ID_RESERVA = DB_ESQUEMA + "VEN_ConsolidadosPedidoPickingIdReservaUpd";
         public ConsolidadoRepository(IHttpClientFactory clientFactory, IConnectionSQL context, IConfiguration configuration)
@@ -593,6 +594,158 @@ namespace Net.Data
 
             return vResultadoTransaccion;
         }
+        public async Task<ResultadoTransaccion<BE_ConsolidadoPedidoPicking>> ModificarConsolidadoPickingMasivo(List<BE_ConsolidadoPedidoPicking> list)
+        {
+            ResultadoTransaccion<BE_ConsolidadoPedidoPicking> vResultadoTransaccion = new ResultadoTransaccion<BE_ConsolidadoPedidoPicking>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                // Obtenemos listada de detalle del consolidado
+                ResultadoTransaccion<BE_ConsolidadoPedidoPicking> resultadoTransaccionConsolidadoPedido = await GetListConsolidadoPickingPorId(list[0].idconsolidado);
+
+                if (resultadoTransaccionConsolidadoPedido.ResultadoCodigo == -1)
+                {
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionConsolidadoPedido.ResultadoDescripcion;
+                    return vResultadoTransaccion;
+                }
+
+                List<BE_ConsolidadoPedidoPicking> bE_ConsolidadoPedidos = (List<BE_ConsolidadoPedidoPicking>)resultadoTransaccionConsolidadoPedido.dataList;
+
+                using (SqlConnection conn = new SqlConnection(_cnx))
+                {
+                    conn.Open();
+                    SqlTransaction transaction = conn.BeginTransaction();
+                    try
+                    {
+
+                        foreach (BE_ConsolidadoPedidoPicking itemConsolidadoPedido in bE_ConsolidadoPedidos.FindAll(xFila => xFila.codproducto == list[0].codproducto))
+                        {
+                            itemConsolidadoPedido.RegIdUsuario = list[0].RegIdUsuario;
+                            ResultadoTransaccion<BE_ConsolidadoPedidoPicking> resultadoTransaccionConsolidadoPedidoPicking = await EliminarConsolidadoProductoPicking(itemConsolidadoPedido, conn, transaction);
+
+                            if (resultadoTransaccionConsolidadoPedidoPicking.ResultadoCodigo == -1)
+                            {
+                                transaction.Rollback();
+                                vResultadoTransaccion.IdRegistro = -1;
+                                vResultadoTransaccion.ResultadoCodigo = -1;
+                                vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionConsolidadoPedidoPicking.ResultadoDescripcion + " - EliminarConsolidadoPicking";
+                                return vResultadoTransaccion;
+                            }
+                        }
+
+                        using (SqlCommand cmd = new SqlCommand(SP_INSERT_CONSOLIDADO_PICKING, conn, transaction))
+                        {
+                            foreach (BE_ConsolidadoPedidoPicking item in list)
+                            {
+                                cmd.Parameters.Clear();
+                                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                SqlParameter oParam = new SqlParameter("@idconsolidadopicking", item.idconsolidadopicking);
+                                oParam.SqlDbType = SqlDbType.Int;
+                                oParam.Direction = ParameterDirection.Output;
+                                cmd.Parameters.Add(oParam);
+                                cmd.Parameters.Add(new SqlParameter("@idconsolidado", item.idconsolidado));
+                                cmd.Parameters.Add(new SqlParameter("@codpedido", item.codpedido));
+                                cmd.Parameters.Add(new SqlParameter("@codproducto", item.codproducto));
+                                cmd.Parameters.Add(new SqlParameter("@cantidad", item.cantidad));
+                                cmd.Parameters.Add(new SqlParameter("@cantidadpicking", item.cantidadpicking));
+                                cmd.Parameters.Add(new SqlParameter("@lote", item.lote));
+                                cmd.Parameters.Add(new SqlParameter("@fechavencimiento", item.fechavencimiento));
+                                cmd.Parameters.Add(new SqlParameter("@codalmacen", item.codalmacen));
+                                cmd.Parameters.Add(new SqlParameter("@ubicacion", item.ubicacion));
+                                cmd.Parameters.Add(new SqlParameter("@codusuarioapu", item.codusuarioapu));
+                                cmd.Parameters.Add(new SqlParameter("@estado", item.estado));
+                                cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", item.RegIdUsuario));
+
+                                SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                                {
+                                    Direction = ParameterDirection.Output
+                                };
+                                cmd.Parameters.Add(outputIdTransaccionParam);
+
+                                SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                                {
+                                    Direction = ParameterDirection.Output
+                                };
+                                cmd.Parameters.Add(outputMsjTransaccionParam);
+
+                                await cmd.ExecuteNonQueryAsync();
+
+                                item.idconsolidadopicking = (int)cmd.Parameters["@idconsolidadopicking"].Value;
+
+                                vResultadoTransaccion.IdRegistro = item.idconsolidadopicking;
+                                vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                                vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+                                vResultadoTransaccion.data = item;
+
+                                // Realiza la reservacion de Articulo
+                                SapReserveStockRepository sapReserve = new SapReserveStockRepository(_clientFactory, _configuration, context);
+
+                                var valueReserva = new SapReserveStockNew
+                                {
+                                    Name = string.Format("APU-RESERVA-CONSO-{0}", item.idconsolidado),
+                                    U_ITEMCODE = item.codproducto,
+                                    U_BINABSENTRY = item.ubicacion == null ? 0 : (int)item.ubicacion,
+                                    U_QUANTITY = item.cantidadpicking,
+                                    U_IDEXTERNO = string.Format("APU-{0}", item.idconsolidado),
+                                    U_BATCHNUM = item.lote,
+                                    U_WHSCODE = item.codalmacen
+                                };
+
+                                ResultadoTransaccion<SapBaseResponse<SapReserveStock>> resultadoSapDocument = await sapReserve.SetCreateReserve(valueReserva);
+
+                                if (resultadoSapDocument.ResultadoCodigo == -1)
+                                {
+                                    transaction.Rollback();
+                                    vResultadoTransaccion.IdRegistro = -1;
+                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                    vResultadoTransaccion.ResultadoDescripcion = resultadoSapDocument.ResultadoDescripcion + " - SetCreateReserve";
+                                    return vResultadoTransaccion;
+                                }
+
+                                item.idreserva = resultadoSapDocument.data.code;
+
+                                // Actualizamos ID de reserva
+                                ResultadoTransaccion<BE_ConsolidadoPedidoPicking> resultadoTransaccionUpdate = await ActualizarIdReserva(conn, transaction, item.idconsolidadopicking, item.idreserva, (int)item.RegIdUsuario);
+
+                                if (resultadoTransaccionUpdate.ResultadoCodigo == -1)
+                                {
+                                    transaction.Rollback();
+                                    vResultadoTransaccion.IdRegistro = -1;
+                                    vResultadoTransaccion.ResultadoCodigo = -1;
+                                    vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionUpdate.ResultadoDescripcion + " - ActualizarIdReserva";
+                                    return vResultadoTransaccion;
+                                }
+                            }
+                        }
+
+                        transaction.Commit();
+                        transaction.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                    }
+                    conn.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+        }
         public async Task<ResultadoTransaccion<BE_ConsolidadoPedidoPicking>> ModificarConsolidadoPicking(BE_ConsolidadoPedidoPicking item)
         {
             ResultadoTransaccion<BE_ConsolidadoPedidoPicking> vResultadoTransaccion = new ResultadoTransaccion<BE_ConsolidadoPedidoPicking>();
@@ -772,6 +925,67 @@ namespace Net.Data
 
                 conn.Close();
 
+            }
+
+            return vResultadoTransaccion;
+        }
+        public async Task<ResultadoTransaccion<BE_ConsolidadoPedidoPicking>> EliminarConsolidadoProductoPicking(BE_ConsolidadoPedidoPicking value, SqlConnection conn, SqlTransaction transaction)
+        {
+            ResultadoTransaccion<BE_ConsolidadoPedidoPicking> vResultadoTransaccion = new ResultadoTransaccion<BE_ConsolidadoPedidoPicking>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(SP_DELETE_CONSOLIDADO_PRODUCTO_PICKING, conn, transaction))
+                {
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                    cmd.Parameters.Add(new SqlParameter("@idconsolidadopicking", value.idconsolidadopicking));
+                    cmd.Parameters.Add(new SqlParameter("@codproducto", value.codproducto));
+                    cmd.Parameters.Add(new SqlParameter("@codusuarioapu", value.codusuarioapu));
+                    cmd.Parameters.Add(new SqlParameter("@RegIdUsuario", value.RegIdUsuario));
+
+                    SqlParameter outputIdTransaccionParam = new SqlParameter("@IdTransaccion", SqlDbType.Int, 3)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmd.Parameters.Add(outputIdTransaccionParam);
+
+                    SqlParameter outputMsjTransaccionParam = new SqlParameter("@MsjTransaccion", SqlDbType.VarChar, 700)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmd.Parameters.Add(outputMsjTransaccionParam);
+
+                    await cmd.ExecuteNonQueryAsync();
+
+                    vResultadoTransaccion.IdRegistro = int.Parse(value.idconsolidadopicking.ToString());
+                    vResultadoTransaccion.ResultadoCodigo = int.Parse(outputIdTransaccionParam.Value.ToString());
+                    vResultadoTransaccion.ResultadoDescripcion = (string)outputMsjTransaccionParam.Value;
+
+                    // Eliminamos la reserva, si es de sala de operación
+                    SapReserveStockRepository sapReserveStockRepository = new SapReserveStockRepository(_clientFactory, _configuration, context);
+                    ResultadoTransaccion<SapBaseResponse<SapReserveStock>> resultadoTransaccionReservaDelete = await sapReserveStockRepository.SetDeleteReserve(value.idreserva);
+
+                    if (resultadoTransaccionReservaDelete.ResultadoCodigo == -1)
+                    {
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionReservaDelete.ResultadoDescripcion;
+                        return vResultadoTransaccion;
+                    }
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
             }
 
             return vResultadoTransaccion;

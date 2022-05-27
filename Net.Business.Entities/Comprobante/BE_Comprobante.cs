@@ -58,6 +58,13 @@ namespace Net.Business.Entities
         public string tipoafectacionigv { get; set; }
         public string usuario { get; set; }
         public bool flg_credito { get; set; }
+        public int doc_entry { get; set; }
+
+        // Campos de usuario de SAP
+        public string U_SYP_STATUS { get; set; }
+        public string U_SYP_CS_USUANU { get; set; }
+        public string U_SYP_CS_MOTANU { get; set; }
+        public string U_SYP_CS_FECANU { get; set; }
     }
 
     public class BE_ComprobanteGenerar

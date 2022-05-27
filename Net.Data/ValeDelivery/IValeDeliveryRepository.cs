@@ -8,9 +8,10 @@ namespace Net.Data
 {
     public interface IValeDeliveryRepository : IRepositoryBase<BE_Receta>
     {
-        Task<ResultadoTransaccion<BE_ValeDelivery>> GetListValeDeliveryPorCodAtencion(string codatencion);
+        Task<ResultadoTransaccion<BE_ValeDelivery>> GetListValeDeliveryPorCodAtencion(string codatencion, string codventa);
         Task<ResultadoTransaccion<BE_ValeDelivery>> RegistrarValeDelivery(BE_ValeDeliveryXml value);
         Task<ResultadoTransaccion<BE_ValeDelivery>> ModificarValeDelivery(BE_ValeDeliveryXml value);
+        //Task<ResultadoTransaccion<BE_ValeDelivery>> ModificarEstadoValeDelivery(BE_ValeDeliveryUpdEstado value);
         Task<ResultadoTransaccion<BE_ValeDelivery>> GetListValeDeliveryPorRangoFecha(DateTime fechaInicio, DateTime fechaFinal);
         Task<ResultadoTransaccion<MemoryStream>> GetGenerarValeValeDeliveryReporte1Print(DateTime fechaInicio, DateTime fechaFinal);
         Task<ResultadoTransaccion<BE_ValeDelivery>> GetListValeDeliveryAgrupoEstadoPorRangoFecha(DateTime fechaInicio, DateTime fechaFinal);

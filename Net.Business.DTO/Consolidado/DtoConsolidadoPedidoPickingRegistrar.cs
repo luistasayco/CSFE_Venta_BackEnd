@@ -1,5 +1,6 @@
 ﻿using Net.Business.Entities;
 using System;
+using System.Collections.Generic;
 
 namespace Net.Business.DTO
 {
@@ -34,6 +35,40 @@ namespace Net.Business.DTO
                 estado = this.estado,
                 RegIdUsuario = this.RegIdUsuario
             };
+        }
+    }
+
+    public class DtoConsolidadoPedidoPickingRegistrarMasivo
+    {
+        public List<DtoConsolidadoPedidoPickingRegistrar> listConsolidadoPedidoPicking { get; set; }
+
+        public List<BE_ConsolidadoPedidoPicking> RetornaConsolidadoPedidoPickingMasivo()
+        {
+
+            var list = new List<BE_ConsolidadoPedidoPicking>();
+
+            foreach (DtoConsolidadoPedidoPickingRegistrar item in this.listConsolidadoPedidoPicking)
+            {
+                var itemnew = new BE_ConsolidadoPedidoPicking
+                {
+                    idconsolidado = item.idconsolidado,
+                    codpedido = item.codpedido,
+                    codproducto = item.codproducto,
+                    cantidad = item.cantidad,
+                    cantidadpicking = item.cantidadpicking,
+                    lote = item.lote,
+                    fechavencimiento = item.fechavencimiento,
+                    codalmacen = item.codalmacen,
+                    ubicacion = item.ubicacion,
+                    codusuarioapu = item.codusuarioapu,
+                    estado = item.estado,
+                    RegIdUsuario = item.RegIdUsuario
+                };
+
+                list.Add(itemnew);
+            }
+
+            return list;
         }
     }
 }

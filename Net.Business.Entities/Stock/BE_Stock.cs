@@ -1,4 +1,6 @@
-﻿namespace Net.Business.Entities
+﻿using System;
+
+namespace Net.Business.Entities
 {
     public class BE_Stock
     {
@@ -57,7 +59,7 @@
         /// <summary>
         /// Stock Total (Todos los almacenes)
         /// </summary>
-        public decimal OnHand { get; set; }
+        public decimal? OnHand { get; set; }
         /// <summary>
         /// Cantidad Solicitada (En Orden de Compra)
         /// </summary>
@@ -117,5 +119,10 @@
         public string Name { get; set; }
 
         public decimal? ReserverdALM { get; set; }
+        public decimal? ReservedLote { get; set; }
+
+        public decimal? AvaliableALM { get; set; }
+        public decimal? AvaliableLote { get; set; }
+        public DateTime? ExpDate { get; set; }
     }
 }

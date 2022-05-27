@@ -24,10 +24,10 @@ namespace Net.Business.Services.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetListValeDeliveryPorCodAtencion([FromQuery] string codatencion)
+        public async Task<IActionResult> GetListValeDeliveryPorCodAtencion([FromQuery] string codatencion, string codventa)
         {
 
-            var objectGetAll = await _repository.ValeDelivery.GetListValeDeliveryPorCodAtencion(codatencion);
+            var objectGetAll = await _repository.ValeDelivery.GetListValeDeliveryPorCodAtencion(codatencion, codventa);
 
             if (objectGetAll.ResultadoCodigo == -1)
             {

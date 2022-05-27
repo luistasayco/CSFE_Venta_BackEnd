@@ -11,6 +11,7 @@ namespace Net.Business.DTO
         public string flg_pago_usado { get; set; }
         public string nro_operacion { get; set; }
         public string terminal { get; set; }
+        public string codterminal { get; set; }
         public string tip_tarjeta { get; set; }
         public decimal cnt_monto_pago { get; set; }
         public long ide_pagos_bot { get; set; }
@@ -26,7 +27,7 @@ namespace Net.Business.DTO
                 tip_tarjeta = pagos.tip_tarjeta,
                 cnt_monto_pago = pagos.cnt_monto_pago,
                 ide_pagos_bot = pagos.ide_pagos_bot,
-
+                codterminal = pagos.codterminal
             };
         }
 

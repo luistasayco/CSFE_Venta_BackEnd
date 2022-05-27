@@ -101,6 +101,7 @@ namespace Net.Data
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@descripcion", (value.descripcion == null) ? string.Empty : value.descripcion));
+                        cmd.Parameters.Add(new SqlParameter("@codtipoconcepto", (value.codtipoconcepto == null) ? 0 : value.codtipoconcepto));
 
                         var response = new List<BE_Concepto>();
 

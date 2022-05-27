@@ -7,6 +7,7 @@ using Microsoft.Data.SqlClient;
 using System;
 using System.Text.RegularExpressions;
 using Net.CrossCotting;
+using System.Net.Http;
 
 namespace Net.Data
 {
@@ -16,6 +17,8 @@ namespace Net.Data
         private string _aplicacionName;
         private string _metodoName;
         private readonly Regex regex = new Regex(@"<(\w+)>.*");
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _clientFactory;
 
         const string DB_ESQUEMA = "";
         const string SP_GET_LISTA_COMPROBANTES_POR_FILTRO = DB_ESQUEMA + "VEN_ListaComprobantesPorFiltrosGet";
@@ -24,12 +27,15 @@ namespace Net.Data
         const string COMPROBANTE_DELETE = DB_ESQUEMA + "VEN_Comprobantes_Delete";
         const string COMPROBANTE_UPDATE = DB_ESQUEMA + "VEN_Comprobantes_Update";
         const string SP_GET_COMPROBANTE = DB_ESQUEMA + "VEN_Comprobantes_Consulta";
+        const string SP_GET_COMPROBANTE_DOC_ENTRY = DB_ESQUEMA + "VEN_ComprobantesObtenerDocEntry";
 
-        public ComprobanteRepository(IConnectionSQL context, IConfiguration configuration)
+        public ComprobanteRepository(IConnectionSQL context, IConfiguration configuration, IHttpClientFactory clientFactory)
             : base(context)
         {
             _cnx = configuration.GetConnectionString("cnnSqlLogistica");
             _aplicacionName = this.GetType().Name;
+            _configuration = configuration;
+            _clientFactory = clientFactory;
         }
 
         public async Task<ResultadoTransaccion<BE_Comprobante>> GetListaComprobantesPorFiltro(string codcomprobante, DateTime fecinicio, DateTime fecfin, int opcion)
@@ -189,6 +195,46 @@ namespace Net.Data
             return vResultadoTransaccion;
 
         }
+
+        public async Task<ResultadoTransaccion<BE_Comprobante>> GetComprobantesObtenerDocEntry(string codcomprobante, SqlConnection conn, SqlTransaction transaction)
+        {
+            ResultadoTransaccion<BE_Comprobante> vResultadoTransaccion = new ResultadoTransaccion<BE_Comprobante>();
+            _metodoName = regex.Match(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name).Groups[1].Value.ToString();
+
+            vResultadoTransaccion.NombreMetodo = _metodoName;
+            vResultadoTransaccion.NombreAplicacion = _aplicacionName;
+
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(SP_GET_COMPROBANTE_DOC_ENTRY, conn, transaction))
+                {
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                    cmd.Parameters.Add(new SqlParameter("@codcomprobante", codcomprobante));
+
+                    var response = new List<BE_Comprobante>();
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        response = (List<BE_Comprobante>)context.ConvertTo<BE_Comprobante>(reader);
+                    }
+
+                    vResultadoTransaccion.IdRegistro = 0;
+                    vResultadoTransaccion.ResultadoCodigo = 0;
+                    vResultadoTransaccion.ResultadoDescripcion = string.Format("Registros Totales {0}", 1);
+                    vResultadoTransaccion.dataList = response;
+
+                }
+            }
+            catch (Exception ex)
+            {
+                vResultadoTransaccion.IdRegistro = -1;
+                vResultadoTransaccion.ResultadoCodigo = -1;
+                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+            }
+
+            return vResultadoTransaccion;
+
+        }
         public async Task<ResultadoTransaccion<BE_CuadreCaja>> GetListaCuadreCaja(string documento)
         {
             ResultadoTransaccion<BE_CuadreCaja> vResultadoTransaccion = new ResultadoTransaccion<BE_CuadreCaja>();
@@ -271,16 +317,20 @@ namespace Net.Data
             vResultadoTransaccion.NombreMetodo = _metodoName;
             vResultadoTransaccion.NombreAplicacion = _aplicacionName;
 
-            try
+
+            
+
+            using (SqlConnection conn = new SqlConnection(_cnx))
             {
-                using (SqlConnection conn = new SqlConnection(_cnx))
+                conn.Open();
+                SqlTransaction transaction = conn.BeginTransaction();
+                try
                 {
-                    using (SqlCommand cmd = new SqlCommand(COMPROBANTE_DELETE, conn))
+                    using (SqlCommand cmd = new SqlCommand(COMPROBANTE_DELETE, conn, transaction))
                     {
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
                         cmd.Parameters.Add(new SqlParameter("@codcomprobante", codcomprobante));
 
-                        await conn.OpenAsync();
                         var reader = await cmd.ExecuteNonQueryAsync();
 
                         vResultadoTransaccion.IdRegistro = 0;
@@ -289,17 +339,70 @@ namespace Net.Data
                         vResultadoTransaccion.data = codcomprobante;
 
                     }
+
+                    ResultadoTransaccion<BE_Comprobante> resultadoTransaccionComprobante = await GetComprobantesObtenerDocEntry(codcomprobante, conn , transaction);
+
+                    if (resultadoTransaccionComprobante.ResultadoCodigo == -1)
+                    {
+                        transaction.Rollback();
+                        vResultadoTransaccion.IdRegistro = -1;
+                        vResultadoTransaccion.ResultadoCodigo = -1;
+                        vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionComprobante.ResultadoDescripcion + " ; [GetComprobantesObtenerDocEntry]";
+                        return vResultadoTransaccion;
+                    }
+
+                    BE_Comprobante bE_Comprobante = ((List<BE_Comprobante>)resultadoTransaccionComprobante.dataList)[0];
+
+                    if (bE_Comprobante.doc_entry > 0)
+                    {
+                        SapDocumentsRepository sapDocumentsRepository = new SapDocumentsRepository(_clientFactory, _configuration, context);
+                        ResultadoTransaccion<SapBaseResponse<SapDocument>> resultadoTransaccionCancel = await sapDocumentsRepository.SetCancelInvoicesDocument(bE_Comprobante.doc_entry);
+
+                        if (resultadoTransaccionCancel.ResultadoCodigo == -1)
+                        {
+                            transaction.Rollback();
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionCancel.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+
+                        var dataUpdate = new SapDocumentFacturaAnular
+                        {
+                            U_SYP_STATUS = bE_Comprobante.U_SYP_STATUS,
+                            U_SYP_CS_USUANU = bE_Comprobante.U_SYP_CS_USUANU,
+                            U_SYP_CS_MOTANU = bE_Comprobante.U_SYP_CS_MOTANU,
+                            U_SYP_CS_FECANU = bE_Comprobante.U_SYP_CS_FECANU
+                        };
+
+                        ResultadoTransaccion<SapBaseResponse<SapDocument>> resultadoTransaccionUpdate = await sapDocumentsRepository.SetPatchInvoicesDocument(bE_Comprobante.doc_entry, dataUpdate);
+
+                        if (resultadoTransaccionUpdate.ResultadoCodigo == -1)
+                        {
+                            transaction.Rollback();
+                            vResultadoTransaccion.IdRegistro = -1;
+                            vResultadoTransaccion.ResultadoCodigo = -1;
+                            vResultadoTransaccion.ResultadoDescripcion = resultadoTransaccionUpdate.ResultadoDescripcion;
+                            return vResultadoTransaccion;
+                        }
+                    }
+
+                    transaction.Commit();
+                    transaction.Dispose();
+
                 }
-            }
-            catch (Exception ex)
-            {
-                vResultadoTransaccion.IdRegistro = -1;
-                vResultadoTransaccion.ResultadoCodigo = -1;
-                vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    vResultadoTransaccion.IdRegistro = -1;
+                    vResultadoTransaccion.ResultadoCodigo = -1;
+                    vResultadoTransaccion.ResultadoDescripcion = ex.Message.ToString();
+                }
+
+                conn.Close();
             }
 
             return vResultadoTransaccion;
-
         }
 
         public async Task<ResultadoTransaccion<BE_Comprobante>> GetComprobanteConsulta(string buscar, int key, int numerolineas, int orden)
